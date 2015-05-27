@@ -10,9 +10,9 @@ using System.Windows.Forms;
 
 namespace sync_client
 {
-    public partial class Form1 : Form
+    public partial class fSync : Form
     {
-        public Form1()
+        public fSync()
         {
             InitializeComponent();
         }

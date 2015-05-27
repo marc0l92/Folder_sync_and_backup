@@ -1,1 +1,12 @@
 D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\bin\Debug\sync_client.exe.config
+<<<<<<< Updated upstream
+=======
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\bin\Debug\sync_client.exe
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\bin\Debug\sync_client.pdb
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\obj\Debug\sync_client.csprojResolveAssemblyReference.cache
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\obj\Debug\sync_client.Properties.Resources.resources
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\obj\Debug\sync_client.csproj.GenerateResource.Cache
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\obj\Debug\sync_client.exe
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\obj\Debug\sync_client.pdb
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\obj\Debug\sync_client.fSync.resources
+>>>>>>> Stashed changes
