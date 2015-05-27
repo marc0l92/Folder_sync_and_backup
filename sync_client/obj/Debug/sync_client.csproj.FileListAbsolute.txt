@@ -1,1 +1,2 @@
 D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\bin\Debug\sync_client.exe.config
+C:\Users\Andrea Ferri\Source\Repos\progetto_Malnati\sync_client\bin\Debug\sync_client.exe.config
