@@ -31,8 +31,8 @@
             this.directorySearcher1 = new System.DirectoryServices.DirectorySearcher();
             this.bStart = new System.Windows.Forms.Button();
             this.bStop = new System.Windows.Forms.Button();
-            this.lDir = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.lDirectory = new System.Windows.Forms.Label();
+            this.tDirectory = new System.Windows.Forms.TextBox();
             this.bBrowse = new System.Windows.Forms.Button();
             this.lVersions = new System.Windows.Forms.ListBox();
             this.bRestore = new System.Windows.Forms.Button();
@@ -55,6 +55,7 @@
             this.bStart.TabIndex = 0;
             this.bStart.Text = "Start sync";
             this.bStart.UseVisualStyleBackColor = true;
+            this.bStart.Click += new System.EventHandler(this.bStart_Click);
             // 
             // bStop
             // 
@@ -65,22 +66,23 @@
             this.bStop.TabIndex = 0;
             this.bStop.Text = "Stop sync";
             this.bStop.UseVisualStyleBackColor = true;
+            this.bStop.Click += new System.EventHandler(this.bStop_Click);
             // 
-            // lDir
+            // lDirectory
             // 
-            this.lDir.AutoSize = true;
-            this.lDir.Location = new System.Drawing.Point(276, 23);
-            this.lDir.Name = "lDir";
-            this.lDir.Size = new System.Drawing.Size(52, 13);
-            this.lDir.TabIndex = 1;
-            this.lDir.Text = "Directory:";
+            this.lDirectory.AutoSize = true;
+            this.lDirectory.Location = new System.Drawing.Point(276, 23);
+            this.lDirectory.Name = "lDirectory";
+            this.lDirectory.Size = new System.Drawing.Size(52, 13);
+            this.lDirectory.TabIndex = 1;
+            this.lDirectory.Text = "Directory:";
             // 
-            // textBox1
+            // tDirectory
             // 
-            this.textBox1.Location = new System.Drawing.Point(334, 20);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(225, 20);
-            this.textBox1.TabIndex = 2;
+            this.tDirectory.Location = new System.Drawing.Point(334, 20);
+            this.tDirectory.Name = "tDirectory";
+            this.tDirectory.Size = new System.Drawing.Size(225, 20);
+            this.tDirectory.TabIndex = 2;
             // 
             // bBrowse
             // 
@@ -134,8 +136,8 @@
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.bRestore);
             this.Controls.Add(this.bBrowse);
-            this.Controls.Add(this.textBox1);
-            this.Controls.Add(this.lDir);
+            this.Controls.Add(this.tDirectory);
+            this.Controls.Add(this.lDirectory);
             this.Controls.Add(this.bStop);
             this.Controls.Add(this.bStart);
             this.MaximizeBox = false;
@@ -153,8 +155,8 @@
         private System.DirectoryServices.DirectorySearcher directorySearcher1;
         private System.Windows.Forms.Button bStart;
         private System.Windows.Forms.Button bStop;
-        private System.Windows.Forms.Label lDir;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Label lDirectory;
+        private System.Windows.Forms.TextBox tDirectory;
         private System.Windows.Forms.Button bBrowse;
         private System.Windows.Forms.ListBox lVersions;
         private System.Windows.Forms.Button bRestore;
