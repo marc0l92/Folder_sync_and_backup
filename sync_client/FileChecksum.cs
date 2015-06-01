@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace sync_client
 {
-    class FileChecksum
+	class FileChecksum : IEquatable<FileChecksum>
     {
-        private String filePath;
-        private String checksum;
+        private String _filePath;
+        private String _checksum;
 
         public FileChecksum(String file)
         {
@@ -25,5 +25,20 @@ namespace sync_client
             Stream fs = File.OpenRead(this.filePath);
             this.checksum = md5.ComputeHash(fs).ToString();
         }
+
+		public String checksum
+		{
+			get { return this._checksum; }
+			set;
+		}
+		public String filePath
+		{
+			get { return this._filePath; }
+			set;
+		}
+
+		public bool Equals(FileChecksum other){
+			return (this.filePath == other.filePath);
+		}
     }
 }

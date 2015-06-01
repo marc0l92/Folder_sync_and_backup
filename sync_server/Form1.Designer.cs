@@ -1,6 +1,6 @@
 ﻿namespace sync_server
 {
-    partial class Form1
+    partial class fSyncServer
     {
         /// <summary>
         /// Required designer variable.
@@ -37,6 +37,9 @@
 			this.lPort = new System.Windows.Forms.Label();
 			this.lLog = new System.Windows.Forms.Label();
 			this.lbLog = new System.Windows.Forms.ListBox();
+			this.lDirectory = new System.Windows.Forms.Label();
+			this.tDirectory = new System.Windows.Forms.TextBox();
+			this.bBrowse = new System.Windows.Forms.Button();
 			this.tabControl1.SuspendLayout();
 			this.tSettings.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.nPort)).BeginInit();
@@ -54,6 +57,9 @@
 			// 
 			// tSettings
 			// 
+			this.tSettings.Controls.Add(this.bBrowse);
+			this.tSettings.Controls.Add(this.tDirectory);
+			this.tSettings.Controls.Add(this.lDirectory);
 			this.tSettings.Controls.Add(this.lbLog);
 			this.tSettings.Controls.Add(this.lLog);
 			this.tSettings.Controls.Add(this.lPort);
@@ -84,8 +90,9 @@
 			this.bStart.Name = "bStart";
 			this.bStart.Size = new System.Drawing.Size(102, 43);
 			this.bStart.TabIndex = 0;
-			this.bStart.Text = "Start";
+			this.bStart.Text = "Start server";
 			this.bStart.UseVisualStyleBackColor = true;
+			this.bStart.Click += new System.EventHandler(this.bStart_Click);
 			// 
 			// bStop
 			// 
@@ -94,8 +101,9 @@
 			this.bStop.Name = "bStop";
 			this.bStop.Size = new System.Drawing.Size(102, 43);
 			this.bStop.TabIndex = 1;
-			this.bStop.Text = "Stop";
+			this.bStop.Text = "Stop server";
 			this.bStop.UseVisualStyleBackColor = true;
+			this.bStop.Click += new System.EventHandler(this.bStop_Click);
 			// 
 			// nPort
 			// 
@@ -142,14 +150,41 @@
 			this.lbLog.Size = new System.Drawing.Size(622, 264);
 			this.lbLog.TabIndex = 5;
 			// 
-			// Form1
+			// lDirectory
+			// 
+			this.lDirectory.AutoSize = true;
+			this.lDirectory.Location = new System.Drawing.Point(114, 13);
+			this.lDirectory.Name = "lDirectory";
+			this.lDirectory.Size = new System.Drawing.Size(93, 13);
+			this.lDirectory.TabIndex = 6;
+			this.lDirectory.Text = "Working directory:";
+			// 
+			// tDirectory
+			// 
+			this.tDirectory.Location = new System.Drawing.Point(117, 29);
+			this.tDirectory.Name = "tDirectory";
+			this.tDirectory.Size = new System.Drawing.Size(479, 20);
+			this.tDirectory.TabIndex = 7;
+			this.tDirectory.Text = "D:\\ProgettoMalnati\\server";
+			// 
+			// bBrowse
+			// 
+			this.bBrowse.Location = new System.Drawing.Point(602, 29);
+			this.bBrowse.Name = "bBrowse";
+			this.bBrowse.Size = new System.Drawing.Size(29, 23);
+			this.bBrowse.TabIndex = 8;
+			this.bBrowse.Text = "...";
+			this.bBrowse.UseVisualStyleBackColor = true;
+			this.bBrowse.Click += new System.EventHandler(this.bBrowse_Click);
+			// 
+			// fSyncServer
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(669, 452);
 			this.Controls.Add(this.tabControl1);
-			this.Name = "Form1";
-			this.Text = "Form1";
+			this.Name = "fSyncServer";
+			this.Text = "Sync server";
 			this.tabControl1.ResumeLayout(false);
 			this.tSettings.ResumeLayout(false);
 			this.tSettings.PerformLayout();
@@ -169,6 +204,9 @@
 		private System.Windows.Forms.TabPage tVersions;
 		private System.Windows.Forms.ListBox lbLog;
 		private System.Windows.Forms.Label lLog;
+		private System.Windows.Forms.TextBox tDirectory;
+		private System.Windows.Forms.Label lDirectory;
+		private System.Windows.Forms.Button bBrowse;
     }
 }
 

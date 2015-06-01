@@ -125,7 +125,7 @@
 			this.tDirectory.Name = "tDirectory";
 			this.tDirectory.Size = new System.Drawing.Size(372, 20);
 			this.tDirectory.TabIndex = 2;
-			this.tDirectory.Text = "C:\\backup\\";
+			this.tDirectory.Text = "D:\\ProgettoMalnati\\client";
 			// 
 			// lDirectory
 			// 

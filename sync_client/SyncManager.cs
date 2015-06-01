@@ -22,7 +22,7 @@ namespace sync_client
 		private Thread syncThread;
 		private List<FileChecksum> clientFileChecksum;
 		private bool thread_stopped = false;
-		delegate void StatusDelegate(String s);
+		public delegate void StatusDelegate(String s);
 		private StatusDelegate statusDelegate;
 		private TcpClient tcpClient;
 		private NetworkStream networkStream;
@@ -50,8 +50,10 @@ namespace sync_client
 			this.username = username;
 			this.password = password;
 
+			statusDelegate("Starting connection...");
 			tcpClient = new TcpClient(address, port);
 			networkStream = tcpClient.GetStream();
+			statusDelegate("Connected");
 
 			// Start the sync thread
 			this.syncThread.Start();
@@ -65,7 +67,6 @@ namespace sync_client
 
 		private void doSync()
 		{
-			statusDelegate("Starting connection...");
 			// Do the first connection
 			this.sendCommand(START_CMD, this.directory);
 			List<FileChecksum> serverFileChecksum = getServerCheckList();
@@ -73,18 +74,38 @@ namespace sync_client
 			this.generateClientChecksum(this.directory);
 
 			// confronta checksum
-			// invio al server i file con diverso checksum
-			this.sendCommand(EDIT_CMD, "file");
-			this.sendFile("");
-			// invio al server i file non presenti sul server
-			this.sendCommand(NEW_CMD, "file");
-			this.sendFile("");
-			// invio al server la richiesta di cancellare i file che non ci sono più
-			this.sendCommand(DEL_CMD, "file");
+			int pos;
+			foreach(FileChecksum file in clientFileChecksum){
+				pos = serverFileChecksum.IndexOf(file);
+				
+				if (pos < 0)
+				{
+					// create a new file on the server
+					this.sendCommand(NEW_CMD, file.filePath);
+					this.sendFile(file.filePath);
+				}
+				else
+				{
+					// the file is also on the server
+					if (file.checksum != serverFileChecksum.ElementAt(pos).checksum)
+					{
+						// on the server there is a different version of the file
+						this.sendCommand(EDIT_CMD, file.filePath);
+						this.sendFile(file.filePath);
+					}
+					serverFileChecksum.RemoveAt(pos);
+				}
+			}
+			foreach (FileChecksum serverFile in serverFileChecksum)
+			{
+				// delete extra file on the server
+				this.sendCommand(DEL_CMD, serverFile.filePath);
+			}
+
 			// Do syncking
 			while (!thread_stopped)
 			{
-				//Thread.Sleep(2000);
+				Thread.Sleep(2000);
 			}
 		}
 
@@ -144,11 +165,11 @@ namespace sync_client
 		}
 		private List<FileChecksum> getServerCheckList()
 		{
-			return null;
+			return new List<FileChecksum>();
 		}
 		private String getFile()
 		{
-			return null;
+			return "";
 		}
 	}
 }
