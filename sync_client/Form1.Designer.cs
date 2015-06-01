@@ -44,16 +44,16 @@
 			this.lUsername = new System.Windows.Forms.Label();
 			this.tController = new System.Windows.Forms.TabControl();
 			this.tSettings = new System.Windows.Forms.TabPage();
-			this.tLog = new System.Windows.Forms.TabPage();
-			this.tAddress = new System.Windows.Forms.TextBox();
-			this.lServer = new System.Windows.Forms.Label();
-			this.lPort = new System.Windows.Forms.Label();
 			this.nPort = new System.Windows.Forms.NumericUpDown();
+			this.lPort = new System.Windows.Forms.Label();
+			this.lServer = new System.Windows.Forms.Label();
+			this.tAddress = new System.Windows.Forms.TextBox();
+			this.tVersions = new System.Windows.Forms.TabPage();
 			this.statusStrip1.SuspendLayout();
 			this.tController.SuspendLayout();
 			this.tSettings.SuspendLayout();
-			this.tLog.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.nPort)).BeginInit();
+			this.tVersions.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// directorySearcher1
@@ -184,7 +184,7 @@
 			// tController
 			// 
 			this.tController.Controls.Add(this.tSettings);
-			this.tController.Controls.Add(this.tLog);
+			this.tController.Controls.Add(this.tVersions);
 			this.tController.Location = new System.Drawing.Point(12, 12);
 			this.tController.Name = "tController";
 			this.tController.SelectedIndex = 0;
@@ -214,44 +214,6 @@
 			this.tSettings.Text = "Settings";
 			this.tSettings.UseVisualStyleBackColor = true;
 			// 
-			// tLog
-			// 
-			this.tLog.Controls.Add(this.lVersions);
-			this.tLog.Controls.Add(this.bRestore);
-			this.tLog.Location = new System.Drawing.Point(4, 22);
-			this.tLog.Name = "tLog";
-			this.tLog.Padding = new System.Windows.Forms.Padding(3);
-			this.tLog.Size = new System.Drawing.Size(604, 328);
-			this.tLog.TabIndex = 1;
-			this.tLog.Text = "Log";
-			this.tLog.UseVisualStyleBackColor = true;
-			// 
-			// tAddress
-			// 
-			this.tAddress.Location = new System.Drawing.Point(9, 141);
-			this.tAddress.Name = "tAddress";
-			this.tAddress.Size = new System.Drawing.Size(295, 20);
-			this.tAddress.TabIndex = 11;
-			this.tAddress.Text = "127.0.0.1";
-			// 
-			// lServer
-			// 
-			this.lServer.AutoSize = true;
-			this.lServer.Location = new System.Drawing.Point(6, 125);
-			this.lServer.Name = "lServer";
-			this.lServer.Size = new System.Drawing.Size(81, 13);
-			this.lServer.TabIndex = 13;
-			this.lServer.Text = "Server address:";
-			// 
-			// lPort
-			// 
-			this.lPort.AutoSize = true;
-			this.lPort.Location = new System.Drawing.Point(309, 125);
-			this.lPort.Name = "lPort";
-			this.lPort.Size = new System.Drawing.Size(29, 13);
-			this.lPort.TabIndex = 14;
-			this.lPort.Text = "Port:";
-			// 
 			// nPort
 			// 
 			this.nPort.Location = new System.Drawing.Point(312, 142);
@@ -269,6 +231,44 @@
             0,
             0});
 			// 
+			// lPort
+			// 
+			this.lPort.AutoSize = true;
+			this.lPort.Location = new System.Drawing.Point(309, 125);
+			this.lPort.Name = "lPort";
+			this.lPort.Size = new System.Drawing.Size(29, 13);
+			this.lPort.TabIndex = 14;
+			this.lPort.Text = "Port:";
+			// 
+			// lServer
+			// 
+			this.lServer.AutoSize = true;
+			this.lServer.Location = new System.Drawing.Point(6, 125);
+			this.lServer.Name = "lServer";
+			this.lServer.Size = new System.Drawing.Size(81, 13);
+			this.lServer.TabIndex = 13;
+			this.lServer.Text = "Server address:";
+			// 
+			// tAddress
+			// 
+			this.tAddress.Location = new System.Drawing.Point(9, 141);
+			this.tAddress.Name = "tAddress";
+			this.tAddress.Size = new System.Drawing.Size(295, 20);
+			this.tAddress.TabIndex = 11;
+			this.tAddress.Text = "127.0.0.1";
+			// 
+			// tVersions
+			// 
+			this.tVersions.Controls.Add(this.lVersions);
+			this.tVersions.Controls.Add(this.bRestore);
+			this.tVersions.Location = new System.Drawing.Point(4, 22);
+			this.tVersions.Name = "tVersions";
+			this.tVersions.Padding = new System.Windows.Forms.Padding(3);
+			this.tVersions.Size = new System.Drawing.Size(604, 328);
+			this.tVersions.TabIndex = 1;
+			this.tVersions.Text = "Versions";
+			this.tVersions.UseVisualStyleBackColor = true;
+			// 
 			// fSync
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -284,8 +284,8 @@
 			this.tController.ResumeLayout(false);
 			this.tSettings.ResumeLayout(false);
 			this.tSettings.PerformLayout();
-			this.tLog.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.nPort)).EndInit();
+			this.tVersions.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -309,7 +309,7 @@
 		private System.Windows.Forms.Label lUsername;
 		private System.Windows.Forms.TabControl tController;
 		private System.Windows.Forms.TabPage tSettings;
-		private System.Windows.Forms.TabPage tLog;
+		private System.Windows.Forms.TabPage tVersions;
 		private System.Windows.Forms.Label lPort;
 		private System.Windows.Forms.Label lServer;
 		private System.Windows.Forms.TextBox tAddress;

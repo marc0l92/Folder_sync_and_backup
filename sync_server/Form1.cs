@@ -15,6 +15,6 @@ namespace sync_server
         public Form1()
         {
             InitializeComponent();
-        }
+		}
     }
 }
