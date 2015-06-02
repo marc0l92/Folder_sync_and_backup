@@ -10,3 +10,6 @@ D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.gi
 D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\obj\Debug\sync_client.pdb
 D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\obj\Debug\sync_client.fSync.resources
 >>>>>>> Stashed changes
+C:\Users\Andrea Ferri\Documents\Visual Studio 2013\Projects\progetto_Malnati\sync_client\bin\Debug\sync_client.exe.config
+C:\Users\Andrea Ferri\Documents\Visual Studio 2013\Projects\progetto_Malnati\sync_client\obj\Debug\sync_client.exe
+C:\Users\Andrea Ferri\Documents\Visual Studio 2013\Projects\progetto_Malnati\sync_client\obj\Debug\sync_client.pdb

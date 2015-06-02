@@ -64,10 +64,6 @@ namespace sync_server
 			bStop.Enabled = false;
 		}
 
-		private void update(String s)
-		{
-
-		}
 		
 		private void appendStatus(String s, int type = LOG_NORMAL)
 		{
