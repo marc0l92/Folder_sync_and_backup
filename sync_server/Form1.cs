@@ -84,7 +84,7 @@ namespace sync_server
 					break;
 			}
 
-			//lbLog.Items.Add(s);
+			// Send the command to add a new item on the listbox on the UI thread
 			lbLog.BeginInvoke(new AppendItem((String str) => { lbLog.Items.Add(str); }), new object[] { s });
 		}
     }
