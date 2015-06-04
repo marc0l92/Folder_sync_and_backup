@@ -17,6 +17,8 @@ namespace sync_client
 		public String username, passwrod;
 		public String fileContent;
 
+		public SyncCommand(CommandSet type, String arg1) : this(type, new String[]{arg1}) {}
+		public SyncCommand(CommandSet type, String arg1, String arg2) : this(type, new String[] { arg1, arg2 }) { }
 		public SyncCommand(CommandSet type, String[] args){
 			switch (type)
 			{

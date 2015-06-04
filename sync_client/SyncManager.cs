@@ -10,13 +10,6 @@ namespace sync_client
 {
 	class SyncManager
 	{
-		private const int START_CMD = 1;
-		private const int EDIT_CMD = 2;
-		private const int DEL_CMD = 3;
-		private const int NEW_CMD = 4;
-		private const int RESTORE_CMD = 7;
-		private const int GET_CMD = 8;
-		private const int ENDSYNC_CMD = 9;
 		private const int SYNC_SLEEPING_TIME = 2000;
 
 		private String address, username, password, directory;
@@ -80,7 +73,7 @@ namespace sync_client
 				networkStream = tcpClient.GetStream();
 				statusDelegate("Connected");
 				// Do the first connection
-				sendCommand(START_CMD, directory);
+				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, new String[]()));
 				serverFileChecksum = getServerCheckList();
 				scanForClientChanges(directory);
 				scanForDeletedFiles();
@@ -156,7 +149,7 @@ namespace sync_client
 			
 		}
 
-		private void sendCommand(int command, string param1 = "", string param2 = "")
+		private void sendCommand(SyncCommand command)
 		{
 			String message;
 			Byte[] data;
