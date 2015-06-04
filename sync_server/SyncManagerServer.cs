@@ -29,8 +29,10 @@ namespace sync_server
 		private Thread listenThread;
         private Thread operationThread;
 		private String workDir;
+        private String usrDir;
         private int version ;
-		private bool serverStopped = false;
+        private bool serverStopped = false;
+        private bool syncFinished = false;
 		private TcpListener tcpServer;   
 
 		private List<FileChecksum> serverFileChecksum;
@@ -48,6 +50,7 @@ namespace sync_server
 			this.statusDelegate = sd;
 		}
 
+        //Function Start Sync Button
 		public void startSync(int port, String workDir)
 		{
 			// Check if the directory is valid
@@ -66,19 +69,18 @@ namespace sync_server
 			// Start the sync thread
 			this.listenThread.Start();
 		}
-
+        //Function Stop Sync Button
 		public void stopSync()
 		{
 			this.serverStopped = true;
+            this.syncFinished = true;
 			this.listenThread.Abort();
+            this.operationThread.Abort();
 			statusDelegate("Server stopped", fSyncServer.LOG_INFO);
 		}
-
+        //Function Main Thread Listening for Connection, CHecking User Credential and Start the Slave Thread to serve the Client Request
 		private void listenForConnections()
 		{
-
-
-
 
 			// thread that waiting for connections
 			while (!serverStopped)
@@ -90,12 +92,23 @@ namespace sync_server
 
 
                 //Check User Credential
+                NetworkStream netStream = client.GetStream();
+                StreamReader sr = new StreamReader(netStream);
+                String usrLOGIN = sr.ReadLine();
+                String[] usrCREDENTIAL = getCommand(usrLOGIN);
+                if (checkCredential(usrCREDENTIAL[1], usrCREDENTIAL[2])&&usrCREDENTIAL[0]=="LOGIN")
+                {
+                    //Instantiate Client Slave
+                    Thread clientThread = new Thread(new ParameterizedThreadStart(doSync));
+                    clientThread.IsBackground = true;
+                    clientThread.Start(client);
 
-
-                //Instantiate Client Slave
-                Thread clientThread = new Thread(new ParameterizedThreadStart(doSync));
-			    clientThread.IsBackground = true;
-                clientThread.Start(client);
+                }
+                else client.Close(); //Else BAD CREDENTIAL Close Connection
+                //Closing the Stream Opened for Check the Credential
+                sr.Close();
+                netStream.Close();
+                
             }
 		}
 
@@ -104,18 +117,105 @@ namespace sync_server
         private void doSync(object client)
 		{
 
-                TcpClient cl = (TcpClient) client;
+            try
+            {
+                while (!syncFinished) { 
+
+                TcpClient cl = (TcpClient)client;
                 NetworkStream netStream = cl.GetStream();
                 StreamReader sr = new StreamReader(netStream);
                 StreamWriter sw = new StreamWriter(netStream);
-                String cmd =sr.ReadLine();
-                String[] command = this.getCommand(cmd);
+                String cmd = createCommand("OK_START:" , "", "");
+                sw.WriteLine(cmd);
+
+                if ((cmd = sr.ReadLine())!=null)
+                {
+                    String[] command = this.getCommand(cmd);
+                    if (doCommand(command, netStream))
+                    {
+                        statusDelegate("Command :"+command[0]+" Done Correctly", fSyncServer.LOG_INFO);
+                    }
+                    else
+                    sr.Close();
+                    //sw.Close();
+                    netStream.Close();
+                    cl.Close();
+                }
+                else
+                {
+                    sr.Close();
+                    //sw.Close();
+                    netStream.Close();
+                }
+
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("The process failed: {0}", e.ToString());
+            }
+
 				
 		}
 
-        private void doCommand(String[] stringCMD)
+        private Boolean doCommand(String[] stringCMD, Object netStream)
+        {
+            
+            switch (stringCMD[0])
+            {
+                case "START_CMD": return startSession(stringCMD[1], (NetworkStream) netStream);
+                case "EDIT_CMD": return editFile();
+                case "DEL_CMD": return delFile();
+                case "NEW_CMD": return newFile();
+                case "RESTORE_CMD": return restVers();
+                case "GET_CMD": return getFile();
+                case "ENDSYNC_CMD": return stopSession();
+                default:
+                    return false;
+            }
+
+
+        }
+        private Boolean startSession(String usrPath, NetworkStream netStream)
         {
 
+            this.usrDir = usrPath;
+            this.generateServerChecksum(this.usrDir);
+            netStream
+
+            return true;
+        }
+
+
+        private Boolean editFile()
+        {
+
+            return true;
+        }
+        private Boolean delFile()
+        {
+
+            return true;
+        }
+        private Boolean newFile()
+        {
+
+            return true;
+        }
+        private Boolean restVers()
+        {
+
+            return true;
+        }
+        private Boolean getFile()
+        {
+
+            return true;
+        }
+        private Boolean stopSession() {
+
+           
+            return true;
         }
 		/*
 
@@ -179,6 +279,10 @@ namespace sync_server
         */
         //Funzioni per gestire la versione
 
+        private Boolean checkCredential(String usr, String psw)
+        {
+            return true;
+        }
         private void resetVersion()
         {
             this.version = 0;
@@ -222,7 +326,7 @@ namespace sync_server
             }
         }
 
-
+        /*
 
         public String createCommand(int CMD, String path, String checksum){
         
@@ -235,15 +339,43 @@ namespace sync_server
 
             return command.Stringify();
         }
+        */
+        //Function that return a Json String containing the command and the inserted variabels
+        public String createCommand(String CMD, String path, String checksum)
+        {
 
-        public String[] getCommand(String jsonoCMD)
+            JsonObject command;
+
+            command = new JsonObject();
+            command["Command"] = JsonValue.CreateStringValue(CMD);
+            command["Path"] = JsonValue.CreateStringValue(path);
+            command["Checksum"] = JsonValue.CreateStringValue(checksum);
+
+            return command.Stringify();
+        }
+        //Function that return a Json String containing the command and the inserted list checksum
+        public String createCommand(String CMD, List<FileChecksum> listChecksum)
+        {
+
+            JsonArray command = new JsonArray();
+
+            command["Command"] = JsonValue.CreateStringValue(CMD);
+            foreach (FileChecksum checksum in listChecksum)
+            {
+                command.Add(JsonValue.CreateStringValue(checksum.filePath));
+                command.Add(JsonValue.CreateStringValue(checksum.checksum));
+            }
+
+            return command.Stringify();
+        }
+        //Convert Standard Command Returning a String Array of three elements
+        public String[] getCommand(String jsonCMD)
         {
             String[] command = new String[3];
-            JsonValue jsonOBJ = JsonValue.Parse(jsonoCMD);
+            JsonValue jsonOBJ = JsonValue.Parse(jsonCMD);
             command[0] = jsonOBJ.GetObject().GetNamedString("Command");
             command[1] = jsonOBJ.GetObject().GetNamedString("Path");
             command[2] = jsonOBJ.GetObject().GetNamedString("Checksum");
-
             return command;
         }
         
