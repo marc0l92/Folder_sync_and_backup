@@ -20,7 +20,10 @@ public class StateObject {
     // Receive buffer.
     public byte[] buffer = new byte[BufferSize];
     // Received data string.
-    public StringBuilder sb = new StringBuilder();  
+    public StringBuilder sb = new StringBuilder(); 
+    // Received command string
+    public String commandString;
+
 }
 
 public class AsyncManagerServer {
@@ -30,11 +33,11 @@ public class AsyncManagerServer {
     private static IPAddress localAddr = IPAddress.Parse("127.0.0.1");
 
     public delegate void StatusDelegate(String s, int type);
-    private StatusDelegate statusDelegate;
+    private static StatusDelegate statusDelegate;
     public static ManualResetEvent allDone = new ManualResetEvent(false);
     private static ManualResetEvent receiveDone = new ManualResetEvent(false);
     private List<FileChecksum> FileChecksum;
-    private bool serverStopped = false;
+    private static bool serverStopped = false;
 
     // The response from the remote device.
     private static String response = String.Empty;
@@ -60,18 +63,21 @@ public class AsyncManagerServer {
             listener.Bind(localEndPoint);
             listener.Listen(100);
 
-            while (true) {
+            statusDelegate("Start Listening on Port: "+ localport + "Address: " + localAddr, fSyncServer.LOG_INFO);
+            while (!serverStopped)
+            {
                 // Set the event to nonsignaled state.
                 allDone.Reset();
 
                 // Start an asynchronous socket to listen for connections.
-                Console.WriteLine("Waiting for a connection...");
                 listener.BeginAccept( 
                     new AsyncCallback(AcceptCallback),
                     listener );
 
+                statusDelegate("Connected and Created New Thred to Serve Client", fSyncServer.LOG_INFO);
                 // Wait until a connection is made before continuing.
                 allDone.WaitOne();
+                statusDelegate("Main Thread Free", fSyncServer.LOG_INFO);
             }
 
         } catch (Exception e) {
@@ -86,7 +92,7 @@ public class AsyncManagerServer {
     public static void AcceptCallback(IAsyncResult ar) {
         // Signal the main thread to continue.
         allDone.Set();
-
+        statusDelegate("Slave Thread created Successfully ", fSyncServer.LOG_INFO);
         // Get the socket that handles the client request.
         Socket listener = (Socket) ar.AsyncState;
         Socket handler = listener.EndAccept(ar);
@@ -99,7 +105,6 @@ public class AsyncManagerServer {
     }
 
     public static void ReadCallback(IAsyncResult ar) {
-        String content = String.Empty;
         
         // Retrieve the state object and the handler socket
         // from the asynchronous state object.
@@ -116,14 +121,14 @@ public class AsyncManagerServer {
 
             // Check for end-of-file tag. If it is not there, read 
             // more data.
-            content = state.sb.ToString();
-            if (content.IndexOf("<EOF>") > -1) {
+            state.commandString = state.sb.ToString();
+            if (state.commandString.IndexOf("<EOF>") > -1)
+            {
                 // All the data has been read from the 
                 // client. Display it on the console.
-                Console.WriteLine("Read {0} bytes from socket. \n Data : {1}",
-                    content.Length, content );
+                statusDelegate("Read " + state.commandString.Length + " bytes from socket. \n Data :" + state.commandString, fSyncServer.LOG_INFO);
                 // Echo the data back to the client.
-                Send(handler, content);
+               // Send(handler, content);
             } else {
                 // Not all data received. Get more.
                 handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
@@ -240,23 +245,15 @@ public class AsyncManagerServer {
         //Function Start Sync Button
         public void startSync(int port, String workDir)
         {
+            //Assign the port value 
+            localport = port;
             // Check if the directory is valid
             if (!Directory.Exists(workDir))
             {
                 throw new Exception("Directory not exists");
             }
-
             // Server start
-
             StartListening();
-
-            IPAddress localAddr = IPAddress.Parse("127.0.0.1");
-            tcpServer = new TcpListener(localAddr, port);
-            tcpServer.Start();
-            statusDelegate("Server started", fSyncServer.LOG_INFO);
-
-            // Start the sync thread
-            this.listenThread.Start();
         }
         //Function Stop Sync Button
         public void stopSync()
