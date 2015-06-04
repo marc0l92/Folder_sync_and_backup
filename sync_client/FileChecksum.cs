@@ -29,12 +29,12 @@ namespace sync_client
 		public String checksum
 		{
 			get { return this._checksum; }
-			set;
+			set { this._checksum = value; }
 		}
 		public String filePath
 		{
 			get { return this._filePath; }
-			set;
+			set { this._filePath = value; }
 		}
 
 		//public bool Equals(FileChecksum other){

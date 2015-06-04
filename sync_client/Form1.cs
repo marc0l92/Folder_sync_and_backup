@@ -13,14 +13,19 @@ namespace sync_client
     public partial class fSync : Form
     {
         SyncManager syncManager;
+		private delegate void ResetGUI();
 
         public fSync()
         {
             InitializeComponent();
 
+			addVersion("test1", 1, 2, 3);
+			addVersion("test2", 2, 3, 4);
+			addVersion("test3", 3, 4, 5);
+
             // initialize my data structure
             syncManager = new SyncManager();
-			syncManager.setStatusDelegate((String s) => {lStatus.Text = s;});
+			syncManager.setStatusDelegate(updateStatus);
         }
 
         private void bStart_Click(object sender, EventArgs e)
@@ -28,8 +33,8 @@ namespace sync_client
             // start the sync manager
             try
             {
+				bStart.Enabled = false;
 				syncManager.startSync(tAddress.Text, Decimal.ToInt32(nPort.Value), tUsername.Text, tPassword.Text, tDirectory.Text);
-                bStart.Enabled = false;
                 bStop.Enabled = true;
                 bRestore.Enabled = true;
                 tDirectory.Enabled = false;
@@ -42,6 +47,7 @@ namespace sync_client
             }
             catch (Exception ex)
             {
+				bStart.Enabled = true;
                 lStatus.Text = ex.Message;
             }
         }
@@ -51,20 +57,12 @@ namespace sync_client
             // stop the sync manager
             try
             {
-                syncManager.stopSync();
-                bStart.Enabled = true;
-                bStop.Enabled = false;
-                bRestore.Enabled = false;
-                tDirectory.Enabled = true;
-                bBrowse.Enabled = true;
-				tUsername.Enabled = true;
-				tPassword.Enabled = true;
-				tAddress.Enabled = true;
-				nPort.Enabled = true;
                 lStatus.Text = "Stop";
+				forceStop();
             }
             catch (Exception ex)
             {
+				bStop.Enabled = true;
                 lStatus.Text = ex.Message;
             }
         }
@@ -82,7 +80,48 @@ namespace sync_client
 
         private void bRestore_Click(object sender, EventArgs e)
         {
-            // TODO
+			String selVersion = lVersions.SelectedItems[0].Text;
+			DialogResult res = MessageBox.Show("Do you want to restore this version?\n" + selVersion, "Restore system", MessageBoxButtons.YesNo);
+			if(res == DialogResult.Yes){
+				try
+				{
+					syncManager.restoreVersion(selVersion);
+					MessageBox.Show("Restore Done!", "Restoring system");
+				}
+				catch (Exception ex)
+				{
+					MessageBox.Show("Restore failed\n"+ex.Message, "Restoring system", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
+			}
+		}
+
+		private void updateStatus(String message, bool fatalError)
+		{
+			lStatus.Text = message;
+			if (fatalError)
+			{
+				this.BeginInvoke(new ResetGUI(forceStop));
+			}
+		}
+
+		private void forceStop()
+		{
+			bStop.Enabled = false;
+			syncManager.stopSync();
+			bStart.Enabled = true;
+			bStop.Enabled = false;
+			bRestore.Enabled = false;
+			tDirectory.Enabled = true;
+			bBrowse.Enabled = true;
+			tUsername.Enabled = true;
+			tPassword.Enabled = true;
+			tAddress.Enabled = true;
+			nPort.Enabled = true;
+		}
+
+		private void addVersion(String version, int newFiles = 0, int editFiles = 0, int delFiles = 0)
+		{
+			lVersions.Items.Add(new ListViewItem(new String[]{version, newFiles.ToString(), editFiles.ToString(), delFiles.ToString(), DateTime.Now.ToString()}));
 		}
     }
 }

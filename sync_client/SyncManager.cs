@@ -19,11 +19,13 @@ namespace sync_client
 		private const int ENDSYNC_CMD = 9;
 		private const int SYNC_SLEEPING_TIME = 2000;
 
-		private String username, password, directory;
+		private String address, username, password, directory;
+		private int port;
 		private Thread syncThread;
 		private List<FileChecksum> serverFileChecksum;
+		private List<FileChecksum> clientFileChecksum;
 		private bool thread_stopped = false;
-		public delegate void StatusDelegate(String s);
+		public delegate void StatusDelegate(String s, bool fatalError = false);
 		private StatusDelegate statusDelegate;
 		private TcpClient tcpClient;
 		private NetworkStream networkStream;
@@ -31,8 +33,8 @@ namespace sync_client
 		public SyncManager()
 		{
 			serverFileChecksum = new List<FileChecksum>();
-			this.syncThread = new Thread(new ThreadStart(this.doSync));
-			this.syncThread.IsBackground = true;
+			//this.syncThread = new Thread(new ThreadStart(this.doSync));
+			//this.syncThread.IsBackground = true;
 		}
 
 		public void setStatusDelegate(StatusDelegate sd)
@@ -50,34 +52,52 @@ namespace sync_client
 			this.directory = directory;
 			this.username = username;
 			this.password = password;
-
-			statusDelegate("Starting connection...");
-			tcpClient = new TcpClient(address, port);
-			networkStream = tcpClient.GetStream();
-			statusDelegate("Connected");
+			this.address = address;
+			this.port = port;
 
 			// Start the sync thread
+			this.syncThread = new Thread(new ThreadStart(this.doSync));
+			this.syncThread.IsBackground = true;
 			this.syncThread.Start();
 		}
 
 		public void stopSync()
 		{
 			this.thread_stopped = true;
-			//syncThread.Abort();
+			if (syncThread.IsAlive)
+			{
+				syncThread.Abort();
+			}
 		}
 
 		private void doSync()
 		{
-			// Do the first connection
-			sendCommand(START_CMD, directory);
-			serverFileChecksum = getServerCheckList();
-			scanForClientChanges(directory);
-
-			// Do syncking
-			while (!thread_stopped)
+			try
 			{
-				Thread.Sleep(SYNC_SLEEPING_TIME);
+				// Create the connection
+				statusDelegate("Starting connection...");
+				tcpClient = new TcpClient(address, port);
+				networkStream = tcpClient.GetStream();
+				statusDelegate("Connected");
+				// Do the first connection
+				sendCommand(START_CMD, directory);
+				serverFileChecksum = getServerCheckList();
 				scanForClientChanges(directory);
+				scanForDeletedFiles();
+				commitChangesToServer();
+
+				// Do syncking
+				while (!thread_stopped)
+				{
+					Thread.Sleep(SYNC_SLEEPING_TIME);
+					scanForClientChanges(directory);
+					scanForDeletedFiles();
+					commitChangesToServer();
+				}
+			}
+			catch(Exception ex)
+			{
+				statusDelegate(ex.Message, true);
 			}
 		}
 
@@ -99,7 +119,6 @@ namespace sync_client
 					// create a new file on the server
 					this.sendCommand(NEW_CMD, currentFile.filePath);
 					this.sendFile(currentFile.filePath);
-					serverFileChecksum.Add(currentFile);
 				}
 				else
 				{
@@ -109,10 +128,11 @@ namespace sync_client
 						// on the server there is a different version of the file
 						this.sendCommand(EDIT_CMD, currentFile.filePath);
 						this.sendFile(currentFile.filePath);
-						serverFileChecksum[pos] = currentFile;
 					}
-					//serverFileChecksum.RemoveAt(pos);
+					serverFileChecksum.RemoveAt(pos);
 				}
+
+				clientFileChecksum.Add(currentFile);
 			}
 
 			// Recurse into subdirectories of this directory.
@@ -123,7 +143,18 @@ namespace sync_client
 			}
 		}
 
-		void 
+		private void scanForDeletedFiles()
+		{
+			foreach(FileChecksum currentFile in serverFileChecksum){
+				sendCommand(DEL_CMD, currentFile.filePath);
+			}
+		}
+
+		public void restoreVersion(String version)
+		{
+			throw new Exception("Function not implemented yet\nPlease contact the server admin:\nandrea.ferri@gmail.com");
+			
+		}
 
 		private void sendCommand(int command, string param1 = "", string param2 = "")
 		{
@@ -171,5 +202,11 @@ namespace sync_client
 		{
 			return "";
 		}
+
+		private void commitChangesToServer()
+		{
+			serverFileChecksum = clientFileChecksum;
+		}
+
 	}
 }

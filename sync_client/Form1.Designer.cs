@@ -31,7 +31,6 @@
 			this.directorySearcher1 = new System.DirectoryServices.DirectorySearcher();
 			this.bStart = new System.Windows.Forms.Button();
 			this.bStop = new System.Windows.Forms.Button();
-			this.lVersions = new System.Windows.Forms.ListBox();
 			this.bRestore = new System.Windows.Forms.Button();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.lStatus = new System.Windows.Forms.ToolStripStatusLabel();
@@ -49,6 +48,12 @@
 			this.lServer = new System.Windows.Forms.Label();
 			this.tAddress = new System.Windows.Forms.TextBox();
 			this.tVersions = new System.Windows.Forms.TabPage();
+			this.lVersions = new System.Windows.Forms.ListView();
+			this.cVersion = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.cEdit = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.cNew = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.cDel = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.cData = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.statusStrip1.SuspendLayout();
 			this.tController.SuspendLayout();
 			this.tSettings.SuspendLayout();
@@ -83,18 +88,8 @@
 			this.bStop.UseVisualStyleBackColor = true;
 			this.bStop.Click += new System.EventHandler(this.bStop_Click);
 			// 
-			// lVersions
-			// 
-			this.lVersions.FormattingEnabled = true;
-			this.lVersions.Location = new System.Drawing.Point(6, 6);
-			this.lVersions.Name = "lVersions";
-			this.lVersions.ScrollAlwaysVisible = true;
-			this.lVersions.Size = new System.Drawing.Size(580, 277);
-			this.lVersions.TabIndex = 4;
-			// 
 			// bRestore
 			// 
-			this.bRestore.Enabled = false;
 			this.bRestore.Location = new System.Drawing.Point(6, 289);
 			this.bRestore.Name = "bRestore";
 			this.bRestore.Size = new System.Drawing.Size(74, 26);
@@ -269,6 +264,47 @@
 			this.tVersions.Text = "Versions";
 			this.tVersions.UseVisualStyleBackColor = true;
 			// 
+			// lVersions
+			// 
+			this.lVersions.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.cVersion,
+            this.cNew,
+            this.cEdit,
+            this.cDel,
+            this.cData});
+			this.lVersions.FullRowSelect = true;
+			this.lVersions.Location = new System.Drawing.Point(6, 6);
+			this.lVersions.Name = "lVersions";
+			this.lVersions.Size = new System.Drawing.Size(592, 277);
+			this.lVersions.TabIndex = 6;
+			this.lVersions.UseCompatibleStateImageBehavior = false;
+			this.lVersions.View = System.Windows.Forms.View.Details;
+			// 
+			// cVersion
+			// 
+			this.cVersion.Text = "Version";
+			this.cVersion.Width = 170;
+			// 
+			// cEdit
+			// 
+			this.cEdit.Text = "Edited files";
+			this.cEdit.Width = 80;
+			// 
+			// cNew
+			// 
+			this.cNew.Text = "New files";
+			this.cNew.Width = 80;
+			// 
+			// cDel
+			// 
+			this.cDel.Text = "Deleted files";
+			this.cDel.Width = 80;
+			// 
+			// cData
+			// 
+			this.cData.Text = "Data";
+			this.cData.Width = 160;
+			// 
 			// fSync
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -276,6 +312,7 @@
 			this.ClientSize = new System.Drawing.Size(638, 398);
 			this.Controls.Add(this.tController);
 			this.Controls.Add(this.statusStrip1);
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.MaximizeBox = false;
 			this.Name = "fSync";
 			this.Text = "Sync";
@@ -296,7 +333,6 @@
         private System.DirectoryServices.DirectorySearcher directorySearcher1;
         private System.Windows.Forms.Button bStart;
 		private System.Windows.Forms.Button bStop;
-        private System.Windows.Forms.ListBox lVersions;
         private System.Windows.Forms.Button bRestore;
         private System.Windows.Forms.StatusStrip statusStrip1;
 		private System.Windows.Forms.ToolStripStatusLabel lStatus;
@@ -314,6 +350,12 @@
 		private System.Windows.Forms.Label lServer;
 		private System.Windows.Forms.TextBox tAddress;
 		private System.Windows.Forms.NumericUpDown nPort;
+		private System.Windows.Forms.ListView lVersions;
+		private System.Windows.Forms.ColumnHeader cVersion;
+		private System.Windows.Forms.ColumnHeader cNew;
+		private System.Windows.Forms.ColumnHeader cEdit;
+		private System.Windows.Forms.ColumnHeader cDel;
+		private System.Windows.Forms.ColumnHeader cData;
     }
 }
 
