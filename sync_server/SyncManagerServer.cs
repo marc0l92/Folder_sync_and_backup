@@ -33,9 +33,9 @@ namespace sync_server
         private int version ;
         private bool serverStopped = false;
         private bool syncFinished = false;
-		private TcpListener tcpServer;   
+		private TcpListener tcpServer;
 
-		private List<FileChecksum> serverFileChecksum;
+        private List<FileChecksum> serverFileChecksum;
 		private NetworkStream networkStream;
         
         // Inizializza un nuovo Thread che compiera' listenForConnection e set del flag IsBackGround to True

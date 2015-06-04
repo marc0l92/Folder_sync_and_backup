@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
+using System.IO;
+using System.Text.RegularExpressions;
 using System.Net.Sockets;
-using System.Threading.ManualResetEvent;
+using System.Threading;
 namespace sync_server
 {
-
 
 // State object for reading client data asynchronously
 public class StateObject {
@@ -18,15 +19,22 @@ public class StateObject {
     public const int BufferSize = 1024;
     // Receive buffer.
     public byte[] buffer = new byte[BufferSize];
-// Received data string.
+    // Received data string.
     public StringBuilder sb = new StringBuilder();  
 }
 
 public class AsyncManagerServer {
     // Thread signal.
+
+    private static int localport; 
+    private static IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+
+    public delegate void StatusDelegate(String s, int type);
+    private StatusDelegate statusDelegate;
     public static ManualResetEvent allDone = new ManualResetEvent(false);
-    private static ManualResetEvent receiveDone =
-        new ManualResetEvent(false);
+    private static ManualResetEvent receiveDone = new ManualResetEvent(false);
+    private List<FileChecksum> FileChecksum;
+    private bool serverStopped = false;
 
     // The response from the remote device.
     private static String response = String.Empty;
@@ -41,9 +49,7 @@ public class AsyncManagerServer {
         // Establish the local endpoint for the socket.
         // The DNS name of the computer
         // running the listener is "host.contoso.com".
-        IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-        IPAddress ipAddress = ipHostInfo.AddressList[0];
-        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
+        IPEndPoint localEndPoint = new IPEndPoint(localAddr, localport);
 
         // Create a TCP/IP socket.
         Socket listener = new Socket(AddressFamily.InterNetwork,
@@ -152,11 +158,6 @@ public class AsyncManagerServer {
         }
     }
 
-
-    public static int Main(String[] args) {
-        StartListening();
-        return 0;
-    }
     private static void Receive(Socket client)
     {
         try
@@ -212,6 +213,57 @@ public class AsyncManagerServer {
             Console.WriteLine(e.ToString());
         }
     }
+
+    
+        //Genera il file checksum delle cartelle e ricorsivamente dei file interni
+
+        private void generateServerChecksum(String dir, int version)
+        {
+            String pattern= "["+ "_" + version.ToString() + "\\" + "Z" + "]" ;
+            string[] fileList = Directory.GetFiles(dir);
+            foreach (string filePath in fileList)
+            {
+                if(Regex.IsMatch(filePath, pattern))
+                {
+                    FileChecksum.Add(new FileChecksum(filePath));
+                }
+            }
+
+            // Recurse into subdirectories of this directory.
+            string[] subdirectoryList = Directory.GetDirectories(dir);
+            foreach (string subdirectoryPath in subdirectoryList)
+            {
+                this.generateServerChecksum(subdirectoryPath, version);
+            }
+        }
+
+        //Function Start Sync Button
+        public void startSync(int port, String workDir)
+        {
+            // Check if the directory is valid
+            if (!Directory.Exists(workDir))
+            {
+                throw new Exception("Directory not exists");
+            }
+
+            // Server start
+
+            StartListening();
+
+            IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+            tcpServer = new TcpListener(localAddr, port);
+            tcpServer.Start();
+            statusDelegate("Server started", fSyncServer.LOG_INFO);
+
+            // Start the sync thread
+            this.listenThread.Start();
+        }
+        //Function Stop Sync Button
+        public void stopSync()
+        {
+            this.serverStopped = true;
+            statusDelegate("Server stopped", fSyncServer.LOG_INFO);
+        }
 }
 
 }
