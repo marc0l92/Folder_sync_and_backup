@@ -21,13 +21,12 @@ namespace sync_client
 		public delegate void StatusDelegate(String s, bool fatalError = false);
 		private StatusDelegate statusDelegate;
 		private TcpClient tcpClient;
-		private NetworkStream networkStream;
+		private StreamReader streamReader;
+		private StreamWriter streamWriter;
 
 		public SyncManager()
 		{
 			serverFileChecksum = new List<FileChecksum>();
-			//this.syncThread = new Thread(new ThreadStart(this.doSync));
-			//this.syncThread.IsBackground = true;
 		}
 
 		public void setStatusDelegate(StatusDelegate sd)
@@ -70,7 +69,9 @@ namespace sync_client
 				// Create the connection
 				statusDelegate("Starting connection...");
 				tcpClient = new TcpClient(address, port);
-				networkStream = tcpClient.GetStream();
+				NetworkStream networkStream = tcpClient.GetStream();
+				streamReader = new StreamReader(networkStream);
+				streamWriter = new StreamWriter(networkStream);
 				statusDelegate("Connected");
 				// Do the first connection
 				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
@@ -110,17 +111,17 @@ namespace sync_client
 				if (pos < 0)
 				{
 					// create a new file on the server
-					this.sendCommand(NEW_CMD, currentFile.filePath);
-					this.sendFile(currentFile.filePath);
+					sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, currentFile.FileName));
+					this.sendFile(currentFile.FileName);
 				}
 				else
 				{
 					// the file is also on the server
-					if (currentFile.checksum != serverFileChecksum[pos].checksum)
+					if (currentFile.Checksum != serverFileChecksum[pos].Checksum)
 					{
 						// on the server there is a different version of the file
-						this.sendCommand(EDIT_CMD, currentFile.filePath);
-						this.sendFile(currentFile.filePath);
+						sendCommand(new SyncCommand(SyncCommand.CommandSet.EDIT, currentFile.FileName));
+						this.sendFile(currentFile.FileName);
 					}
 					serverFileChecksum.RemoveAt(pos);
 				}
@@ -139,61 +140,45 @@ namespace sync_client
 		private void scanForDeletedFiles()
 		{
 			foreach(FileChecksum currentFile in serverFileChecksum){
-				sendCommand(DEL_CMD, currentFile.filePath);
+				sendCommand(new SyncCommand(SyncCommand.CommandSet.DEL, currentFile.FileName));
 			}
 		}
 
 		public void restoreVersion(String version)
 		{
 			throw new Exception("Function not implemented yet\nPlease contact the server admin:\nandrea.ferri@gmail.com");
-			
+			// TODO
 		}
 
 		private void sendCommand(SyncCommand command)
 		{
-			String message;
-			Byte[] data;
-			switch (command)
-			{
-				case START_CMD:
-					message = "START:" + param1;
-					break;
-				case EDIT_CMD:
-					message = "EDIT:" + param1;
-					break;
-				case DEL_CMD:
-					message = "DEL:" + param1;
-					break;
-				case NEW_CMD:
-					message = "NEW:" + param1;
-					break;
-				case RESTORE_CMD:
-					message = "RESTORE:" + param1;
-					break;
-				case GET_CMD:
-					message = "GET:" + param1 + ";" + param2;
-					break;
-				case ENDSYNC_CMD:
-					message = "ENDSYNC:";
-					break;
-				default:
-					message = "";
-					break;
-			}
-
-			data = System.Text.Encoding.ASCII.GetBytes(message);
-			networkStream.Write(data, 0, data.Length);
+			streamWriter.WriteLine(command.convertToString());
 		}
 		private void sendFile(String path)
 		{
+			SyncCommand sc = new SyncCommand(SyncCommand.CommandSet.FILE, File.ReadAllLines(path));
+			this.sendCommand(sc);
 		}
 		private List<FileChecksum> getServerCheckList()
 		{
-			return new List<FileChecksum>();
+			String line = streamReader.ReadLine();
+			SyncCommand sc;
+			List<FileChecksum> serverCheckList = new List<FileChecksum>();
+
+			while ((sc = SyncCommand.convertFromString(line)).Type != SyncCommand.CommandSet.ENDCHECK)
+			{
+				if (sc.Type != SyncCommand.CommandSet.CHECK) break;
+				serverCheckList.Add(new FileChecksum(sc.FileName, sc.Checksum));
+			}
+
+			return serverCheckList;
 		}
 		private String getFile()
 		{
-			return "";
+			String line = streamReader.ReadLine();
+			SyncCommand sc = SyncCommand.convertFromString(line);
+			if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("File not received");
+			return sc.FileContent;
 		}
 
 		private void commitChangesToServer()

@@ -10,8 +10,8 @@ namespace sync_client
 {
 	class FileChecksum //: IEquatable<FileChecksum>
     {
-        private String _filePath;
-        private String _checksum;
+        private String fileName;
+        private String checksum;
 
         public FileChecksum(String file)
         {
@@ -19,26 +19,27 @@ namespace sync_client
             if (!File.Exists(file)) {
                 throw new Exception("ERROR: file not exists");
             }
-            this.filePath = file;
+			this.fileName = file;
             // Generate checksum
             MD5 md5 = MD5.Create();
-            Stream fs = File.OpenRead(this.filePath);
+			Stream fs = File.OpenRead(this.fileName);
             this.checksum = md5.ComputeHash(fs).ToString();
         }
-
-		public String checksum
+		public FileChecksum(String file, String checksum)
 		{
-			get { return this._checksum; }
-			set { this._checksum = value; }
-		}
-		public String filePath
-		{
-			get { return this._filePath; }
-			set { this._filePath = value; }
+			this.fileName = file;
+			this.checksum = checksum;
 		}
 
-		//public bool Equals(FileChecksum other){
-		//	return (this.filePath == other.filePath);
-		//}
+		public String Checksum
+		{
+			get { return this.checksum; }
+			set { this.checksum = value; }
+		}
+		public String FileName
+		{
+			get { return this.fileName; }
+			set { this.fileName = value; }
+		}
     }
 }
