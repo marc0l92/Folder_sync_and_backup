@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace sync_client
 {
@@ -76,6 +77,16 @@ namespace sync_client
 				default:
 					throw new Exception("Command not implemented");
 			}
+		}
+
+		public String convertToString()
+		{
+			return JsonConvert.SerializeObject(this);
+		}
+
+		public SyncCommand convertFromString(String jsonString)
+		{
+			return JsonConvert.DeserializeObject<SyncCommand>(jsonString);
 		}
 
 		// Property definition
