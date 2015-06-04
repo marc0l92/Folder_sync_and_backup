@@ -13,7 +13,6 @@ namespace sync_server
         private String usrPwd { set; get; }
         private List<FileChecksum> usrFileChecksum { set; get; }
         private int vers { set; get; }
-        private Boolean syncEnd { set; get; } 
-
+        private Boolean syncEnd { set; get; }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace sync_client
 {
@@ -12,11 +13,12 @@ namespace sync_client
 		private CommandSet type;
 		private String directory;
 		private String fileName;
-		public int version;
-		public String checksum;
-		public String username, passwrod;
-		public String fileContent;
+		private int version;
+		private String checksum;
+		private String username, passwrod;
+		private String fileContent;
 
+		public SyncCommand(CommandSet type) : this(type, new String[]{}) {}
 		public SyncCommand(CommandSet type, String arg1) : this(type, new String[]{arg1}) {}
 		public SyncCommand(CommandSet type, String arg1, String arg2) : this(type, new String[] { arg1, arg2 }) { }
 		public SyncCommand(CommandSet type, String[] args){
@@ -75,6 +77,16 @@ namespace sync_client
 				default:
 					throw new Exception("Command not implemented");
 			}
+		}
+
+		public String convertToString()
+		{
+			return JsonConvert.SerializeObject(this);
+		}
+
+		public SyncCommand convertFromString(String jsonString)
+		{
+			return JsonConvert.DeserializeObject<SyncCommand>(jsonString);
 		}
 
 		// Property definition
