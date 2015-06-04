@@ -17,10 +17,11 @@ namespace sync_client
 		private const int RESTORE_CMD = 7;
 		private const int GET_CMD = 8;
 		private const int ENDSYNC_CMD = 9;
+		private const int SYNC_SLEEPING_TIME = 2000;
 
 		private String username, password, directory;
 		private Thread syncThread;
-		private List<FileChecksum> clientFileChecksum;
+		private List<FileChecksum> serverFileChecksum;
 		private bool thread_stopped = false;
 		public delegate void StatusDelegate(String s);
 		private StatusDelegate statusDelegate;
@@ -29,7 +30,7 @@ namespace sync_client
 
 		public SyncManager()
 		{
-			clientFileChecksum = new List<FileChecksum>();
+			serverFileChecksum = new List<FileChecksum>();
 			this.syncThread = new Thread(new ThreadStart(this.doSync));
 			this.syncThread.IsBackground = true;
 		}
@@ -68,62 +69,61 @@ namespace sync_client
 		private void doSync()
 		{
 			// Do the first connection
-			this.sendCommand(START_CMD, this.directory);
-			List<FileChecksum> serverFileChecksum = getServerCheckList();
-			clientFileChecksum.Clear();
-			this.generateClientChecksum(this.directory);
-
-			// confronta checksum
-			int pos;
-			foreach(FileChecksum file in clientFileChecksum){
-				pos = serverFileChecksum.IndexOf(file);
-				
-				if (pos < 0)
-				{
-					// create a new file on the server
-					this.sendCommand(NEW_CMD, file.filePath);
-					this.sendFile(file.filePath);
-				}
-				else
-				{
-					// the file is also on the server
-					if (file.checksum != serverFileChecksum.ElementAt(pos).checksum)
-					{
-						// on the server there is a different version of the file
-						this.sendCommand(EDIT_CMD, file.filePath);
-						this.sendFile(file.filePath);
-					}
-					serverFileChecksum.RemoveAt(pos);
-				}
-			}
-			foreach (FileChecksum serverFile in serverFileChecksum)
-			{
-				// delete extra file on the server
-				this.sendCommand(DEL_CMD, serverFile.filePath);
-			}
+			sendCommand(START_CMD, directory);
+			serverFileChecksum = getServerCheckList();
+			scanForClientChanges(directory);
 
 			// Do syncking
 			while (!thread_stopped)
 			{
-				Thread.Sleep(2000);
+				Thread.Sleep(SYNC_SLEEPING_TIME);
+				scanForClientChanges(directory);
 			}
 		}
 
-		private void generateClientChecksum(String dir)
+		private void scanForClientChanges(String dir)
 		{
+			// Get directory file list
 			string[] fileList = Directory.GetFiles(dir);
+			
+			// Scan for changes
 			foreach (string filePath in fileList)
 			{
-				clientFileChecksum.Add(new FileChecksum(filePath));
+				FileChecksum currentFile = new FileChecksum(filePath);
+				// Search the file in the server list
+				int pos = serverFileChecksum.FindIndex(x => x.Equals(currentFile));
+				//int pos = serverFileChecksum.IndexOf(file);
+
+				if (pos < 0)
+				{
+					// create a new file on the server
+					this.sendCommand(NEW_CMD, currentFile.filePath);
+					this.sendFile(currentFile.filePath);
+					serverFileChecksum.Add(currentFile);
+				}
+				else
+				{
+					// the file is also on the server
+					if (currentFile.checksum != serverFileChecksum[pos].checksum)
+					{
+						// on the server there is a different version of the file
+						this.sendCommand(EDIT_CMD, currentFile.filePath);
+						this.sendFile(currentFile.filePath);
+						serverFileChecksum[pos] = currentFile;
+					}
+					//serverFileChecksum.RemoveAt(pos);
+				}
 			}
 
 			// Recurse into subdirectories of this directory.
 			string[] subdirectoryList = Directory.GetDirectories(dir);
 			foreach (string subdirectoryPath in subdirectoryList)
 			{
-				this.generateClientChecksum(subdirectoryPath);
+				this.scanForClientChanges(subdirectoryPath);
 			}
 		}
+
+		void 
 
 		private void sendCommand(int command, string param1 = "", string param2 = "")
 		{

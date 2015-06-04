@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace sync_client
 {
-	class FileChecksum : IEquatable<FileChecksum>
+	class FileChecksum //: IEquatable<FileChecksum>
     {
         private String _filePath;
         private String _checksum;
@@ -37,8 +37,8 @@ namespace sync_client
 			set;
 		}
 
-		public bool Equals(FileChecksum other){
-			return (this.filePath == other.filePath);
-		}
+		//public bool Equals(FileChecksum other){
+		//	return (this.filePath == other.filePath);
+		//}
     }
 }
