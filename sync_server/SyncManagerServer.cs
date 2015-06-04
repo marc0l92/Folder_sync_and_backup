@@ -121,14 +121,14 @@ namespace sync_server
             {
                 while (!syncFinished) { 
 
-                TcpClient cl = (TcpClient)client;
+                TcpClient cl = (TcpClient) client;
                 NetworkStream netStream = cl.GetStream();
                 StreamReader sr = new StreamReader(netStream);
                 StreamWriter sw = new StreamWriter(netStream);
                 String cmd = createCommand("OK_START:" , "", "");
                 sw.WriteLine(cmd);
 
-                if ((cmd = sr.ReadLine())!=null)
+                while((cmd = sr.ReadLine())!=null)
                 {
                     String[] command = this.getCommand(cmd);
                     if (doCommand(command, netStream))
@@ -136,23 +136,18 @@ namespace sync_server
                         statusDelegate("Command :"+command[0]+" Done Correctly", fSyncServer.LOG_INFO);
                     }
                     else
-                    sr.Close();
-                    //sw.Close();
-                    netStream.Close();
-                    cl.Close();
+                    {
+                        sr.Close();
+                        //sw.Close();
+                        netStream.Close();
+                        cl.Close();
+                    }   
                 }
-                else
-                {
-                    sr.Close();
-                    //sw.Close();
-                    netStream.Close();
-                }
-
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("The process failed: {0}", e.ToString());
+                statusDelegate("The process failed: " + e.ToString(), fSyncServer.LOG_INFO);
             }
 
 				
@@ -163,13 +158,13 @@ namespace sync_server
             
             switch (stringCMD[0])
             {
-                case "START_CMD": return startSession(stringCMD[1], (NetworkStream) netStream);
-                case "EDIT_CMD": return editFile();
-                case "DEL_CMD": return delFile();
-                case "NEW_CMD": return newFile();
-                case "RESTORE_CMD": return restVers();
-                case "GET_CMD": return getFile();
-                case "ENDSYNC_CMD": return stopSession();
+                case "START_CMD:": return startSession(stringCMD[1], (NetworkStream) netStream);
+                case "EDIT_CMD:": return editFile();
+                case "DEL_CMD:": return delFile();
+                case "NEW_CMD:": return newFile();
+                case "RESTORE_CMD:": return restVers();
+                case "GET_CMD:": return getFile();
+                case "ENDSYNC_CMD:": return stopSession();
                 default:
                     return false;
             }
@@ -181,17 +176,19 @@ namespace sync_server
 
             this.usrDir = usrPath;
             this.generateServerChecksum(this.usrDir);
-            netStream
-
+            String command = createCommand("CHECK:", this.serverFileChecksum);
+            StreamWriter sw = new StreamWriter(netStream);
+            sw.WriteLine(command);
+            sw.Close();
             return true;
         }
-
 
         private Boolean editFile()
         {
 
             return true;
         }
+
         private Boolean delFile()
         {
 
@@ -214,7 +211,10 @@ namespace sync_server
         }
         private Boolean stopSession() {
 
-           
+            this.usrDir = "";
+            this.syncFinished = true;
+            this.operationThread.Abort();
+            statusDelegate("Slave Stopped Syncronization Finished", fSyncServer.LOG_INFO);
             return true;
         }
 		/*
