@@ -84,7 +84,7 @@ namespace sync_client
 			return JsonConvert.SerializeObject(this);
 		}
 
-		public SyncCommand convertFromString(String jsonString)
+		public static SyncCommand convertFromString(String jsonString)
 		{
 			return JsonConvert.DeserializeObject<SyncCommand>(jsonString);
 		}

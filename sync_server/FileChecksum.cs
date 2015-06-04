@@ -1,50 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace sync_server
 {
-    class FileChecksum : IEquatable<FileChecksum>
-    {
+	class FileChecksum
+	{
+		private String fileName;
+		private String checksum;
 
-         private String _filePath;
-        private String _checksum;
-
-        public FileChecksum(String file)
-        {
-            // Check if the file exists
-            if (!File.Exists(file)) {
-                throw new Exception("ERROR: file not exists");
-            }
-            this.filePath = file;
-            // Generate checksum
-            MD5 md5 = MD5.Create();
-            Stream fs = File.OpenRead(this.filePath);
-            this.checksum = md5.ComputeHash(fs).ToString();
-        }
-
-		public String checksum
+		public FileChecksum(String file)
 		{
-			get { return this._checksum; }
-			set;
+			// Check if the file exists
+			if (!File.Exists(file))
+			{
+				throw new Exception("ERROR: file not exists");
+			}
+			this.fileName = file;
+			// Generate checksum
+			MD5 md5 = MD5.Create();
+			Stream fs = File.OpenRead(this.fileName);
+			this.checksum = md5.ComputeHash(fs).ToString();
 		}
-		public String filePath
+		public FileChecksum(String file, String checksum)
 		{
-			get { return this._filePath; }
-			set;
+			this.fileName = file;
+			this.checksum = checksum;
 		}
 
-		public bool EqualsPath(FileChecksum other){
-			return (this.filePath == other.filePath);
+		public String Checksum
+		{
+			get { return this.checksum; }
+			set { this.checksum = value; }
 		}
-
-        public bool EqualsCheckSum(FileChecksum other)
-        {
-            return (this.checksum == other.checksum);
-        }
-    }
+		public String FileName
+		{
+			get { return this.fileName; }
+			set { this.fileName = value; }
+		}
+	}
 }
