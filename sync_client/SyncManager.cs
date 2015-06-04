@@ -73,7 +73,7 @@ namespace sync_client
 				networkStream = tcpClient.GetStream();
 				statusDelegate("Connected");
 				// Do the first connection
-				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, new String[]()));
+				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
 				serverFileChecksum = getServerCheckList();
 				scanForClientChanges(directory);
 				scanForDeletedFiles();
