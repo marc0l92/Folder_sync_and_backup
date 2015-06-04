@@ -12,10 +12,10 @@ namespace sync_server
 		private CommandSet type;
 		private String directory;
 		private String fileName;
-		public int version;
-		public String checksum;
-		public String username, passwrod;
-		public String fileContent;
+		private int version;
+		private String checksum;
+		private String username, passwrod;
+		private String fileContent;
 
 		public SyncCommand(CommandSet type, String arg1) : this(type, new String[] { arg1 }) { }
 		public SyncCommand(CommandSet type, String arg1, String arg2) : this(type, new String[] { arg1, arg2 }) { }
