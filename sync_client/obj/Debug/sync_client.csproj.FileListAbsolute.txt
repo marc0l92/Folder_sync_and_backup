@@ -13,3 +13,7 @@ D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.gi
 C:\Users\Andrea Ferri\Documents\Visual Studio 2013\Projects\progetto_Malnati\sync_client\bin\Debug\sync_client.exe.config
 C:\Users\Andrea Ferri\Documents\Visual Studio 2013\Projects\progetto_Malnati\sync_client\obj\Debug\sync_client.exe
 C:\Users\Andrea Ferri\Documents\Visual Studio 2013\Projects\progetto_Malnati\sync_client\obj\Debug\sync_client.pdb
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\bin\Debug\Newtonsoft.Json.dll
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\bin\Debug\System.Json.dll
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\bin\Debug\Newtonsoft.Json.xml
+D:\Dropbox\Polito\Programmazione di sistema\Malnati\Progetto\progetto_Malnati.git\sync_client\bin\Debug\System.Json.xml
