@@ -20,15 +20,16 @@ public class StateObject {
     // Receive buffer.
     public byte[] buffer = new byte[BufferSize];
     // Received data string.
-    public StringBuilder sb = new StringBuilder(); 
-    // Received command string
-    public String commandString;
+    public StringBuilder sb = new StringBuilder();
+    // Received Cmd
+    public SyncCommand cmd;
+    // Served Client
+    public SyncClient clnt = new SyncClient();
 
 }
 
 public class AsyncManagerServer {
     // Thread signal.
-
     private static int localport; 
     private static IPAddress localAddr = IPAddress.Parse("127.0.0.1");
 
@@ -36,12 +37,12 @@ public class AsyncManagerServer {
     private static StatusDelegate statusDelegate;
     public static ManualResetEvent allDone = new ManualResetEvent(false);
     private static ManualResetEvent receiveDone = new ManualResetEvent(false);
-    private List<FileChecksum> FileChecksum;
     private static bool serverStopped = false;
+    private static bool syncEnded = false;
 
     // The response from the remote device.
-    private static String response = String.Empty;
-
+    private static String command = String.Empty;
+    
     public AsyncManagerServer() {
     }
 
@@ -81,11 +82,9 @@ public class AsyncManagerServer {
             }
 
         } catch (Exception e) {
-            Console.WriteLine(e.ToString());
-        }
 
-        Console.WriteLine("\nPress ENTER to continue...");
-        Console.Read();
+            statusDelegate("Connection Error Exception:" + e.ToString(), fSyncServer.LOG_INFO);
+        }
         
     }
 
@@ -100,10 +99,147 @@ public class AsyncManagerServer {
         // Create the state object.
         StateObject state = new StateObject();
         state.workSocket = handler;
-        handler.BeginReceive( state.buffer, 0, StateObject.BufferSize, 0,
-            new AsyncCallback(ReadCallback), state);
+       // handler.BeginReceive( state.buffer, 0, StateObject.BufferSize, 0,
+         //   new AsyncCallback(ReadCallback), state);
+        while(!syncEnded)
+        {
+            // Receive the response from the remote device.
+            ReceiveCommand(state.workSocket);
+            receiveDone.WaitOne();
+            state.cmd = SyncCommand.convertFromString(command);
+            if(doCommand(state))
+            {
+            }
+            else
+            {
+
+            }
+        }
     }
 
+    private static Boolean doCommand(StateObject stateToDo)
+    {
+        switch (stateToDo.cmd.Type)
+			{
+                case SyncCommand.CommandSet.LOGIN:
+					return loginUser(stateToDo);
+				case SyncCommand.CommandSet.START:
+					return startSession(stateToDo);
+				case SyncCommand.CommandSet.AUTHORIZED:
+					if (args.Length != 0) throw new Exception("Wrong params count");
+					break;
+				case SyncCommand.CommandSet.UNAUTHORIZED:
+					if (args.Length != 0) throw new Exception("Wrong params count");
+					break;
+				case SyncCommand.CommandSet.EDIT:
+					if (args.Length != 1) throw new Exception("Wrong params count");
+					fileName = args[0];
+					break;
+				case SyncCommand.CommandSet.DEL:
+					if (args.Length != 1) throw new Exception("Wrong params count");
+					fileName = args[0];
+					break;
+				case SyncCommand.CommandSet.NEW:
+					if (args.Length != 1) throw new Exception("Wrong params count");
+					fileName = args[0];
+					break;
+				case SyncCommand.CommandSet.FILE:
+					if (args.Length != 1) throw new Exception("Wrong params count");
+					fileContent = args[0];
+					break;
+				case SyncCommand.CommandSet.GET:
+					if (args.Length != 1) throw new Exception("Wrong params count");
+					fileName = args[0];
+					break;
+				case SyncCommand.CommandSet.RESTORE:
+					if (args.Length != 1) throw new Exception("Wrong params count");
+					version = Convert.ToInt32(args[0]);
+					break;
+				case SyncCommand.CommandSet.ENDSYNC:
+					if (args.Length != 0) throw new Exception("Wrong params count");
+					break;
+				case SyncCommand.CommandSet.CHECK:
+					if (args.Length != 2) throw new Exception("Wrong params count");
+					fileName = args[0];
+					checksum = args[1];
+					break;
+				case SyncCommand.CommandSet.ENDCHECK:
+					if (args.Length != 0) throw new Exception("Wrong params count");
+					break;
+				default:
+					return false;
+			}
+
+
+    }
+    private static Boolean loginUser(StateObject stt)
+    {
+        //Get credential by DB
+        //Check if user is just logged in
+        statusDelegate("Get user data on DB ", fSyncServer.LOG_INFO);
+        if (true) //compared to the sended is true
+        {
+            statusDelegate("User Credential Confermed ", fSyncServer.LOG_INFO);
+            stt.clnt.usrNam = "name";
+            stt.clnt.usrPwd = "password";
+            stt.clnt.usrDir = "usrDir";
+            statusDelegate("Send Back Authorized Message ", fSyncServer.LOG_INFO);
+            return true;
+        }
+        else
+        {
+            statusDelegate("User Credential NOT Confirmed", fSyncServer.LOG_INFO);
+            statusDelegate("Send Back Unauthorized Message ", fSyncServer.LOG_INFO);
+            return false;
+        }
+    }
+    private static  Boolean startSession(StateObject stt)
+    {
+
+        if(string.Compare(stt.clnt.usrDir, stt.cmd.Directory)!=0)
+        {
+
+            return true;
+        }
+         else return false;
+    }
+
+    private Boolean editFile()
+    {
+
+        return true;
+    }
+
+    private Boolean delFile()
+    {
+
+        return true;
+    }
+    private Boolean newFile()
+    {
+
+        return true;
+    }
+    private Boolean restVers()
+    {
+
+        return true;
+    }
+    private Boolean getFile()
+    {
+
+        return true;
+    }
+    private Boolean stopSession()
+    {
+
+        this.usrDir = "";
+        this.syncFinished = true;
+        this.operationThread.Abort();
+        statusDelegate("Slave Stopped Syncronization Finished", fSyncServer.LOG_INFO);
+        return true;
+    }
+    /*
     public static void ReadCallback(IAsyncResult ar) {
         
         // Retrieve the state object and the handler socket
@@ -136,7 +272,7 @@ public class AsyncManagerServer {
             }
         }
     }
-    
+    */
     private static void Send(Socket handler, String data) {
         // Convert the string data to byte data using ASCII encoding.
         byte[] byteData = Encoding.ASCII.GetBytes(data);
@@ -146,23 +282,7 @@ public class AsyncManagerServer {
             new AsyncCallback(SendCallback), handler);
     }
 
-    private static void SendCallback(IAsyncResult ar) {
-        try {
-            // Retrieve the socket from the state object.
-            Socket handler = (Socket) ar.AsyncState;
-
-            // Complete sending the data to the remote device.
-            int bytesSent = handler.EndSend(ar);
-            Console.WriteLine("Sent {0} bytes to client.", bytesSent);
-
-            handler.Shutdown(SocketShutdown.Both);
-            handler.Close();
-
-        } catch (Exception e) {
-            Console.WriteLine(e.ToString());
-        }
-    }
-
+    /*
     private static void Receive(Socket client)
     {
         try
@@ -174,6 +294,44 @@ public class AsyncManagerServer {
             // Begin receiving the data from the remote device.
             client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                 new AsyncCallback(ReceiveCallback), state);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.ToString());
+        }
+    }
+    */
+    private static void ReceiveCommand(Socket client)
+    {
+        try
+        {
+            // Create the state object.
+            StateObject state = new StateObject();
+            state.workSocket = client;
+
+            // Begin receiving the data from the remote device.
+            client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                new AsyncCallback(ReceiveCallback), state);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.ToString());
+        }
+    }
+    private static void SendCallback(IAsyncResult ar)
+    {
+        try
+        {
+            // Retrieve the socket from the state object.
+            Socket handler = (Socket)ar.AsyncState;
+
+            // Complete sending the data to the remote device.
+            int bytesSent = handler.EndSend(ar);
+            Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+
+            handler.Shutdown(SocketShutdown.Both);
+            handler.Close();
+
         }
         catch (Exception e)
         {
@@ -207,7 +365,7 @@ public class AsyncManagerServer {
                 // All the data has arrived; put it in response.
                 if (state.sb.Length > 1)
                 {
-                    response = state.sb.ToString();
+                    command = state.sb.ToString();
                 }
                 // Signal that all bytes have been received.
                 receiveDone.Set();
@@ -221,8 +379,8 @@ public class AsyncManagerServer {
 
     
         //Genera il file checksum delle cartelle e ricorsivamente dei file interni
-
-        private void generateServerChecksum(String dir, int version)
+        
+        private void generateServerChecksum(List<FileChecksum> FileChecksum,String dir, int version)
         {
             String pattern= "["+ "_" + version.ToString() + "\\" + "Z" + "]" ;
             string[] fileList = Directory.GetFiles(dir);
@@ -238,7 +396,7 @@ public class AsyncManagerServer {
             string[] subdirectoryList = Directory.GetDirectories(dir);
             foreach (string subdirectoryPath in subdirectoryList)
             {
-                this.generateServerChecksum(subdirectoryPath, version);
+                this.generateServerChecksum(FileChecksum, subdirectoryPath, version);
             }
         }
 
@@ -258,7 +416,7 @@ public class AsyncManagerServer {
         //Function Stop Sync Button
         public void stopSync()
         {
-            this.serverStopped = true;
+            serverStopped = true;
             statusDelegate("Server stopped", fSyncServer.LOG_INFO);
         }
 }

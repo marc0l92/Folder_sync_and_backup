@@ -8,11 +8,11 @@ namespace sync_server
 {
     class SyncClient
     {
-        private String usrDir { set; get; }
-        private String usrNam { set; get; }
-        private String usrPwd { set; get; }
-        private List<FileChecksum> usrFileChecksum { set; get; }
-        private int vers { set; get; }
-        private Boolean syncEnd { set; get; }
+        public String usrDir { set { usrDir = value; } get { return usrDir; } }
+        public String usrNam { set { usrNam = value; } get { return usrNam; } }
+        public String usrPwd { set { usrPwd = value; } get { return usrPwd; } }
+        public List<FileChecksum> usrFileChecksum { set { usrFileChecksum = value; } get { return usrFileChecksum; } }
+        public int vers { set { vers = value; } get { return vers; } }
+        public Boolean syncEnd { set { syncEnd = value; } get { return syncEnd; } }
     }
 }

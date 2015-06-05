@@ -55,7 +55,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="syncClient.cs" />
+    <Compile Include="SyncClient.cs" />
     <Compile Include="SyncCommand.cs" />
     <Compile Include="SyncManagerServer.cs" />
     <EmbeddedResource Include="Form1.resx">
