@@ -131,8 +131,10 @@ public class AsyncManagerServer {
 				case SyncCommand.CommandSet.START:
 					return startSession(stateToDo);
 				case SyncCommand.CommandSet.AUTHORIZED:
-					return false;
+                    statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
+                    return false;
 				case SyncCommand.CommandSet.UNAUTHORIZED:
+                    statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
 					return false;
 				case SyncCommand.CommandSet.EDIT:
 					return false;
@@ -147,8 +149,8 @@ public class AsyncManagerServer {
                     return false;
 					break;
 				case SyncCommand.CommandSet.GET:
-                    return false;
-					break;
+                    return SendFile(stateToDo);
+					
 				case SyncCommand.CommandSet.RESTORE:
                     return false;
 					break;
@@ -213,6 +215,7 @@ public class AsyncManagerServer {
         {
 
             statusDelegate("User Directory Authorized, Start Send Check", fSyncServer.LOG_INFO);
+            generateChecksum(stt.clnt.usrDir, stt.clnt.vers);
             foreach (FileChecksum check in UserChecksum)
             {
                 SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileName, check.Checksum);
@@ -227,10 +230,29 @@ public class AsyncManagerServer {
         }
     }
 
-    private Boolean editFile()
+
+    private static Boolean SendFile(StateObject stt)
     {
 
-        return true;
+        string fileName = stt.cmd.FileName + "_" + stt.clnt.vers.ToString();
+        SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, stt.cmd.FileName);
+
+            if (File.Exists(fileName))
+            {
+                SendCommand(stt.workSocket, file.ToString());
+                statusDelegate("Send File Command  ", fSyncServer.LOG_INFO);
+             // Send file fileName to remote device
+                stt.workSocket.SendFile(fileName);
+                statusDelegate("File Sended Succesfully", fSyncServer.LOG_INFO);
+
+                return true;
+            }
+            else
+	        {
+                statusDelegate("File doesn't exists  ", fSyncServer.LOG_INFO);
+                return false;
+	        }
+       
     }
 
     private Boolean delFile()
@@ -248,14 +270,9 @@ public class AsyncManagerServer {
 
         return true;
     }
-    private Boolean getFile()
-    {
-
-        return true;
-    }
     private Boolean stopSession()
     {
-
+        return true;
         
     }
     /*
@@ -341,6 +358,25 @@ public class AsyncManagerServer {
             Console.WriteLine(e.ToString());
         }
     }
+
+
+ private static void ReceiveFile(Socket client)
+    {
+        try
+        {
+            // Create the state object.
+            StateObject state = new StateObject();
+            state.workSocket = client;
+
+            // Begin receiving the data from the remote device.
+            client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                new AsyncCallback(ReceiveFileCallback), state);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.ToString());
+        }
+    }
     private static void SendCallback(IAsyncResult ar)
     {
         try
@@ -400,10 +436,54 @@ public class AsyncManagerServer {
         }
     }
 
+private static void ReceiveFileCallback(IAsyncResult ar)
+    {
+        try
+        {
+            // Retrieve the state object and the client socket 
+            // from the asynchronous state object.
+            StateObject state = (StateObject)ar.AsyncState;
+            Socket client = state.workSocket;
+
+            string fileName = state.cmd.FileName + "_" + state.clnt.vers.ToString();
+
+
+            // Delete the file if it exists. 
+            if (File.Exists(fileName))
+                File.Delete(fileName);
+                
+            FileStream fs = File.Create(fileName);
+  
+            // Read data from the remote device.
+            int bytesRead = client.EndReceive(ar);
+
+            if (bytesRead > 0)
+            {
+                fs.WriteAsync(state.buffer, 0, bytesRead);
+                // There might be more data, so store the data received so far.
+                //state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
+
+                // Get the rest of the data.
+                client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                    new AsyncCallback(ReceiveCallback), state);
+            }
+            else
+            {
+                fs.Close();
+                // Signal that all bytes have been received.
+                receiveDone.Set();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.ToString());
+        }
+    }
+
     
         //Genera il file checksum delle cartelle e ricorsivamente dei file interni
         
-        private void generateServerChecksum(String dir, int version)
+        private static void generateChecksum(String dir, int version)
         {
             String pattern= "["+ "_" + version.ToString() + "\\" + "Z" + "]" ;
             string[] fileList = Directory.GetFiles(dir);
@@ -419,7 +499,7 @@ public class AsyncManagerServer {
             string[] subdirectoryList = Directory.GetDirectories(dir);
             foreach (string subdirectoryPath in subdirectoryList)
             {
-                this.generateServerChecksum(subdirectoryPath, version);
+                generateChecksum(subdirectoryPath, version);
             }
         }
 
@@ -445,3 +525,9 @@ public class AsyncManagerServer {
 }
 
 }
+
+
+
+
+
+  
