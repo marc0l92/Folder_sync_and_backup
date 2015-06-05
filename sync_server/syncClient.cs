@@ -13,6 +13,5 @@ namespace sync_server
         public String usrPwd { set { usrPwd = value; } get { return usrPwd; } }
         public List<FileChecksum> usrFileChecksum { set { usrFileChecksum = value; } get { return usrFileChecksum; } }
         public int vers { set { vers = value; } get { return vers; } }
-        public Boolean syncEnd { set { syncEnd = value; } get { return syncEnd; } }
     }
 }

@@ -25,6 +25,8 @@ public class StateObject {
     public SyncCommand cmd;
     // Served Client
     public SyncClient clnt = new SyncClient();
+    // Served Client
+    public Boolean syncEnd = false;
 
 }
 
@@ -38,10 +40,11 @@ public class AsyncManagerServer {
     public static ManualResetEvent allDone = new ManualResetEvent(false);
     private static ManualResetEvent receiveDone = new ManualResetEvent(false);
     private static bool serverStopped = false;
-    private static bool syncEnded = false;
 
     // The response from the remote device.
     private static String command = String.Empty;
+
+    private static List<FileChecksum> UserChecksum;
     
     public AsyncManagerServer() {
     }
@@ -101,7 +104,7 @@ public class AsyncManagerServer {
         state.workSocket = handler;
        // handler.BeginReceive( state.buffer, 0, StateObject.BufferSize, 0,
          //   new AsyncCallback(ReadCallback), state);
-        while(!syncEnded)
+        while(!state.syncEnd)
         {
             // Receive the response from the remote device.
             ReceiveCommand(state.workSocket);
@@ -109,12 +112,14 @@ public class AsyncManagerServer {
             state.cmd = SyncCommand.convertFromString(command);
             if(doCommand(state))
             {
+
             }
             else
             {
 
             }
         }
+        //See if necessary close connection
     }
 
     private static Boolean doCommand(StateObject stateToDo)
@@ -126,45 +131,35 @@ public class AsyncManagerServer {
 				case SyncCommand.CommandSet.START:
 					return startSession(stateToDo);
 				case SyncCommand.CommandSet.AUTHORIZED:
-					if (args.Length != 0) throw new Exception("Wrong params count");
-					break;
+					return false;
 				case SyncCommand.CommandSet.UNAUTHORIZED:
-					if (args.Length != 0) throw new Exception("Wrong params count");
-					break;
+					return false;
 				case SyncCommand.CommandSet.EDIT:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileName = args[0];
+					return false;
 					break;
 				case SyncCommand.CommandSet.DEL:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileName = args[0];
+					return false;
 					break;
 				case SyncCommand.CommandSet.NEW:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileName = args[0];
+					return false;
 					break;
 				case SyncCommand.CommandSet.FILE:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileContent = args[0];
+                    return false;
 					break;
 				case SyncCommand.CommandSet.GET:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileName = args[0];
+                    return false;
 					break;
 				case SyncCommand.CommandSet.RESTORE:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					version = Convert.ToInt32(args[0]);
+                    return false;
 					break;
 				case SyncCommand.CommandSet.ENDSYNC:
-					if (args.Length != 0) throw new Exception("Wrong params count");
-					break;
+                    stateToDo.syncEnd = true;
+                    return true;
 				case SyncCommand.CommandSet.CHECK:
-					if (args.Length != 2) throw new Exception("Wrong params count");
-					fileName = args[0];
-					checksum = args[1];
+                    return false;
 					break;
 				case SyncCommand.CommandSet.ENDCHECK:
-					if (args.Length != 0) throw new Exception("Wrong params count");
+                    return false;
 					break;
 				default:
 					return false;
@@ -174,34 +169,62 @@ public class AsyncManagerServer {
     }
     private static Boolean loginUser(StateObject stt)
     {
+        String username=new String("");
+        String password = new String("");
+        String directory = new String("");
+        int version;
         //Get credential by DB
         //Check if user is just logged in
         statusDelegate("Get user data on DB ", fSyncServer.LOG_INFO);
         if (true) //compared to the sended is true
         {
             statusDelegate("User Credential Confermed ", fSyncServer.LOG_INFO);
-            stt.clnt.usrNam = "name";
-            stt.clnt.usrPwd = "password";
-            stt.clnt.usrDir = "usrDir";
+            stt.clnt.usrNam = username;
+            stt.clnt.usrPwd = password;
+            stt.clnt.usrDir = directory;
+            stt.clnt.vers = version;
+            SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
+            SendCommand(stt.workSocket, authorized.ToString());
             statusDelegate("Send Back Authorized Message ", fSyncServer.LOG_INFO);
             return true;
         }
         else
         {
             statusDelegate("User Credential NOT Confirmed", fSyncServer.LOG_INFO);
+            SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
+            SendCommand(stt.workSocket, unauthorized.ToString());
             statusDelegate("Send Back Unauthorized Message ", fSyncServer.LOG_INFO);
             return false;
         }
     }
+
     private static  Boolean startSession(StateObject stt)
     {
 
-        if(string.Compare(stt.clnt.usrDir, stt.cmd.Directory)!=0)
+        if (string.Compare(stt.clnt.usrDir, stt.cmd.Directory) != 0)
+        {
+            statusDelegate("User Directory Change NOT Authorized", fSyncServer.LOG_INFO);
+            SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
+            SendCommand(stt.workSocket, unauthorized.ToString());
+            statusDelegate("Send Back Unauthorized Message because the user change the root directory for the connection ", fSyncServer.LOG_INFO);
+            return false;
+        }
+        else
         {
 
+            statusDelegate("User Directory Authorized, Start Send Check", fSyncServer.LOG_INFO);
+            foreach (FileChecksum check in UserChecksum)
+            {
+                SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileName, check.Checksum);
+                SendCommand(stt.workSocket, checkCommand.ToString());
+                statusDelegate("Send check Message ", fSyncServer.LOG_INFO);
+            }
+
+            SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
+            SendCommand(stt.workSocket, endcheck.ToString());
+            statusDelegate("Send End check Message ", fSyncServer.LOG_INFO);
             return true;
         }
-         else return false;
     }
 
     private Boolean editFile()
@@ -233,11 +256,7 @@ public class AsyncManagerServer {
     private Boolean stopSession()
     {
 
-        this.usrDir = "";
-        this.syncFinished = true;
-        this.operationThread.Abort();
-        statusDelegate("Slave Stopped Syncronization Finished", fSyncServer.LOG_INFO);
-        return true;
+        
     }
     /*
     public static void ReadCallback(IAsyncResult ar) {
@@ -273,14 +292,6 @@ public class AsyncManagerServer {
         }
     }
     */
-    private static void Send(Socket handler, String data) {
-        // Convert the string data to byte data using ASCII encoding.
-        byte[] byteData = Encoding.ASCII.GetBytes(data);
-
-        // Begin sending the data to the remote device.
-        handler.BeginSend(byteData, 0, byteData.Length, 0,
-            new AsyncCallback(SendCallback), handler);
-    }
 
     /*
     private static void Receive(Socket client)
@@ -301,6 +312,18 @@ public class AsyncManagerServer {
         }
     }
     */
+    private static void SendCommand(Socket handler, String data) {
+        // Convert the string data to byte data using ASCII encoding.
+        byte[] byteData = Encoding.ASCII.GetBytes(data);
+
+        statusDelegate("SendCommand Started", fSyncServer.LOG_INFO);
+
+        // Begin sending the data to the remote device.
+        handler.BeginSend(byteData, 0, byteData.Length, 0,
+            new AsyncCallback(SendCallback), handler);
+    }
+
+    
     private static void ReceiveCommand(Socket client)
     {
         try
@@ -327,7 +350,7 @@ public class AsyncManagerServer {
 
             // Complete sending the data to the remote device.
             int bytesSent = handler.EndSend(ar);
-            Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+            statusDelegate("Send Command Byte number: " + bytesSent, fSyncServer.LOG_INFO);
 
             handler.Shutdown(SocketShutdown.Both);
             handler.Close();
@@ -380,7 +403,7 @@ public class AsyncManagerServer {
     
         //Genera il file checksum delle cartelle e ricorsivamente dei file interni
         
-        private void generateServerChecksum(List<FileChecksum> FileChecksum,String dir, int version)
+        private void generateServerChecksum(String dir, int version)
         {
             String pattern= "["+ "_" + version.ToString() + "\\" + "Z" + "]" ;
             string[] fileList = Directory.GetFiles(dir);
@@ -388,7 +411,7 @@ public class AsyncManagerServer {
             {
                 if(Regex.IsMatch(filePath, pattern))
                 {
-                    FileChecksum.Add(new FileChecksum(filePath));
+                    UserChecksum.Add(new FileChecksum(filePath));
                 }
             }
 
@@ -396,7 +419,7 @@ public class AsyncManagerServer {
             string[] subdirectoryList = Directory.GetDirectories(dir);
             foreach (string subdirectoryPath in subdirectoryList)
             {
-                this.generateServerChecksum(FileChecksum, subdirectoryPath, version);
+                this.generateServerChecksum(subdirectoryPath, version);
             }
         }
 
