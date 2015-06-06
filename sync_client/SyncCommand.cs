@@ -22,6 +22,7 @@ namespace sync_client
 		public SyncCommand(CommandSet type, String arg1) : this(type, new String[]{arg1}) {}
 		public SyncCommand(CommandSet type, String arg1, String arg2) : this(type, new String[] { arg1, arg2 }) { }
 		public SyncCommand(CommandSet type, String[] args){
+			this.type = type;
 			switch (type)
 			{
 				case CommandSet.START:
@@ -83,10 +84,42 @@ namespace sync_client
 		{
 			return JsonConvert.SerializeObject(this);
 		}
-
 		public static SyncCommand convertFromString(String jsonString)
 		{
 			return JsonConvert.DeserializeObject<SyncCommand>(jsonString);
+		}
+		[JsonConstructor]
+		public SyncCommand(CommandSet Type, String Directory, String FileName, int Version, String Checksum, String FileContent, String Username, String Password)
+		{
+			this.type = Type;
+			this.directory = Directory;
+			this.fileName = FileName;
+			this.version = Version;
+			this.checksum = Checksum;
+			this.fileContent = FileContent;
+			this.username = Username;
+			this.passwrod = Password;
+		}
+		public int searchJsonEnd(String jsonText)
+		{
+			// TODO struttura debole
+			bool quotes = false;
+			for (int i = 0; i < jsonText.Length; i++)
+			{
+				if (jsonText[i] == '"' && jsonText[i-1] != '\\')
+				{
+					quotes = !quotes;
+				}
+				else
+				{
+					if (jsonText[i] == '}' && quotes == false)
+					{
+						return i;
+					}
+				}
+			}
+
+			return -1;
 		}
 
 		// Property definition
@@ -100,7 +133,7 @@ namespace sync_client
 				if (this.type == CommandSet.START)
 					return directory;
 				else
-					throw new Exception("Command type not compatible");
+					return null;
 			}
 		}
 		public String FileName
@@ -110,7 +143,7 @@ namespace sync_client
 				if (this.type == CommandSet.EDIT || this.type == CommandSet.DEL || this.type == CommandSet.NEW || this.type == CommandSet.GET || this.type == CommandSet.CHECK)
 					return fileName;
 				else
-					throw new Exception("Command type not compatible");
+					return null;
 			}
 		}
 		public int Version
@@ -120,7 +153,7 @@ namespace sync_client
 				if (this.type == CommandSet.RESTORE)
 					return version;
 				else
-					throw new Exception("Command type not compatible");
+					return -1;
 			}
 		}
 		public String Checksum
@@ -130,7 +163,7 @@ namespace sync_client
 				if (this.type == CommandSet.CHECK)
 					return checksum;
 				else
-					throw new Exception("Command type not compatible");
+					return null;
 			}
 		}
 		public String FileContent
@@ -140,7 +173,7 @@ namespace sync_client
 				if (this.type == CommandSet.FILE)
 					return fileContent;
 				else
-					throw new Exception("Command type not compatible");
+					return null;
 			}
 		}
 		public String Username
@@ -150,7 +183,7 @@ namespace sync_client
 				if (this.type == CommandSet.LOGIN)
 					return username;
 				else
-					throw new Exception("Command type not compatible");
+					return null;
 			}
 		}
 		public String Password
@@ -160,7 +193,7 @@ namespace sync_client
 				if (this.type == CommandSet.LOGIN)
 					return passwrod;
 				else
-					throw new Exception("Command type not compatible");
+					return null;
 			}
 		}
 	}
