@@ -111,13 +111,9 @@ public class AsyncManagerServer {
             receiveDone.WaitOne();
             state.cmd = SyncCommand.convertFromString(command);
             if(doCommand(state))
-            {
-
-            }
+                statusDelegate("Slave Thread Done Command Successfully ", fSyncServer.LOG_INFO);
             else
-            {
-
-            }
+                statusDelegate("Slave Thread Done Command with no Success", fSyncServer.LOG_INFO);
         }
         //See if necessary close connection
     }
@@ -130,40 +126,37 @@ public class AsyncManagerServer {
 					return LoginUser(stateToDo);
 				case SyncCommand.CommandSet.START:
 					return StartSession(stateToDo);
-				case SyncCommand.CommandSet.AUTHORIZED:
-                    statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
-                    return false;
-				case SyncCommand.CommandSet.UNAUTHORIZED:
-                    statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
-					return false;
-				case SyncCommand.CommandSet.EDIT:
-					return false;
-					break;
-				case SyncCommand.CommandSet.DEL:
-					return DeleteFile();
-				case SyncCommand.CommandSet.NEW:
-					return false;
-					break;
-				case SyncCommand.CommandSet.FILE:
-                    return false;
-					break;
-				case SyncCommand.CommandSet.GET:
+                case SyncCommand.CommandSet.GET:
                     return SendFile(stateToDo);
-					
-				case SyncCommand.CommandSet.RESTORE:
+                case SyncCommand.CommandSet.RESTORE: //Da implementare
                     return false;
-					break;
-				case SyncCommand.CommandSet.ENDSYNC:
-                    stateToDo.syncEnd = true;
+                case SyncCommand.CommandSet.ENDSYNC:
+                    return EndSync(stateToDo);
+                case SyncCommand.CommandSet.DEL:
+                    return DeleteFile();
+                case SyncCommand.CommandSet.NEW:
+                    return NewFile(stateToDo);
+		 //   	case SyncCommand.CommandSet.AUTHORIZED:
+         //           statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
+         //           return false;
+		//		case SyncCommand.CommandSet.UNAUTHORIZED:
+         //           statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
+		//			return false;
+		//		case SyncCommand.CommandSet.EDIT:
+		//			return NewFile(stateToDo);
+		//		case SyncCommand.CommandSet.FILE:
+        //          return false;
+		//			break;
+				
+		//		case SyncCommand.CommandSet.CHECK:
+        //          return false;
+		//			break;
+		//		case SyncCommand.CommandSet.ENDCHECK:
+        //          return false;
+		//			break;
+                default: 
+                    statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
                     return true;
-				case SyncCommand.CommandSet.CHECK:
-                    return false;
-					break;
-				case SyncCommand.CommandSet.ENDCHECK:
-                    return false;
-					break;
-				default:
-					return false;
 			}
 
 
@@ -258,98 +251,44 @@ public class AsyncManagerServer {
     {
         //Update in the DB all file of the current version with a value equal to current version plus one 
         statusDelegate("DB Updated Correctly, Start Rename Files ", fSyncServer.LOG_INFO);
-        generateChecksum(stt.clnt.usrDir, stt.clnt.vers);
-        stt.clnt.vers++;
+        return RenameFiles(stt.clnt.usrDir, stt.cmd.fileName, stt.clnt.vers); // Da Implementare Meglio
+    }
+    private static Boolean EndSync(StateObject stt)
+    {
+        //Update in the DB all file of the current version with a value equal to current version plus one 
+        statusDelegate("DB Updated Correctly, Start Rename Files ", fSyncServer.LOG_INFO);
+        //Get List
+        return RenameFiles(stt.clnt.usrDir, stt.cmd.fileName, stt.clnt.vers); // Da Implementare Meglio
+    }
+    private static Boolean NewFile(StateObject stt)
+    { 
+
+        //Update in the DB all file of the current version with a value equal to current version plus one 
+        statusDelegate("DB Updated Correctly, Start Recive File ", fSyncServer.LOG_INFO);
+        ReceiveFile(stt.workSocket);
+        statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
+        return true;
+    }
+    
+    private static Boolean RenameFiles(String dir, String file, int version)
+    {
         foreach (FileChecksum check in UserChecksum)
         {
-            
-            if (File.Exists(check.FileName))
+            if (String.Compare(check.FileName, file + "_" + (version - 1)) != 0)
             {
-                String file = check.FileName.Remove(check.FileName.Length-3);
-                file = file + "_" + stt.clnt.vers;
-                File.Move(check.FileName,file);
-                statusDelegate("File: "+ check.FileName + "Renamed", fSyncServer.LOG_INFO);
+                if (File.Exists(check.FileName))
+                {
+                    String fil = check.FileName.Remove(check.FileName.Length - 3);
+                    fil = fil + "_" + version;
+                    File.Move(check.FileName, file);
+                    statusDelegate("File: " + check.FileName + "Renamed", fSyncServer.LOG_INFO);
+                }
+                else statusDelegate("File: " + check.FileName + "Doesn't Exists", fSyncServer.LOG_INFO);
             }
-            else statusDelegate("File: " + check.FileName + "Doesn't Exists", fSyncServer.LOG_INFO);
-            
         }
-
-        SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
-        SendCommand(stt.workSocket, endcheck.ToString());
-        statusDelegate("Send End check Message ", fSyncServer.LOG_INFO);
-        return true;
-    }
-    private Boolean newFile()
-    {
-
-        return true;
-    }
-    private Boolean restVers()
-    {
-
-        return true;
-    }
-    private Boolean stopSession()
-    {
         return true;
         
     }
-    /*
-    public static void ReadCallback(IAsyncResult ar) {
-        
-        // Retrieve the state object and the handler socket
-        // from the asynchronous state object.
-        StateObject state = (StateObject) ar.AsyncState;
-        Socket handler = state.workSocket;
-
-        // Read data from the client socket. 
-        int bytesRead = handler.EndReceive(ar);
-
-        if (bytesRead > 0) {
-            // There  might be more data, so store the data received so far.
-            state.sb.Append(Encoding.ASCII.GetString(
-                state.buffer,0,bytesRead));
-
-            // Check for end-of-file tag. If it is not there, read 
-            // more data.
-            state.commandString = state.sb.ToString();
-            if (state.commandString.IndexOf("<EOF>") > -1)
-            {
-                // All the data has been read from the 
-                // client. Display it on the console.
-                statusDelegate("Read " + state.commandString.Length + " bytes from socket. \n Data :" + state.commandString, fSyncServer.LOG_INFO);
-                // Echo the data back to the client.
-               // Send(handler, content);
-            } else {
-                // Not all data received. Get more.
-                handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), state);
-            }
-        }
-    }
-    */
-
-    /*
-    private static void Receive(Socket client)
-    {
-        try
-        {
-            // Create the state object.
-            StateObject state = new StateObject();
-            state.workSocket = client;
-
-            // Begin receiving the data from the remote device.
-            client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReceiveCallback), state);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.ToString());
-        }
-    }
-    */
-
-
 
 
  private static void ReceiveFile(Socket client)
@@ -379,15 +318,16 @@ public class AsyncManagerServer {
          // from the asynchronous state object.
          StateObject state = (StateObject)ar.AsyncState;
          Socket client = state.workSocket;
+         FileStream fs;
 
          string fileName = state.cmd.FileName + "_" + state.clnt.vers.ToString();
 
 
          // Delete the file if it exists. 
          if (File.Exists(fileName))
-             File.Delete(fileName);
-
-         FileStream fs = File.Create(fileName);
+             fs = File.Open(fileName, FileMode.Append, FileAccess.Write, FileShare.None);
+         else
+             fs = File.Create(fileName);
 
          // Read data from the remote device.
          int bytesRead = client.EndReceive(ar);
@@ -552,7 +492,57 @@ public class AsyncManagerServer {
 }
 
 
+/*
+  public static void ReadCallback(IAsyncResult ar) {
+        
+      // Retrieve the state object and the handler socket
+      // from the asynchronous state object.
+      StateObject state = (StateObject) ar.AsyncState;
+      Socket handler = state.workSocket;
 
+      // Read data from the client socket. 
+      int bytesRead = handler.EndReceive(ar);
 
+      if (bytesRead > 0) {
+          // There  might be more data, so store the data received so far.
+          state.sb.Append(Encoding.ASCII.GetString(
+              state.buffer,0,bytesRead));
 
-  
+          // Check for end-of-file tag. If it is not there, read 
+          // more data.
+          state.commandString = state.sb.ToString();
+          if (state.commandString.IndexOf("<EOF>") > -1)
+          {
+              // All the data has been read from the 
+              // client. Display it on the console.
+              statusDelegate("Read " + state.commandString.Length + " bytes from socket. \n Data :" + state.commandString, fSyncServer.LOG_INFO);
+              // Echo the data back to the client.
+             // Send(handler, content);
+          } else {
+              // Not all data received. Get more.
+              handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+              new AsyncCallback(ReadCallback), state);
+          }
+      }
+  }
+  */
+
+/*
+private static void Receive(Socket client)
+{
+    try
+    {
+        // Create the state object.
+        StateObject state = new StateObject();
+        state.workSocket = client;
+
+        // Begin receiving the data from the remote device.
+        client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+            new AsyncCallback(ReceiveCallback), state);
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e.ToString());
+    }
+}
+*/
