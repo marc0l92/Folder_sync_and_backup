@@ -7,7 +7,7 @@ using System.Threading;
 using System.Net.Sockets;
 using System.Net;
 
-namespace sync_client
+namespace sync_clientWPF
 {
 	class SyncManager
 	{
@@ -27,11 +27,17 @@ namespace sync_client
 		public SyncManager()
 		{
 			serverFileChecksum = new List<FileChecksum>();
+			clientFileChecksum = new List<FileChecksum>();
 		}
 
 		public void setStatusDelegate(StatusDelegate sd)
 		{
 			this.statusDelegate = sd;
+		}
+
+		public bool login(String username, String password, bool register = false)
+		{
+			return true;
 		}
 
 		public void startSync(String address, int port, String username, String password, String directory)
@@ -57,7 +63,12 @@ namespace sync_client
 		{
 			this.thread_stopped = true;
 			// Release the socket.
-			tcpClient.Shutdown(SocketShutdown.Both);
+			try
+			{
+				tcpClient.Shutdown(SocketShutdown.Both); // TODO errore con server inesistente
+			}
+			catch (Exception ex) { }
+			
 			tcpClient.Close();
 			if (syncThread.IsAlive)
 			{
@@ -215,6 +226,7 @@ namespace sync_client
 		{
 			sendCommand(new SyncCommand(SyncCommand.CommandSet.ENDSYNC));
 			serverFileChecksum = clientFileChecksum;
+			clientFileChecksum.Clear();
 		}
 
 	}

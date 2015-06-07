@@ -4,43 +4,57 @@
         Title="MainWindow" Height="350" Width="450">
 	<Grid>
 		<TabControl Margin="0,0,0,19">
-			<TabItem Header="Settings">
-				<Grid Background="#FFE5E5E5" Margin="0,0,0,0">
-					<Label Content="Username:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
-					<TextBox Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10,36,0,0" Text="username" HorizontalAlignment="Left" Width="200"/>
-					<Label Content="Password:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="215,10,0,0"/>
-					<PasswordBox Height="23" VerticalAlignment="Top" Margin="215,36,0,0" Password="password" HorizontalAlignment="Left" Width="200"/>
-					<Label Content="Direcotry:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,59,0,0"/>
-					<TextBox Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10,85,49,0"/>
-					<Button Content="..." HorizontalAlignment="Right" VerticalAlignment="Top" Width="30" RenderTransformOrigin="3.136,8.118" Margin="0,85,14,0" Height="23" Click="Browse_Click"/>
-					<Label Content="Server address:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.473,0.501" Margin="10,113,0,0"/>
-					<TextBox Height="23" Margin="10,139,104,0" TextWrapping="Wrap" Text="127.0.0.1" VerticalAlignment="Top"/>
-					<Label Content="Port:" HorizontalAlignment="Right" Margin="0,113,60,0" VerticalAlignment="Top" RenderTransformOrigin="0.496,0.501"/>
-					<TextBox HorizontalAlignment="Right" Height="23" Margin="0,139,10,0" TextWrapping="Wrap" Text="55555" VerticalAlignment="Top" Width="85"/>
-					<Button Content="Start sync" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="10,0,0,10" Click="StartSync_Click"/>
-					<Button Content="Stop sync" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="90,0,0,10" IsEnabled="False" Click="StopSync_Click"/>
+			<TabItem Header="Home" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="55">
+				<Grid Background="#FFE5E5E5">
+					<Image Margin="20,20,0,0" Source="user.jpg" Stretch="Fill" HorizontalAlignment="Left" Width="76" Height="77" VerticalAlignment="Top"/>
+					<Label Content="User:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="119,20,0,0"/>
+					<Label Content="Username" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="119,46,0,0"/>
+					<Button Content="Log out" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="119,77,0,0" Click="LogOut_Click"/>
+					<ListView Margin="20,123,16,10">
+						<ListView.View>
+							<GridView>
+								<GridViewColumn/>
+							</GridView>
+						</ListView.View>
+					</ListView>
 				</Grid>
 			</TabItem>
 			<TabItem Header="Versions">
 				<Grid Background="#FFE5E5E5">
-					<ListView Margin="10,10,10,35" SelectionMode="Single">
+					<ListView Name="lVersions" Margin="10,10,10,35" SelectionMode="Single">
 						<ListView.View>
 							<GridView>
 								<GridViewColumn Header="Version" Width="60"/>
 								<GridViewColumn Header="NewFiles" Width="60"/>
-								<GridViewColumn Header="EditFIles" Width="60"/>
+								<GridViewColumn Header="EditFiles" Width="60"/>
 								<GridViewColumn Header="DelFIles" Width="60"/>
 								<GridViewColumn Header="DateTime" Width="100"/>
 							</GridView>
 						</ListView.View>
 					</ListView>
-					<Button Content="Restore" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="10,0,0,10" IsEnabled="False" Click="Restore_Click"/>
+					<Button Name="bRestore" Content="Restore" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="10,0,0,10" IsEnabled="False" Click="Restore_Click"/>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Settings">
+				<Grid Background="#FFE5E5E5" Margin="0,0,0,3">
+					<Label Content="Username:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
+					<TextBox Name="tUsername" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10,36,0,0" Text="username" HorizontalAlignment="Left" Width="200"/>
+					<Label Content="Password:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="215,10,0,0"/>
+					<PasswordBox Name="tPassword" Height="23" VerticalAlignment="Top" Margin="215,36,0,0" Password="password" HorizontalAlignment="Left" Width="200"/>
+					<Label Content="Direcotry:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,59,0,0"/>
+					<TextBox Name="tDirectory" Text="D:\ProgettoMalnati\client" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10,85,49,0"/>
+					<Button Name="bBrowse" Content="..." HorizontalAlignment="Right" VerticalAlignment="Top" Width="30" RenderTransformOrigin="3.136,8.118" Margin="0,85,14,0" Height="23" Click="Browse_Click"/>
+					<Label Content="Server address:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.473,0.501" Margin="10,113,0,0"/>
+					<TextBox Name="tAddress" Height="23" Margin="10,139,104,0" TextWrapping="Wrap" Text="127.0.0.1" VerticalAlignment="Top"/>
+					<Label Content="Port:" HorizontalAlignment="Right" Margin="0,113,60,0" VerticalAlignment="Top" RenderTransformOrigin="0.496,0.501"/>
+					<TextBox Name="tPort" HorizontalAlignment="Right" Height="23" Margin="0,139,10,0" TextWrapping="Wrap" Text="55555" VerticalAlignment="Top" Width="85"/>
+					<Button Name="bStart" Content="Start sync" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="10,0,0,10" Click="StartSync_Click"/>
+					<Button Name="bStop" Content="Stop sync" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="90,0,0,10" IsEnabled="False" Click="StopSync_Click"/>
 				</Grid>
 			</TabItem>
 		</TabControl>
-		<StatusBar Height="25" Margin="0,0,-8,0" VerticalAlignment="Bottom">
-			<StatusBarItem Content="Status" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top" Width="430" Margin="0,0,0,0"/>
+		<StatusBar Height="25" VerticalAlignment="Bottom">
+			<StatusBarItem Name="lStatus" Content="Status" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top" Width="442" Margin="0,0,0,0"/>
 		</StatusBar>
-
 	</Grid>
 </Window>
