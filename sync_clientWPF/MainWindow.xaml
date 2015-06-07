@@ -10,13 +10,7 @@
 					<Label Content="User:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="119,20,0,0"/>
 					<Label Name="lUsername" Content="Username" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="119,46,0,0"/>
 					<Button Content="Log out" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="119,77,0,0" Click="LogOut_Click"/>
-					<ListView Margin="20,123,16,10">
-						<ListView.View>
-							<GridView>
-								<GridViewColumn/>
-							</GridView>
-						</ListView.View>
-					</ListView>
+					<ListBox Name="lbStatus" Margin="10,113,10,10"/>
 				</Grid>
 			</TabItem>
 			<TabItem Header="Versions">

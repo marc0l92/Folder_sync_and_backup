@@ -52,12 +52,12 @@ namespace sync_clientWPF
 				tPassword.IsEnabled = false;
 				tAddress.IsEnabled = false;
 				tPort.IsEnabled = false;
-				lStatus.Content = "Started";
+				updateStatus("Started");
 			}
 			catch (Exception ex)
 			{
 				bStart.IsEnabled = true;
-				lStatus.Content = ex.Message;
+				updateStatus(ex.Message);
 			}
 		}
 
@@ -66,13 +66,13 @@ namespace sync_clientWPF
 			// stop the sync manager
 			try
 			{
-				lStatus.Content = "Stop";
+				updateStatus("Stop");
 				forceStop();
 			}
 			catch (Exception ex)
 			{
 				bStop.IsEnabled = true;
-				lStatus.Content = ex.Message;
+				updateStatus(ex.Message);
 			}
 		}
 
@@ -110,7 +110,7 @@ namespace sync_clientWPF
 		{
 			this.Dispatcher.BeginInvoke((Action)(() =>
 			{
-				lStatus.Content = message;
+				updateStatus(message);
 				if (fatalError)
 				{
 					forceStop();
@@ -177,6 +177,7 @@ namespace sync_clientWPF
 				}
 			}
 			lw.Close();
+			updateStatus("Logged in");
 		}
 
 		private void addVersion(String version, int newFiles = 0, int editFiles = 0, int delFiles = 0)
@@ -196,6 +197,14 @@ namespace sync_clientWPF
 			{
 				openLogin();
 			}));
+		}
+
+		private void updateStatus(String newStatus)
+		{
+			lStatus.Content = newStatus;
+			ListBoxItem lbi = new ListBoxItem();
+			lbi.Content = newStatus;
+			lbStatus.Items.Add(lbi);
 		}
 	}
 

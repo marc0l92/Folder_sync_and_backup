@@ -37,7 +37,16 @@ namespace sync_clientWPF
 
 		public bool login(String username, String password, bool register = false)
 		{
-			return true;
+			if (register)
+			{
+				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.REGISTER, username, password));
+			}
+			else
+			{
+				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+			}
+
+			return (this.receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED);
 		}
 
 		public void startSync(String address, int port, String username, String password, String directory)
@@ -91,6 +100,9 @@ namespace sync_clientWPF
 
 				// Do the first connection
 				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
+				if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED) {
+					statusDelegate("Wrong directory", true);
+				};
 				serverFileChecksum = getServerCheckList();
 				scanForClientChanges(directory);
 				scanForDeletedFiles();
@@ -127,7 +139,7 @@ namespace sync_clientWPF
 				if (pos < 0)
 				{
 					// create a new file on the server
-					sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, currentFile.FileName));
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, currentFile.FileName));
 					this.sendFile(currentFile.FileName);
 				}
 				else
@@ -136,7 +148,7 @@ namespace sync_clientWPF
 					if (currentFile.Checksum != serverFileChecksum[pos].Checksum)
 					{
 						// on the server there is a different version of the file
-						sendCommand(new SyncCommand(SyncCommand.CommandSet.EDIT, currentFile.FileName));
+						this.sendCommand(new SyncCommand(SyncCommand.CommandSet.EDIT, currentFile.FileName));
 						this.sendFile(currentFile.FileName);
 					}
 					serverFileChecksum.RemoveAt(pos);
@@ -196,8 +208,19 @@ namespace sync_clientWPF
 
 		private void sendFile(String path)
 		{
-			SyncCommand sc = new SyncCommand(SyncCommand.CommandSet.FILE, File.ReadAllLines(path));
-			this.sendCommand(sc);
+			int bytesSent;
+			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.FILE, path));
+			byte[] fileContent = File.ReadAllBytes(path);
+			while (fileContent.Length > 0)
+			{
+				bytesSent = tcpClient.Send(fileContent);
+				fileContent.CopyTo(fileContent, bytesSent); // cat the message part already sent
+			}
+			if (receiveCommand().Type != SyncCommand.CommandSet.ENDFILE)
+			{
+				statusDelegate("Error during file trasmission", true);
+			}
+			
 		}
 		private List<FileChecksum> getServerCheckList()
 		{
@@ -212,11 +235,16 @@ namespace sync_clientWPF
 
 			return serverCheckList;
 		}
-		private String getFile()
+		private void getFile(String path)
 		{
-			SyncCommand sc = this.receiveCommand();
-			if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("File not received");
-			return sc.FileContent;
+			byte[] data = new byte[1024];
+			System.IO.StreamWriter file = new System.IO.StreamWriter(path);
+			// Receive data from the server
+			while (tcpClient.Receive(data)>0)
+			{
+				file.Write(data);
+			}
+			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ENDFILE));
 		}
 
 		private void commitChangesToServer()
