@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +27,7 @@ namespace sync_server
             [SQLite.PrimaryKey, SQLite.AutoIncrement]
             public int Id { get; set; }
             public string client_dir { get; set; }
+            public string server_dir { get; set; }
             public string username { get; set; }
             public string password { get; set; }
             public int version { get; set; }
@@ -56,7 +57,7 @@ namespace sync_server
             SQLiteAsyncConnection conn = new SQLiteAsyncConnection(tableName);
             await conn.InsertAsync(file);
         }
-/*
+
         public async Task<Post> GetPost(int id)
         {
             SQLiteAsyncConnection conn = new SQLiteAsyncConnection("blog");
@@ -66,7 +67,7 @@ namespace sync_server
 
             return result.FirstOrDefault();
         }
-        */
+        
         public async Task<List<FileRow>> GetFiles(String username)
         {
 
@@ -88,10 +89,12 @@ namespace sync_server
             file.version = version;
             SQLiteAsyncConnection conn = new SQLiteAsyncConnection(tableName);
 
-            var query = conn.Table<FileRow>().Where(x => x.server_path == server_path, x => x.server_path == server_path);
+            
             var result = await query.ToListAsync();
             await conn.UpdateAsync(file);
         }
 
     }
 }
+
+*/

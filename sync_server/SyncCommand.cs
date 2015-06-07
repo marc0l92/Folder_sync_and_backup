@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace sync_client
+namespace sync_server
 {
-	class SyncCommand
+	public class SyncCommand
 	{
 		public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK };
 		private CommandSet type;
