@@ -1,4 +1,6 @@
-﻿using System;
+﻿
+/*
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -217,7 +219,7 @@ namespace sync_server
             statusDelegate("Slave Stopped Syncronization Finished", fSyncServer.LOG_INFO);
             return true;
         }
-		/*
+		
 
 		
         private String getClientDir()
@@ -276,7 +278,7 @@ namespace sync_server
             string [] split = login.Split(new Char [] {: , ;} );
             return split;
         }
-        */
+        
         //Funzioni per gestire la versione
 
         private Boolean checkCredential(String usr, String psw)
@@ -309,7 +311,7 @@ namespace sync_server
         private void generateServerChecksum(String dir)
         {
             String pattern= "["+ "_" + version.ToString() + "\\" + "Z" + "]" ;
-            string[] fileList = Directory.GetFiles(dir);
+            String[] fileList = Directory.GetFiles(dir);
             foreach (string filePath in fileList)
             {
                 if(Regex.IsMatch(filePath, pattern))
@@ -326,7 +328,7 @@ namespace sync_server
             }
         }
 
-        /*
+        
 
         public String createCommand(int CMD, String path, String checksum){
         
@@ -339,7 +341,7 @@ namespace sync_server
 
             return command.Stringify();
         }
-        */
+        
         //Function that return a Json String containing the command and the inserted variabels
         public String createCommand(String CMD, String path, String checksum)
         {
@@ -383,3 +385,4 @@ namespace sync_server
 
 	}
 }
+*/

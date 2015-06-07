@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace sync_server
 {
-    class SyncClient
+   public  class SyncClient
     {
         public String usrDir;
         public String usrNam;

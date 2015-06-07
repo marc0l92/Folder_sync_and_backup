@@ -18,13 +18,13 @@ namespace sync_server
 		public const int LOG_ERROR   = 3;
 
 		private delegate void AppendItem(String s);
-		private SyncManagerServer syncManager;
+		private AsyncManagerServer syncManager;
         private NetworkOperation networkOperation;
 
         public fSyncServer()
         {
             InitializeComponent();
-			syncManager = new SyncManagerServer();
+			syncManager = new AsyncManagerServer();
 			syncManager.setStatusDelegate(appendStatus);
             networkOperation = new NetworkOperation();
             networkOperation.setStatusDelegateNetwork(appendStatus);

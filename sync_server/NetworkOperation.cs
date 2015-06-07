@@ -14,7 +14,7 @@ namespace sync_server
 
 
         private static ManualResetEvent receiveDone = new ManualResetEvent(false);
-
+        private static ManualResetEvent sendDone = new ManualResetEvent(false);
 
         public delegate void StatusDelegate(String s, int type);
         private static StatusDelegate statusDelegate;
@@ -313,7 +313,7 @@ namespace sync_server
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                statusDelegate("Exception: " + e.ToString(), fSyncServer.LOG_INFO);
             }
         }
 
@@ -334,7 +334,8 @@ namespace sync_server
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+
+                statusDelegate("Exception: " + e.ToString(), fSyncServer.LOG_INFO);
             }
         }
         public static void ReceiveCallback(IAsyncResult ar)
@@ -366,12 +367,12 @@ namespace sync_server
                         state.cmd = SyncCommand.convertFromString(state.sb.ToString());
                     }
                     // Signal that all bytes have been received.
-                    receiveDone.Set();
+                    //receiveDone.Set();
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                statusDelegate("Exception: " + e.ToString(), fSyncServer.LOG_INFO);
             }
         }
 

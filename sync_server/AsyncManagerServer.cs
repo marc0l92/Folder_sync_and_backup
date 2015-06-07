@@ -116,7 +116,7 @@ public class AsyncManagerServer {
         {
             // Receive the response from the remote device.
             NetworkOperation.ReceiveCommand(state.workSocket);
-            receiveDone.WaitOne();
+           // receiveDone.WaitOne();
             state.cmd = SyncCommand.convertFromString(command);
             if (NetworkOperation.doCommand(state))
                 statusDelegate("Slave Thread Done Command Successfully ", fSyncServer.LOG_INFO);
@@ -154,7 +154,7 @@ public class AsyncManagerServer {
         //Genera il file checksum delle cartelle e ricorsivamente dei file interni
         // todo funzione che ritorna la lista di checksum
 
-
+    /*
     private static Boolean RenameFiles(String dir, String file, int version)
     {
         foreach (FileChecksum check in UserChecksum)
@@ -173,8 +173,8 @@ public class AsyncManagerServer {
         }
         return true;
 
-    }
-        private static void generateChecksum(String dir, int version)
+    }*/
+       /* private static void generateChecksum(String dir, int version)
         {
             String pattern= "["+ "_" + version.ToString() + "\\" + "Z" + "]" ;
             string[] fileList = Directory.GetFiles(dir);
@@ -192,7 +192,7 @@ public class AsyncManagerServer {
             {
                 generateChecksum(subdirectoryPath, version);
             }
-        }
+        }*/
 
 }
 

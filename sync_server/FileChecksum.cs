@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace sync_server
 {
-	class FileChecksum
+	public class FileChecksum
 	{
 		private String fileNameClient;
         private String fileNameServer;
