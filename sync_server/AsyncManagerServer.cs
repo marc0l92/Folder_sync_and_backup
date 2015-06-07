@@ -142,7 +142,9 @@ public class AsyncManagerServer {
             throw new Exception("Directory not exists");
         }
         // Server start
-        StartListening();
+        Thread listeningThread = new Thread(new ThreadStart(StartListening));
+        listeningThread.IsBackground = true;
+        listeningThread.Start();
     }
     //Function Stop Sync Button
     public void stopSync()
