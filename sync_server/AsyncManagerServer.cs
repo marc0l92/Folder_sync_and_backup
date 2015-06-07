@@ -118,6 +118,7 @@ public class AsyncManagerServer {
                 statusDelegate("Slave Thread Done Command Successfully ", fSyncServer.LOG_INFO);
             else
                 statusDelegate("Slave Thread Done Command with no Success", fSyncServer.LOG_INFO);
+
         }
         if(!state.wellEnd)
         { 
@@ -136,22 +137,22 @@ public class AsyncManagerServer {
 					return StartSession(stateToDo);
                 case SyncCommand.CommandSet.GET:
                     return SendFileClient(stateToDo);
-                case SyncCommand.CommandSet.RESTORE: //Da implementare
+                case SyncCommand.CommandSet.RESTORE: // Todo Da implementare RESTORE
                     return false;
                 case SyncCommand.CommandSet.ENDSYNC:
                     return EndSync(stateToDo);
                 case SyncCommand.CommandSet.DEL:
-                    return DeleteFile();
+                    return DeleteFile(stateToDo);
                 case SyncCommand.CommandSet.NEW:
                     return NewFile(stateToDo);
+                case SyncCommand.CommandSet.EDIT:
+                    return EditFile(stateToDo);
 		 //   	case SyncCommand.CommandSet.AUTHORIZED:
          //           statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
          //           return false;
 		//		case SyncCommand.CommandSet.UNAUTHORIZED:
          //           statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
 		//			return false;
-		//		case SyncCommand.CommandSet.EDIT:
-		//			return NewFile(stateToDo);
 		//		case SyncCommand.CommandSet.FILE:
         //          return false;
 		//			break;
@@ -209,7 +210,7 @@ public class AsyncManagerServer {
             SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
             SendCommand(stt.workSocket, unauthorized.convertToString());
             statusDelegate("Send Back Unauthorized Message because the user change the root directory for the connection ", fSyncServer.LOG_INFO);
-            return false;
+            return true;
         }
         else
         {
@@ -234,8 +235,8 @@ public class AsyncManagerServer {
 
     private static Boolean SendFileClient(StateObject stt)
     {
-
-        FileChecksum check = stt.userChecksum[stt.]
+        int index= stt.userChecksum.FindIndex(x => x.FileNameClient == stt.cmd.FileName);
+        String fileName = stt.userChecksum[index].FileNameServer;
         SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, stt.cmd.FileName);
 
             if (File.Exists(fileName))
@@ -259,63 +260,60 @@ public class AsyncManagerServer {
 
     private static Boolean DeleteFile(StateObject stt)
     {
-        // todo Update in the DB all file of the current version with a value equal to current version plus one 
-        statusDelegate("DB Updated Correctly, Start Rename Files ", fSyncServer.LOG_INFO);
-        return RenameFiles(stt.client.usrDir, stt.cmd.FileName, stt.client.vers); // Da Implementare Meglio
+        int index = stt.userChecksum.FindIndex(x => x.FileNameClient == stt.cmd.FileName);
+        stt.userChecksum.RemoveAt(index);
+        statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
+        return true; // Da Implementare Meglio
     }
+
     private static Boolean EndSync(StateObject stt)
     {
         //todo Update in the DB all file of the current version with a value equal to current version plus one 
+        //todo Update user version on DB
         statusDelegate("DB Updated Correctly, Start Rename Files ", fSyncServer.LOG_INFO);
         //Get List
-        return RenameFiles(stt.client.usrDir, stt.cmd.FileName, stt.client.vers); // Da Implementare Meglio
+        stt.syncEnd = true;
+        stt.wellEnd = true;
+        return true; 
     }
+
     private static Boolean NewFile(StateObject stt)
     { 
-
-        //Update in the DB all file of the current version with a value equal to current version plus one 
-        statusDelegate("DB Updated Correctly, Start Recive File ", fSyncServer.LOG_INFO);
-        ReceiveFile(stt.workSocket);
+        ReceiveFile(stt);
         statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
+        FileChecksum file = new FileChecksum(stt.cmd.FileName + "_" + (stt.client.vers + 1), stt.cmd.FileName);
+        stt.userChecksum.Add(file);
+        statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO); 
         return true;
     }
-    
-    private static Boolean RenameFiles(String dir, String file, int version)
+
+
+    private static Boolean EditFile(StateObject state)
     {
-        foreach (FileChecksum check in UserChecksum)
-        {
-            if (String.Compare(check.FileName, file + "_" + (version - 1)) != 0)
-            {
-                if (File.Exists(check.FileName))
-                {
-                    String fil = check.FileName.Remove(check.FileName.Length - 3);
-                    fil = fil + "_" + version;
-                    File.Move(check.FileName, file);
-                    statusDelegate("File: " + check.FileName + "Renamed", fSyncServer.LOG_INFO);
-                }
-                else statusDelegate("File: " + check.FileName + "Doesn't Exists", fSyncServer.LOG_INFO);
-            }
-        }
+        int index = state.userChecksum.FindIndex(x => x.FileNameClient == state.cmd.FileName);
+        state.userChecksum.RemoveAt(index);
+        statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
+        ReceiveFile(state);
+        statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
+        FileChecksum file = new FileChecksum(state.cmd.FileName + "_" + (state.client.vers + 1), state.cmd.FileName);
+        state.userChecksum.Add(file);
+        statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
         return true;
-        
     }
 
 
- private static void ReceiveFile(Socket client)
+ private static void ReceiveFile(StateObject state)
     {
         try
         {
-            // Create the state object.
-            StateObject state = new StateObject();
-            state.workSocket = client;
 
             // Begin receiving the data from the remote device.
-            client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+            state.workSocket.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                 new AsyncCallback(ReceiveFileCallback), state);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
+            statusDelegate("Exception:" + e.ToString(), fSyncServer.LOG_INFO);
         }
     }
 
@@ -335,7 +333,7 @@ public class AsyncManagerServer {
 
          // Delete the file if it exists. 
          if (File.Exists(fileName))
-             fs = File.Open(fileName, FileMode.CREATE, FileAccess.Write, FileShare.None);
+             fs = File.Open(fileName, FileMode..OpenOrCreate, FileAccess.Write, FileShare.None);
          else
              fs = File.Create(fileName);
 
@@ -355,13 +353,11 @@ public class AsyncManagerServer {
          else
          {
              fs.Close();
-             // Signal that all bytes have been received.
-             receiveDone.Set();
          }
      }
      catch (Exception e)
      {
-         Console.WriteLine(e.ToString());
+         statusDelegate("Exception:" + e.ToString(), fSyncServer.LOG_INFO);
      }
  }
 
@@ -455,9 +451,50 @@ public class AsyncManagerServer {
             Console.WriteLine(e.ToString());
         }
     }
+
+    //Function Start Sync Button
+    public void startSync(int port, String workDir)
+    {
+        //Assign the port value 
+        localport = port;
+        // Check if the directory is valid
+        if (!Directory.Exists(workDir))
+        {
+            throw new Exception("Directory not exists");
+        }
+        // Server start
+        StartListening();
+    }
+    //Function Stop Sync Button
+    public void stopSync()
+    {
+        serverStopped = true;
+        statusDelegate("Server stopped", fSyncServer.LOG_INFO);
+    }
     
         //Genera il file checksum delle cartelle e ricorsivamente dei file interni
         // todo funzione che ritorna la lista di checksum
+
+
+    private static Boolean RenameFiles(String dir, String file, int version)
+    {
+        foreach (FileChecksum check in UserChecksum)
+        {
+            if (String.Compare(check.FileName, file + "_" + (version - 1)) != 0)
+            {
+                if (File.Exists(check.FileName))
+                {
+                    String fil = check.FileName.Remove(check.FileName.Length - 3);
+                    fil = fil + "_" + version;
+                    File.Move(check.FileName, file);
+                    statusDelegate("File: " + check.FileName + "Renamed", fSyncServer.LOG_INFO);
+                }
+                else statusDelegate("File: " + check.FileName + "Doesn't Exists", fSyncServer.LOG_INFO);
+            }
+        }
+        return true;
+
+    }
         private static void generateChecksum(String dir, int version)
         {
             String pattern= "["+ "_" + version.ToString() + "\\" + "Z" + "]" ;
@@ -478,25 +515,6 @@ public class AsyncManagerServer {
             }
         }
 
-        //Function Start Sync Button
-        public void startSync(int port, String workDir)
-        {
-            //Assign the port value 
-            localport = port;
-            // Check if the directory is valid
-            if (!Directory.Exists(workDir))
-            {
-                throw new Exception("Directory not exists");
-            }
-            // Server start
-            StartListening();
-        }
-        //Function Stop Sync Button
-        public void stopSync()
-        {
-            serverStopped = true;
-            statusDelegate("Server stopped", fSyncServer.LOG_INFO);
-        }
 }
 
 }
