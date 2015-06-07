@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{3DAED4F9-F8F6-46A1-B6FC-D0E8A427548D}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>WindowsApplication</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>SQLiteExample</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SQLiteExample\App.config" />
+    <None Include="SQLiteExample\bin\Debug\clients.db" />
+    <None Include="SQLiteExample\bin\Debug\SQLiteExample.exe.config" />
+    <None Include="SQLiteExample\bin\Debug\SQLiteExample.vshost.exe.config" />
+    <None Include="SQLiteExample\bin\Debug\SQLiteExample.vshost.exe.manifest" />
+    <None Include="SQLiteExample\obj\Debug\DesignTimeResolveAssemblyReferences.cache" />
+    <None Include="SQLiteExample\obj\Debug\DesignTimeResolveAssemblyReferencesInput.cache" />
+    <None Include="SQLiteExample\obj\Debug\SQLiteExample.csproj.GenerateResource.Cache" />
+    <None Include="SQLiteExample\obj\Debug\SQLiteExample.csprojResolveAssemblyReference.cache" />
+    <None Include="SQLiteExample\Properties\Settings.settings" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="SQLiteExample\Form1.cs" />
+    <Compile Include="SQLiteExample\Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SQLiteExample\obj\Debug\TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D92.cs" />
+    <Compile Include="SQLiteExample\obj\Debug\TemporaryGeneratedFile_5937a670-0e60-4077-877b-f7221da3dda1.cs" />
+    <Compile Include="SQLiteExample\obj\Debug\TemporaryGeneratedFile_E7A71F73-0F8D-4B9B-B56E-8E70B10BC5D3.cs" />
+    <Compile Include="SQLiteExample\Program.cs" />
+    <Compile Include="SQLiteExample\Properties\AssemblyInfo.cs" />
+    <Compile Include="SQLiteExample\Properties\Resources.Designer.cs" />
+    <Compile Include="SQLiteExample\Properties\Settings.Designer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SQLiteExample\Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SQLiteExample\obj\Debug\SQLiteExample.Form1.resources" />
+    <EmbeddedResource Include="SQLiteExample\obj\Debug\SQLiteExample.Properties.Resources.resources" />
+    <EmbeddedResource Include="SQLiteExample\Properties\Resources.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="SQLiteExample\bin\Debug\SQLiteExample.exe" />
+    <Content Include="SQLiteExample\bin\Debug\SQLiteExample.pdb" />
+    <Content Include="SQLiteExample\bin\Debug\SQLiteExample.vshost.exe" />
+    <Content Include="SQLiteExample\bin\Debug\System.Data.SQLite.dll" />
+    <Content Include="SQLiteExample\bin\Debug\System.Data.SQLite.pdb" />
+    <Content Include="SQLiteExample\obj\Debug\SQLiteExample.csproj.FileListAbsolute.txt" />
+    <Content Include="SQLiteExample\obj\Debug\SQLiteExample.exe" />
+    <Content Include="SQLiteExample\obj\Debug\SQLiteExample.pdb" />
+    <Content Include="SQLiteExample\SQLiteExample.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="SQLiteExample\obj\Debug\TempPE\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+</Project>
