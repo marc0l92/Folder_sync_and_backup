@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace sync_client
+namespace sync_server
 {
 	class SyncCommand
 	{

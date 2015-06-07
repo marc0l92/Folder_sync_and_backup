@@ -27,6 +27,7 @@ namespace sync_server
             [SQLite.PrimaryKey, SQLite.AutoIncrement]
             public int Id { get; set; }
             public string client_dir { get; set; }
+            public string server_dir { get; set; }
             public string username { get; set; }
             public string password { get; set; }
             public int version { get; set; }

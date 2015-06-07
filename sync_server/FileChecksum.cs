@@ -10,25 +10,28 @@ namespace sync_server
 {
 	class FileChecksum
 	{
-		private String fileName;
+		private String fileNameClient;
+        private String fileNameServer;
 		private String checksum;
 
-		public FileChecksum(String file)
+		public FileChecksum(String fileClient , String fileServer)
 		{
 			// Check if the file exists
-			if (!File.Exists(file))
+			if (!File.Exists(fileServer))
 			{
 				throw new Exception("ERROR: file not exists");
 			}
-			this.fileName = file;
+            this.fileNameServer = fileServer;
+            this.fileNameClient = fileClient;
 			// Generate checksum
 			MD5 md5 = MD5.Create();
-			Stream fs = File.OpenRead(this.fileName);
+			Stream fs = File.OpenRead(this.fileNameServer);
 			this.checksum = md5.ComputeHash(fs).ToString();
 		}
-		public FileChecksum(String file, String checksum)
+        public FileChecksum(String fileS, String fileC, String checksum)
 		{
-			this.fileName = file;
+			this.fileNameServer = fileS;
+            this.fileNameClient = fileC;
 			this.checksum = checksum;
 		}
 
@@ -37,10 +40,15 @@ namespace sync_server
 			get { return this.checksum; }
 			set { this.checksum = value; }
 		}
-		public String FileName
+		public String FileNameServer
 		{
-			get { return this.fileName; }
-			set { this.fileName = value; }
+			get { return this.fileNameServer; }
+			set { this.fileNameServer = value; }
 		}
+        public String FileNameClient
+        {
+            get { return this.fileNameClient; }
+            set { this.fileNameClient = value; }
+        }
 	}
 }
