@@ -9,14 +9,13 @@ namespace sync_clientWPF
 {
 	class SyncCommand
 	{
-		public enum CommandSet {START, LOGIN, AUTHORIZED, UNAUTHORIZED,  EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK};
+		public enum CommandSet {START, LOGIN, AUTHORIZED, UNAUTHORIZED, REGISTER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ENDFILE};
 		private CommandSet type;
 		private String directory;
 		private String fileName;
 		private int version;
 		private String checksum;
 		private String username, passwrod;
-		private String fileContent;
 
 		public SyncCommand(CommandSet type) : this(type, new String[]{}) {}
 		public SyncCommand(CommandSet type, String arg1) : this(type, new String[]{arg1}) {}
@@ -40,6 +39,11 @@ namespace sync_clientWPF
 				case CommandSet.UNAUTHORIZED:
 					if (args.Length != 0) throw new Exception("Wrong params count");
 					break;
+				case CommandSet.REGISTER:
+					if (args.Length != 2) throw new Exception("Wrong params count");
+					username = args[0];
+					passwrod = args[1];
+					break;
 				case CommandSet.EDIT:
 					if (args.Length != 1) throw new Exception("Wrong params count");
 					fileName = args[0];
@@ -54,7 +58,7 @@ namespace sync_clientWPF
 					break;
 				case CommandSet.FILE:
 					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileContent = args[0];
+					fileName = args[0];
 					break;
 				case CommandSet.GET:
 					if (args.Length != 1) throw new Exception("Wrong params count");
@@ -75,6 +79,9 @@ namespace sync_clientWPF
 				case CommandSet.ENDCHECK:
 					if (args.Length != 0) throw new Exception("Wrong params count");
 					break;
+				case CommandSet.ENDFILE:
+					if (args.Length != 0) throw new Exception("Wrong params count");
+					break;
 				default:
 					throw new Exception("Command not implemented");
 			}
@@ -89,14 +96,13 @@ namespace sync_clientWPF
 			return JsonConvert.DeserializeObject<SyncCommand>(jsonString);
 		}
 		[JsonConstructor]
-		public SyncCommand(CommandSet Type, String Directory, String FileName, int Version, String Checksum, String FileContent, String Username, String Password)
+		public SyncCommand(CommandSet Type, String Directory, String FileName, int Version, String Checksum, String Username, String Password)
 		{
 			this.type = Type;
 			this.directory = Directory;
 			this.fileName = FileName;
 			this.version = Version;
 			this.checksum = Checksum;
-			this.fileContent = FileContent;
 			this.username = Username;
 			this.passwrod = Password;
 		}
@@ -162,16 +168,6 @@ namespace sync_clientWPF
 			{
 				if (this.type == CommandSet.CHECK)
 					return checksum;
-				else
-					return null;
-			}
-		}
-		public String FileContent
-		{
-			get
-			{
-				if (this.type == CommandSet.FILE)
-					return fileContent;
 				else
 					return null;
 			}

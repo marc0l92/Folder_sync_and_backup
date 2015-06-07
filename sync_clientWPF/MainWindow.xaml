@@ -1,14 +1,14 @@
 ﻿<Window x:Class="sync_clientWPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="350" Width="450">
+        Title="MainWindow" Height="350" Width="450" Loaded="Window_Loaded">
 	<Grid>
 		<TabControl Margin="0,0,0,19">
 			<TabItem Header="Home" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="55">
 				<Grid Background="#FFE5E5E5">
 					<Image Margin="20,20,0,0" Source="user.jpg" Stretch="Fill" HorizontalAlignment="Left" Width="76" Height="77" VerticalAlignment="Top"/>
 					<Label Content="User:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="119,20,0,0"/>
-					<Label Content="Username" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="119,46,0,0"/>
+					<Label Name="lUsername" Content="Username" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="119,46,0,0"/>
 					<Button Content="Log out" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="119,77,0,0" Click="LogOut_Click"/>
 					<ListView Margin="20,123,16,10">
 						<ListView.View>
@@ -24,11 +24,11 @@
 					<ListView Name="lVersions" Margin="10,10,10,35" SelectionMode="Single">
 						<ListView.View>
 							<GridView>
-								<GridViewColumn Header="Version" Width="60"/>
-								<GridViewColumn Header="NewFiles" Width="60"/>
-								<GridViewColumn Header="EditFiles" Width="60"/>
-								<GridViewColumn Header="DelFIles" Width="60"/>
-								<GridViewColumn Header="DateTime" Width="100"/>
+								<GridViewColumn Header="Version" Width="60" DisplayMemberBinding="{Binding sVersion}"/>
+								<GridViewColumn Header="NewFiles" Width="60" DisplayMemberBinding="{Binding sNewFiles}"/>
+								<GridViewColumn Header="EditFiles" Width="60" DisplayMemberBinding="{Binding sEditFiles}"/>
+								<GridViewColumn Header="DelFIles" Width="60" DisplayMemberBinding="{Binding sDelFiles}"/>
+								<GridViewColumn Header="DateTime" Width="100" DisplayMemberBinding="{Binding sDateTime}"/>
 							</GridView>
 						</ListView.View>
 					</ListView>
@@ -54,7 +54,7 @@
 			</TabItem>
 		</TabControl>
 		<StatusBar Height="25" VerticalAlignment="Bottom">
-			<StatusBarItem Name="lStatus" Content="Status" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top" Width="442" Margin="0,0,0,0"/>
+			<StatusBarItem Name="lStatus" Content="Status" Height="25" VerticalAlignment="Top" Margin="0,0,0,0"/>
 		</StatusBar>
 	</Grid>
 </Window>

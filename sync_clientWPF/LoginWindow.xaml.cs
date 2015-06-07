@@ -28,7 +28,7 @@ namespace sync_clientWPF
 		public LoginWindow()
 		{
 			InitializeComponent();
-
+			lError.Content = "";
 			//dataLock = new ManualResetEvent(false);
 		}
 
@@ -50,7 +50,7 @@ namespace sync_clientWPF
 			get
 			{
 				//dataLock.WaitOne();
-				return Username;
+				return username;
 			}
 		}
 		public String Password
@@ -59,7 +59,14 @@ namespace sync_clientWPF
 			get
 			{
 				//dataLock.WaitOne();
-				return Password;
+				return password;
+			}
+		}
+		public String ErrorMessage
+		{
+			set
+			{
+				lError.Content = value;
 			}
 		}
 
@@ -81,6 +88,13 @@ namespace sync_clientWPF
 			this.Hide();
 		}
 		private void Cancel_Click(object sender, RoutedEventArgs e)
+		{
+			lastResponse = LoginResponse.CANCEL;
+			//dataLock.Set();
+			this.Hide();
+		}
+
+		private void Window_Closed(object sender, EventArgs e)
 		{
 			lastResponse = LoginResponse.CANCEL;
 			//dataLock.Set();

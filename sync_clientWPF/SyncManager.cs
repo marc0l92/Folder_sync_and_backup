@@ -63,12 +63,10 @@ namespace sync_clientWPF
 		{
 			this.thread_stopped = true;
 			// Release the socket.
-			try
+			if (tcpClient.IsBound)
 			{
-				tcpClient.Shutdown(SocketShutdown.Both); // TODO errore con server inesistente
+				tcpClient.Shutdown(SocketShutdown.Both);
 			}
-			catch (Exception ex) { }
-			
 			tcpClient.Close();
 			if (syncThread.IsAlive)
 			{
@@ -182,7 +180,6 @@ namespace sync_clientWPF
 		}
 		private SyncCommand receiveCommand()
 		{
-			// TODO ricezzione
 			byte[] data = new byte[1024];
 			int dataRec, jsonEnd;
 			SyncCommand sc;

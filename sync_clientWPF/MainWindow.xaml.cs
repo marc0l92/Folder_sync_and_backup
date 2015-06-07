@@ -27,75 +27,69 @@ namespace sync_clientWPF
 		public MainWindow()
 		{
 			InitializeComponent();
-		
+
 			addVersion("test1", 1, 2, 3);
 			addVersion("test2", 2, 3, 4);
 			addVersion("test3", 3, 4, 5);
 
-            // initialize my data structure
-            syncManager = new SyncManager();
+			// initialize my data structure
+			syncManager = new SyncManager();
 			syncManager.setStatusDelegate(updateStatus);
-			
-			// start the login procedure 
-			// TODO
-			//this.Dispatcher.BeginInvoke((Action)(() => {
-			//	openLogin();
-			//}));
-        }
+		}
 
 		private void StartSync_Click(object sender, EventArgs e)
-        {
-            // start the sync manager
-            try
-            {
+		{
+			// start the sync manager
+			try
+			{
 				bStart.IsEnabled = false;
 				syncManager.startSync(tAddress.Text, Convert.ToInt32(tPort.Text), tUsername.Text, tPassword.Password, tDirectory.Text);
 				bStop.IsEnabled = true;
 				bRestore.IsEnabled = true;
 				tDirectory.IsEnabled = false;
-                bBrowse.IsEnabled = false;
+				bBrowse.IsEnabled = false;
 				tUsername.IsEnabled = false;
 				tPassword.IsEnabled = false;
 				tAddress.IsEnabled = false;
 				tPort.IsEnabled = false;
 				lStatus.Content = "Started";
-            }
-            catch (Exception ex)
-            {
+			}
+			catch (Exception ex)
+			{
 				bStart.IsEnabled = true;
 				lStatus.Content = ex.Message;
-            }
-        }
+			}
+		}
 
-        private void StopSync_Click(object sender, EventArgs e)
-        {
-            // stop the sync manager
-            try
-            {
+		private void StopSync_Click(object sender, EventArgs e)
+		{
+			// stop the sync manager
+			try
+			{
 				lStatus.Content = "Stop";
 				forceStop();
-            }
-            catch (Exception ex)
-            {
+			}
+			catch (Exception ex)
+			{
 				bStop.IsEnabled = true;
 				lStatus.Content = ex.Message;
-            }
-        }
+			}
+		}
 
-        private void Browse_Click(object sender, EventArgs e)
-        {
-            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-            folderBrowserDialog.Description = "Select the folder to sync";
-            folderBrowserDialog.ShowNewFolderButton = true;
-            //folderBrowserDialog.RootFolder = Environment.SpecialFolder.Personal;
+		private void Browse_Click(object sender, EventArgs e)
+		{
+			FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
+			folderBrowserDialog.Description = "Select the folder to sync";
+			folderBrowserDialog.ShowNewFolderButton = true;
+			//folderBrowserDialog.RootFolder = Environment.SpecialFolder.Personal;
 			if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
 			{
-                tDirectory.Text = folderBrowserDialog.SelectedPath;
-            }
-        }
+				tDirectory.Text = folderBrowserDialog.SelectedPath;
+			}
+		}
 
-        private void Restore_Click(object sender, EventArgs e)
-        {
+		private void Restore_Click(object sender, EventArgs e)
+		{
 			String selVersion = lVersions.SelectedItems[0].ToString();
 			MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore this version?\n" + selVersion, "Restore system", System.Windows.MessageBoxButton.YesNo);
 			if (res == MessageBoxResult.Yes)
@@ -114,7 +108,8 @@ namespace sync_clientWPF
 
 		private void updateStatus(String message, bool fatalError)
 		{
-			this.Dispatcher.BeginInvoke((Action)(() => {
+			this.Dispatcher.BeginInvoke((Action)(() =>
+			{
 				lStatus.Content = message;
 				if (fatalError)
 				{
@@ -141,33 +136,92 @@ namespace sync_clientWPF
 		private void openLogin()
 		{
 			LoginWindow lw = new LoginWindow();
-			lw.showLogin();
-			switch (lw.waitResponse())
+			bool loginAuthorized = false;
+			while (!loginAuthorized)
 			{
-				case LoginWindow.LoginResponse.CANCEL:
-					System.Windows.Application.Current.Shutdown();
-					break;
-				case LoginWindow.LoginResponse.LOGIN:
-					syncManager.login(lw.Username, lw.Password);
-					break;
-				case LoginWindow.LoginResponse.REGISTER:
-					syncManager.login(lw.Username, lw.Password, true);
-					break;
-				default:
-					throw new Exception("Not implemented");
+				lw.showLogin();
+				try
+				{
+					switch (lw.waitResponse())
+					{
+						case LoginWindow.LoginResponse.CANCEL:
+							System.Windows.Application.Current.Shutdown();
+							return;
+						case LoginWindow.LoginResponse.LOGIN:
+							loginAuthorized = syncManager.login(lw.Username, lw.Password);
+							if (!loginAuthorized)
+							{
+								lw.ErrorMessage = "Login faild";
+							}
+							break;
+						case LoginWindow.LoginResponse.REGISTER:
+							loginAuthorized = syncManager.login(lw.Username, lw.Password, true);
+							if (!loginAuthorized)
+							{
+								lw.ErrorMessage = "Registration faild";
+							}
+							break;
+						default:
+							throw new Exception("Not implemented");
+					}
+					if (loginAuthorized)
+					{
+						lUsername.Content = lw.Username;
+					}
+
+				}
+				catch (Exception ex)
+				{
+					lw.ErrorMessage = ex.Message;
+					loginAuthorized = false;
+				}
 			}
+			lw.Close();
 		}
 
 		private void addVersion(String version, int newFiles = 0, int editFiles = 0, int delFiles = 0)
 		{
-			// TODO add an item
-			//lVersions.Items.Add(new String[]{version, newFiles.ToString(), editFiles.ToString(), delFiles.ToString(), DateTime.Now.ToString()});
-			//lVersions.Items.Add(new RestoreListViewItem());
+			lVersions.Items.Add(new VersionsListViewItem(version, newFiles, editFiles, delFiles));
 		}
 
 		private void LogOut_Click(object sender, RoutedEventArgs e)
 		{
 			this.openLogin();
 		}
+
+		private void Window_Loaded(object sender, RoutedEventArgs e)
+		{
+			// Start the login procedure
+			this.Dispatcher.BeginInvoke((Action)(() =>
+			{
+				openLogin();
+			}));
+		}
 	}
+
+	class VersionsListViewItem
+	{
+		public String sVersion { get; set; }
+		public String sNewFiles { get; set; }
+		public String sEditFiles { get; set; }
+		public String sDelFiles { get; set; }
+		public String sDateTime { get; set; }
+		public VersionsListViewItem(String version, int newFiles, int editFiles, int delFiles)
+		{
+			sVersion = version;
+			sNewFiles = newFiles.ToString();
+			sEditFiles = editFiles.ToString();
+			sDelFiles = delFiles.ToString();
+			sDateTime = DateTime.Now.ToString();
+		}
+		public VersionsListViewItem(String version, int newFiles, int editFiles, int delFiles, String dateTime)
+		{
+			sVersion = version;
+			sNewFiles = newFiles.ToString();
+			sEditFiles = editFiles.ToString();
+			sDelFiles = delFiles.ToString();
+			sDateTime = dateTime;
+		}
+	}
+
 }
