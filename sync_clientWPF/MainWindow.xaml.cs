@@ -195,7 +195,9 @@ namespace sync_clientWPF
 			// Start the login procedure
 			this.Dispatcher.BeginInvoke((Action)(() =>
 			{
-				openLogin();
+				// TODO login at startup
+				// i have to create the connection in order to perform the login
+				//openLogin();
 			}));
 		}
 

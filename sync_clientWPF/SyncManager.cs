@@ -93,7 +93,7 @@ namespace sync_clientWPF
 				IPAddress ipAddress = ipHostInfo.AddressList[0];
 				IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 				// Create a TCP/IP socket
-				tcpClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+				tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 				// Connect to the remote endpoint
 				tcpClient.Connect(remoteEP);
 				statusDelegate("Connected to: " + tcpClient.RemoteEndPoint.ToString());
