@@ -24,8 +24,9 @@ namespace SQLiteExample
         public Form1()
         {
             InitializeComponent();
-            connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["db"].ConnectionString;
-            connection = new SQLiteConnection(connectionString);
+			SQLiteConnection.CreateFile("MyDatabase.sqlite");
+            connection = new SQLiteConnection("Data Source=MyDatabase.sqlite;Version=3;");
+			connection.Open();
         }
 
         private void btnExit_Click(object sender, EventArgs e)

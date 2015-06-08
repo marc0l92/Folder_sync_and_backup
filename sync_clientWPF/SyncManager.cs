@@ -87,7 +87,7 @@ namespace sync_clientWPF
 		{
 			try
 			{
-				statusDelegate("Starting connection...");
+				statusDelegate("Request address form DNS");
 				// Generate the remote endpoint
 				IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
 				IPAddress ipAddress = ipHostInfo.AddressList[0];
@@ -95,15 +95,19 @@ namespace sync_clientWPF
 				// Create a TCP/IP socket
 				tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 				// Connect to the remote endpoint
+				statusDelegate("Starting connection...");
 				tcpClient.Connect(remoteEP);
 				statusDelegate("Connected to: " + tcpClient.RemoteEndPoint.ToString());
 
 				// Do the first connection
+				statusDelegate("Send START");
 				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
 				if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED) {
 					statusDelegate("Wrong directory", true);
 				};
+				statusDelegate("Waiting for CHECK list...");
 				serverFileChecksum = getServerCheckList();
+				statusDelegate("Scan client changes...");
 				scanForClientChanges(directory);
 				scanForDeletedFiles();
 				commitChangesToServer();
@@ -111,7 +115,9 @@ namespace sync_clientWPF
 				// Do syncking
 				while (!thread_stopped)
 				{
+					statusDelegate("Idle");
 					Thread.Sleep(SYNC_SLEEPING_TIME);
+					statusDelegate("Syncing...");
 					scanForClientChanges(directory);
 					scanForDeletedFiles();
 					commitChangesToServer();

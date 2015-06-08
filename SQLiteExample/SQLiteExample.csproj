@@ -38,6 +38,9 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data.SQLite">
+      <HintPath>..\..\..\..\..\..\..\Downloads\System.Data.SQLite_DLL\System.Data.SQLite.dll</HintPath>
+    </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -56,7 +59,9 @@
     <None Include="SQLiteExample\Properties\Settings.settings" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SQLiteExample\Form1.cs" />
+    <Compile Include="SQLiteExample\Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="SQLiteExample\Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
