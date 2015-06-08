@@ -60,7 +60,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncManagerServer.cs" />
-    <Compile Include="DataBase.cs" />
     <Compile Include="FileChecksum.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
