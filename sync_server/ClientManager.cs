@@ -13,6 +13,7 @@ namespace sync_server
     {
         private Thread clientThread;
         private StateObject stateClient;
+        private SyncClient client= new SyncClient();
         public delegate void StatusDelegate(String s, int type);
         private StatusDelegate statusDelegate;
         private ManualResetEvent receiveDone = new ManualResetEvent(false);
@@ -60,13 +61,9 @@ namespace sync_server
         {
             try
             {
-                // Create the state object.
-                StateObject state = new StateObject();
-                state.workSocket = client;
-
                 // Begin receiving the data from the remote device.
-                client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReceiveCallback), state);
+                client.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
+                    new AsyncCallback(ReceiveCallback), stateClient);
             }
             catch (Exception e)
             {
@@ -81,29 +78,29 @@ namespace sync_server
             {
                 // Retrieve the state object and the client socket
                 // from the asynchronous state object.
-                StateObject state = (StateObject)ar.AsyncState;
-                Socket client = state.workSocket;
+               // StateObject state = (StateObject)ar.AsyncState;
+                // Socket client = state.workSocket;
 
                 // Read data from the remote device.
-                int bytesRead = client.EndReceive(ar);
+                int bytesRead = stateClient.workSocket.EndReceive(ar);
 
                 if ((bytesRead > 0))
                 {
                     // There might be more data, so store the data received so far.
-                    state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
+                    stateClient.sb.Append(Encoding.ASCII.GetString(stateClient.buffer, 0, bytesRead));
                 }
-                if (SyncCommand.searchJsonEnd(state.sb.ToString()) == -1)
+                if (SyncCommand.searchJsonEnd(stateClient.sb.ToString()) == -1)
                 {
                     // Get the rest of the data.
-                    client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReceiveCallback), state);
+                    stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
+                        new AsyncCallback(ReceiveCallback), stateClient);
                 }
                 else
                 {
                     // All the data has arrived; put it in response.
-                    if (state.sb.Length > 1)
+                    if (stateClient.sb.Length > 1)
                     {
-                        state.cmd = SyncCommand.convertFromString(state.sb.ToString());
+                        stateClient.cmd = SyncCommand.convertFromString(stateClient.sb.ToString());
                     }
                     // Signal that all bytes have been received.
                     receiveDone.Set();
@@ -117,9 +114,9 @@ namespace sync_server
 
         public  Boolean doCommand()
         {
-            if (stateToDo.cmd != null)
+            if (stateClient.cmd != null)
             {
-                switch (stateToDo.cmd.Type)
+                switch (stateClient.cmd.Type)
                 {
                     case SyncCommand.CommandSet.LOGIN:
                         return LoginUser();
@@ -178,12 +175,12 @@ namespace sync_server
             if (true) //compared to the sended is true
             {
                 statusDelegate("User Credential Confermed ", fSyncServer.LOG_INFO);
-                stt.client.usrNam = username;
-                stateClient.client.usrPwd = password;
-                stt.client.usrDir = directory;
-                stt.client.vers = version;
+                client.usrNam = username;
+                client.usrPwd = password;
+                client.usrDir = directory;
+                client.vers = version;
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
-                SendCommand(stt.workSocket, authorized.convertToString());
+                SendCommand(stateClient.workSocket, authorized.convertToString());
                 statusDelegate("Send Back Authorized Message ", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -191,7 +188,7 @@ namespace sync_server
             {
                 statusDelegate("User Credential NOT Confirmed", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
-                SendCommand(stt.workSocket, unauthorized.convertToString());
+                SendCommand(stateClient.workSocket, unauthorized.convertToString());
                 statusDelegate("Send Back Unauthorized Message ", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -202,26 +199,25 @@ namespace sync_server
             String password = "";
             String directory = "";
             int version = 0;
-            //Get credential by DB
-            //Check if user is just logged in
-            statusDelegate("Get user data on DB ", fSyncServer.LOG_INFO);
+            //todo check if doesn't exists add to DB
+            
             if (true) //compared to the sended is true
             {
-                statusDelegate("User Credential Confermed ", fSyncServer.LOG_INFO);
-                stt.client.usrNam = username;
-                stt.client.usrPwd = password;
-                stt.client.usrDir = directory;
-                stt.client.vers = version;
+                statusDelegate("User Added Succesfully  ", fSyncServer.LOG_INFO);
+                client.usrNam = username;
+                client.usrPwd = password;
+                client.usrDir = directory;
+                client.vers = version;
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
-                SendCommand(stt.workSocket, authorized.convertToString());
+                SendCommand(stateClient.workSocket, authorized.convertToString());
                 statusDelegate("Send Back Authorized Message ", fSyncServer.LOG_INFO);
                 return true;
             }
             else
             {
-                statusDelegate("User Credential NOT Confirmed", fSyncServer.LOG_INFO);
+                statusDelegate("Username in CONFLICT choose another one", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
-                SendCommand(stt.workSocket, unauthorized.convertToString());
+                SendCommand(stateClient.workSocket, unauthorized.convertToString());
                 statusDelegate("Send Back Unauthorized Message ", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -230,11 +226,11 @@ namespace sync_server
         public  Boolean StartSession()
         {
 
-            if (string.Compare(stt.client.usrDir, stt.cmd.Directory) != 0)
+            if (string.Compare(client.usrDir, stateClient.cmd.Directory) != 0)
             {
                 statusDelegate("User Directory Change NOT Authorized", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
-                SendCommand(stt.workSocket, unauthorized.convertToString());
+                SendCommand(stateClient.workSocket, unauthorized.convertToString());
                 statusDelegate("Send Back Unauthorized Message because the user change the root directory for the connection ", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -247,12 +243,12 @@ namespace sync_server
                 foreach (FileChecksum check in userChecksum)
                 {
                     SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum);
-                    SendCommand(stt.workSocket, checkCommand.convertToString());
+                    SendCommand(stateClient.workSocket, checkCommand.convertToString());
                     statusDelegate("Send check Message ", fSyncServer.LOG_INFO);
                 }
 
                 SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
-                SendCommand(stt.workSocket, endcheck.convertToString());
+                SendCommand(stateClient.workSocket, endcheck.convertToString());
                 statusDelegate("Send End check Message ", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -261,16 +257,16 @@ namespace sync_server
 
         public  Boolean SendFileClient()
         {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == stt.cmd.FileName);
+            int index = userChecksum.FindIndex(x => x.FileNameClient == stateClient.cmd.FileName);
             String fileName = userChecksum[index].FileNameServer;
-            SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, stt.cmd.FileName);
+            SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, stateClient.cmd.FileName);
 
             if (File.Exists(fileName))
             {
-                SendCommand(stt.workSocket, file.convertToString());
+                SendCommand(stateClient.workSocket, file.convertToString());
                 statusDelegate("Send File Command  ", fSyncServer.LOG_INFO);
                 // Send file fileName to remote device
-                stt.workSocket.SendFile(fileName);
+                stateClient.workSocket.SendFile(fileName);
                 statusDelegate("File Sended Succesfully", fSyncServer.LOG_INFO);
 
                 return true;
@@ -286,7 +282,7 @@ namespace sync_server
 
         public  Boolean DeleteFile()
         {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == stt.cmd.FileName);
+            int index = userChecksum.FindIndex(x => x.FileNameClient == stateClient.cmd.FileName);
             userChecksum.RemoveAt(index);
             statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
             return true; // Da Implementare Meglio
@@ -305,9 +301,9 @@ namespace sync_server
 
         public  Boolean NewFile()
         {
-            ReceiveFile(stt);
+            ReceiveFile();
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(stt.cmd.FileName + "_" + (stt.client.vers + 1), stt.cmd.FileName);
+            FileChecksum file = new FileChecksum(stateClient.cmd.FileName + "_" + (client.vers + 1), stateClient.cmd.FileName);
             userChecksum.Add(file);
             statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
             return true;
@@ -316,12 +312,12 @@ namespace sync_server
 
         public  Boolean EditFile()
         {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == state.cmd.FileName);
+            int index = userChecksum.FindIndex(x => x.FileNameClient == stateClient.cmd.FileName);
             userChecksum.RemoveAt(index);
             statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
-            ReceiveFile(state);
+            ReceiveFile();
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(state.cmd.FileName + "_" + (state.client.vers + 1), state.cmd.FileName);
+            FileChecksum file = new FileChecksum(stateClient.cmd.FileName + "_" + (client.vers + 1), stateClient.cmd.FileName);
             userChecksum.Add(file);
             statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
             return true;
@@ -336,10 +332,10 @@ namespace sync_server
                 if (File.Exists(check.FileNameServer))
                 {
                     SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, check.FileNameClient);
-                    SendCommand(state.workSocket, file.convertToString());
+                    SendCommand(stateClient.workSocket, file.convertToString());
                     statusDelegate("Send File Command ", fSyncServer.LOG_INFO);
                     // Send file fileName to remote device
-                    state.workSocket.SendFile(check.FileNameServer);
+                    stateClient.workSocket.SendFile(check.FileNameServer);
                     statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient, fSyncServer.LOG_INFO);
                 }
                 else
@@ -358,8 +354,8 @@ namespace sync_server
             {
 
                 // Begin receiving the data from the remote device.
-                state.workSocket.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReceiveFileCallback), state);
+                stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
+                    new AsyncCallback(ReceiveFileCallback), stateClient);
             }
             catch (Exception e)
             {
@@ -374,11 +370,11 @@ namespace sync_server
             {
                 // Retrieve the state object and the client socket 
                 // from the asynchronous state object.
-                StateObject state = (StateObject)ar.AsyncState;
-                Socket client = state.workSocket;
+               // StateObject state = (StateObject)ar.AsyncState;
+                //Socket client = state.workSocket;
                 FileStream fs;
 
-                string fileName = state.cmd.FileName + "_" + state.client.vers.ToString();
+                string fileName = stateClient.cmd.FileName + "_" + client.vers.ToString();
 
 
                 // Delete the file if it exists. 
@@ -388,17 +384,17 @@ namespace sync_server
                     fs = File.Create(fileName);
 
                 // Read data from the remote device.
-                int bytesRead = client.EndReceive(ar);
+                int bytesRead = stateClient.workSocket.EndReceive(ar);
 
                 if (bytesRead > 0)
                 {
-                    fs.WriteAsync(state.buffer, 0, bytesRead);
+                    fs.WriteAsync(stateClient.buffer, 0, bytesRead);
                     // There might be more data, so store the data received so far.
                     //state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
 
                     // Get the rest of the data.
-                    client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReceiveCallback), state);
+                    stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
+                        new AsyncCallback(ReceiveCallback), stateClient);
                 }
                 else
                 {
@@ -428,14 +424,14 @@ namespace sync_server
             try
             {
                 // Retrieve the socket from the state object.
-                Socket handler = (Socket)ar.AsyncState;
+               // Socket handler = (Socket)ar.AsyncState;
 
                 // Complete sending the data to the remote device.
-                int bytesSent = handler.EndSend(ar);
+                int bytesSent = stateClient.workSocket.EndSend(ar);
                 statusDelegate("Send Command Byte number: " + bytesSent, fSyncServer.LOG_INFO);
 
-                handler.Shutdown(SocketShutdown.Both);
-                handler.Close();
+                stateClient.workSocket.Shutdown(SocketShutdown.Both);
+                stateClient.workSocket.Close();
 
             }
             catch (Exception e)

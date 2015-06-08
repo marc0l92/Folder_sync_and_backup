@@ -21,8 +21,6 @@ namespace sync_server
         // Received Cmd
         public SyncCommand cmd;
         // Served Client
-        public SyncClient client = new SyncClient();
-        // Served Client
 
     }
 }
