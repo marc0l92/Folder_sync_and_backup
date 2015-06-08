@@ -19,16 +19,13 @@ namespace sync_server
 
 		private delegate void AppendItem(String s);
 		private AsyncManagerServer syncManager;
-        private NetworkOperation networkOperation;
 
         public fSyncServer()
         {
             InitializeComponent();
 			syncManager = new AsyncManagerServer();
 			syncManager.setStatusDelegate(appendStatus);
-            networkOperation = new NetworkOperation();
-            networkOperation.setStatusDelegateNetwork(appendStatus);
-
+            
 		}
 
 		private void bBrowse_Click(object sender, EventArgs e)

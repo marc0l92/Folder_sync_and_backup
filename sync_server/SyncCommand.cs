@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace sync_server
 {
-	class SyncCommand
+	public class SyncCommand
 	{
 		public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, REGISTER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ENDFILE };
 		private CommandSet type;
