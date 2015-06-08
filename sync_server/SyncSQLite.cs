@@ -35,7 +35,11 @@ namespace sync_server
 
 		public void destroyDatabase()
 		{
-			File.Delete(this.databaseFile);
+			if (File.Exists(this.databaseFile))
+			{
+				connection.Close();
+				File.Delete(this.databaseFile);
+			}
 		}
 
 		private int executeQuery(String query)
@@ -53,14 +57,14 @@ namespace sync_server
 
 		private void initDatabaseStructure()
 		{
-			this.executeQuery("CREATE TABLE users ( id int NOT NULL AUTO_INCREMENT,username VARCHAR(30) NOT NULL, password VARCHAR(30) NOT NULL, client_dir VARCHAR(80) NOT NULL, PRIMARY KEY (id))");
-			//this.executeQuery("insert into highscores (name, score) values ('Me', 9001)");
+			this.executeQuery("CREATE TABLE users (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, user_dir TEXT NOT NULL);");
+			//this.executeQuery("INSERT INTO users (username, password, client_dir) VALUES ('admin', 'admin', '/')");
 		}
 
 		public bool authenticateUser(String username, String password)
 		{
 			bool authenticated = false;
-			SQLiteCommand command = new SQLiteCommand("SELECT * FORM users WHERE username = @username AND password = @password", connection);
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username AND password = @password", connection);
 			command.Parameters.AddWithValue("username", username);
 			command.Parameters.AddWithValue("password", password);
 			SQLiteDataReader reader = command.ExecuteReader();
@@ -75,37 +79,56 @@ namespace sync_server
 
 		public bool checkUserDirectory(String username, String directory)
 		{
-			SQLiteCommand command = new SQLiteCommand("SELECT directory FORM users WHERE username = @username", connection);
+			SQLiteCommand command = new SQLiteCommand("SELECT directory FROM users WHERE username = @username", connection);
 			command.Parameters.AddWithValue("username", username);
 			SQLiteDataReader reader = command.ExecuteReader();
-			return false;
+			return (reader.Read() && reader["client_dir"] == directory);
 		}
 
-		public bool newUser(String username, String password)
-		{	
-
-			this.executeQuery("CREATE TABLE user_@param ( id int NOT NULL AUTO_INCREMENT,username VARCHAR(30) NOT NULL, password VARCHAR(30) NOT NULL, client_dir VARCHAR(80) NOT NULL, PRIMARY KEY (id))", username);
-			return false;
+		public bool newUser(String username, String password, String directory)
+		{
+			// test if there is an user with the same username
+			bool usernameAlereadyUsed;
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username", connection);
+			command.Parameters.AddWithValue("username", username);
+			SQLiteDataReader reader = command.ExecuteReader();
+			usernameAlereadyUsed = reader.Read();
+			reader.Close();
+			if (usernameAlereadyUsed)
+			{
+				return false;
+			}
+			// create a new user
+			command = new SQLiteCommand("INSERT INTO users (username, password, user_dir) VALUES (@username, @password, @directory)", connection);
+			command.Parameters.AddWithValue("username", username);
+			command.Parameters.AddWithValue("password", password);
+			command.Parameters.AddWithValue("directory", directory);
+			command.ExecuteNonQuery();
+			// todo create a table with the right name
+			this.executeQuery("CREATE TABLE user_1 (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL UNIQUE, client_file TEXT NOT NULL, checksum TEXT NOT NULL);");
+			return true;
 		}
 
 		public bool deleteUser(String username)
 		{
-			return false;
+			return (this.executeQuery("DELETE FROM users WHERE username = @param1;", username) == 1);
 		}
 
 		public int getUserLastVersion(String username)
 		{
+			// todo write the function
 			return 0;
 		}
 
 		public List<FileChecksum> getUserFiles(String username, int version)
 		{
+			// todo write the function
 			return null;
 		}
 
 		public void setUserFiles(String username, int version, List<FileChecksum> fileList)
 		{
-
+			// todo write the function
 		}
 	}
 }
