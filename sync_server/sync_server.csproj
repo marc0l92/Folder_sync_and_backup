@@ -73,7 +73,6 @@
     <Compile Include="StateObject.cs" />
     <Compile Include="SyncClient.cs" />
     <Compile Include="SyncCommand.cs" />
-    <Compile Include="SyncManagerServer.cs" />
     <Compile Include="SyncSQLite.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

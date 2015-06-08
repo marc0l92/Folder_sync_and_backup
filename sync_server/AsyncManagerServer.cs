@@ -144,25 +144,6 @@ namespace sync_server
             return true;
 
         }*/
-        /* private static void generateChecksum(String dir, int version)
-         {
-             String pattern= "["+ "_" + version.ToString() + "\\" + "Z" + "]" ;
-             string[] fileList = Directory.GetFiles(dir);
-             foreach (string filePath in fileList)
-             {
-                 if(Regex.IsMatch(filePath, pattern))
-                 {
-                     UserChecksum.Add(new FileChecksum(filePath));
-                 }
-             }
-
-             // Recurse into subdirectories of this directory.
-             string[] subdirectoryList = Directory.GetDirectories(dir);
-             foreach (string subdirectoryPath in subdirectoryList)
-             {
-                 generateChecksum(subdirectoryPath, version);
-             }
-         }*/
 
     }
 

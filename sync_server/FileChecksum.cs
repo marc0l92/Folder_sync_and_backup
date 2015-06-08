@@ -28,6 +28,20 @@ namespace sync_server
 			Stream fs = File.OpenRead(this.fileNameServer);
 			this.checksum = md5.ComputeHash(fs).ToString();
 		}
+        public FileChecksum(String fileServer)
+        {
+            // Check if the file exists
+            if (!File.Exists(fileServer))
+            {
+                throw new Exception("ERROR: file not exists");
+            }
+            this.fileNameServer = fileServer;
+            // Generate checksum
+            MD5 md5 = MD5.Create();
+            Stream fs = File.OpenRead(this.fileNameServer);
+            this.checksum = md5.ComputeHash(fs).ToString();
+        }
+
         public FileChecksum(String fileServer, String fileClient, String checksum)
 		{
 			this.fileNameServer = fileServer;

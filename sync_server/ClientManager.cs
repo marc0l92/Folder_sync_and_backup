@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -199,6 +200,7 @@ namespace sync_server
             String password = "";
             String directory = "";
             int version = 0;
+           
             //todo check if doesn't exists add to DB
             
             if (true) //compared to the sended is true
@@ -440,6 +442,24 @@ namespace sync_server
             }
         }
 
+        private void generateChecksum(String dir, int version)
+        {
+            String pattern = "[" + "_" + version.ToString() + "\\" + "Z" + "]";
+            string[] fileList = Directory.GetFiles(dir);
+            foreach (string filePath in fileList)
+            {
+                if (Regex.IsMatch(filePath, pattern))
+                {
+                    userChecksum.Add(new FileChecksum(filePath));
+                }
+            }
 
+            // Recurse into subdirectories of this directory.
+            string[] subdirectoryList = Directory.GetDirectories(dir);
+            foreach (string subdirectoryPath in subdirectoryList)
+            {
+                generateChecksum(subdirectoryPath, version);
+            }
+        }
     }
 }
