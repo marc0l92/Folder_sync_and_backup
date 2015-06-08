@@ -43,7 +43,7 @@ namespace sync_server
                 this.ReceiveCommand(stateClient.workSocket);
                 receiveDone.WaitOne();
 
-                if (doCommand(stateClient))
+                if (doCommand())
                     statusDelegate("Slave Thread Done Command Successfully ", fSyncServer.LOG_INFO);
                 else
                     statusDelegate("Slave Thread Done Command with no Success", fSyncServer.LOG_INFO);
@@ -115,28 +115,30 @@ namespace sync_server
             }
         }
 
-        public  Boolean doCommand(StateObject stateToDo)
+        public  Boolean doCommand()
         {
             if (stateToDo.cmd != null)
             {
                 switch (stateToDo.cmd.Type)
                 {
                     case SyncCommand.CommandSet.LOGIN:
-                        return LoginUser(stateToDo);
+                        return LoginUser();
                     case SyncCommand.CommandSet.START:
-                        return StartSession(stateToDo);
+                        return StartSession();
                     case SyncCommand.CommandSet.GET:
-                        return SendFileClient(stateToDo);
+                        return SendFileClient();
                     case SyncCommand.CommandSet.RESTORE: // Todo Da implementare RESTORE
                         return false;
                     case SyncCommand.CommandSet.ENDSYNC:
-                        return EndSync(stateToDo);
+                        return EndSync();
                     case SyncCommand.CommandSet.DEL:
-                        return DeleteFile(stateToDo);
+                        return DeleteFile();
                     case SyncCommand.CommandSet.NEW:
-                        return NewFile(stateToDo);
+                        return NewFile();
                     case SyncCommand.CommandSet.EDIT:
-                        return EditFile(stateToDo);
+                        return EditFile();
+                //   case SyncCommand.CommandSet.NEWUSER: //todo delete comment
+                    //       return NewUser();       //todo delete comment  
                     //   	case SyncCommand.CommandSet.AUTHORIZED:
                     //           statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
                     //           return false;
@@ -164,7 +166,37 @@ namespace sync_server
             }
 
         }
-        public  Boolean LoginUser(StateObject stt)
+        public  Boolean LoginUser()
+        {
+            String username = "";
+            String password = "";
+            String directory = "";
+            int version = 0;
+            //Get credential by DB
+            //Check if user is just logged in
+            statusDelegate("Get user data on DB ", fSyncServer.LOG_INFO);
+            if (true) //compared to the sended is true
+            {
+                statusDelegate("User Credential Confermed ", fSyncServer.LOG_INFO);
+                stt.client.usrNam = username;
+                stateClient.client.usrPwd = password;
+                stt.client.usrDir = directory;
+                stt.client.vers = version;
+                SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
+                SendCommand(stt.workSocket, authorized.convertToString());
+                statusDelegate("Send Back Authorized Message ", fSyncServer.LOG_INFO);
+                return true;
+            }
+            else
+            {
+                statusDelegate("User Credential NOT Confirmed", fSyncServer.LOG_INFO);
+                SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
+                SendCommand(stt.workSocket, unauthorized.convertToString());
+                statusDelegate("Send Back Unauthorized Message ", fSyncServer.LOG_INFO);
+                return true;
+            }
+        }
+        public Boolean NewUser()
         {
             String username = "";
             String password = "";
@@ -195,7 +227,7 @@ namespace sync_server
             }
         }
 
-        public  Boolean StartSession(StateObject stt)
+        public  Boolean StartSession()
         {
 
             if (string.Compare(stt.client.usrDir, stt.cmd.Directory) != 0)
@@ -227,7 +259,7 @@ namespace sync_server
         }
 
 
-        public  Boolean SendFileClient(StateObject stt)
+        public  Boolean SendFileClient()
         {
             int index = userChecksum.FindIndex(x => x.FileNameClient == stt.cmd.FileName);
             String fileName = userChecksum[index].FileNameServer;
@@ -252,7 +284,7 @@ namespace sync_server
 
         }
 
-        public  Boolean DeleteFile(StateObject stt)
+        public  Boolean DeleteFile()
         {
             int index = userChecksum.FindIndex(x => x.FileNameClient == stt.cmd.FileName);
             userChecksum.RemoveAt(index);
@@ -260,7 +292,7 @@ namespace sync_server
             return true; // Da Implementare Meglio
         }
 
-        public  Boolean EndSync(StateObject stt)
+        public  Boolean EndSync()
         {
             //todo Update in the DB all file of the current version with a value equal to current version plus one 
             //todo Update user version on DB
@@ -271,7 +303,7 @@ namespace sync_server
             return true;
         }
 
-        public  Boolean NewFile(StateObject stt)
+        public  Boolean NewFile()
         {
             ReceiveFile(stt);
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
@@ -282,7 +314,7 @@ namespace sync_server
         }
 
 
-        public  Boolean EditFile(StateObject state)
+        public  Boolean EditFile()
         {
             int index = userChecksum.FindIndex(x => x.FileNameClient == state.cmd.FileName);
             userChecksum.RemoveAt(index);
@@ -295,7 +327,7 @@ namespace sync_server
             return true;
         }
 
-        public  Boolean RestoreVersion(StateObject state)
+        public  Boolean RestoreVersion( )
         {
             //todo Get list of all file belonging to the selected version
 
@@ -320,7 +352,7 @@ namespace sync_server
         }
 
 
-        public  void ReceiveFile(StateObject state)
+        public  void ReceiveFile( )
         {
             try
             {
