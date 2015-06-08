@@ -40,10 +40,12 @@
 			this.bStop = new System.Windows.Forms.Button();
 			this.bStart = new System.Windows.Forms.Button();
 			this.tVersions = new System.Windows.Forms.TabPage();
-			this.listView1 = new System.Windows.Forms.ListView();
-			this.lvUsers = new System.Windows.Forms.ListView();
-			this.lUsers = new System.Windows.Forms.Label();
 			this.lVersions = new System.Windows.Forms.Label();
+			this.lUsers = new System.Windows.Forms.Label();
+			this.lvUsers = new System.Windows.Forms.ListView();
+			this.listView1 = new System.Windows.Forms.ListView();
+			this.lConnectedUser = new System.Windows.Forms.Label();
+			this.lConnectedNum = new System.Windows.Forms.Label();
 			this.tabControl1.SuspendLayout();
 			this.tSettings.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.nPort)).BeginInit();
@@ -62,6 +64,8 @@
 			// 
 			// tSettings
 			// 
+			this.tSettings.Controls.Add(this.lConnectedNum);
+			this.tSettings.Controls.Add(this.lConnectedUser);
 			this.tSettings.Controls.Add(this.bBrowse);
 			this.tSettings.Controls.Add(this.tDirectory);
 			this.tSettings.Controls.Add(this.lDirectory);
@@ -73,7 +77,7 @@
 			this.tSettings.Controls.Add(this.bStart);
 			this.tSettings.Location = new System.Drawing.Point(4, 22);
 			this.tSettings.Name = "tSettings";
-			this.tSettings.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+			this.tSettings.Padding = new System.Windows.Forms.Padding(3);
 			this.tSettings.Size = new System.Drawing.Size(637, 402);
 			this.tSettings.TabIndex = 0;
 			this.tSettings.Text = "Settings";
@@ -180,27 +184,20 @@
 			this.tVersions.Controls.Add(this.listView1);
 			this.tVersions.Location = new System.Drawing.Point(4, 22);
 			this.tVersions.Name = "tVersions";
-			this.tVersions.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+			this.tVersions.Padding = new System.Windows.Forms.Padding(3);
 			this.tVersions.Size = new System.Drawing.Size(637, 402);
 			this.tVersions.TabIndex = 1;
 			this.tVersions.Text = "Versions";
 			this.tVersions.UseVisualStyleBackColor = true;
 			// 
-			// listView1
+			// lVersions
 			// 
-			this.listView1.Location = new System.Drawing.Point(3, 165);
-			this.listView1.Name = "listView1";
-			this.listView1.Size = new System.Drawing.Size(628, 231);
-			this.listView1.TabIndex = 0;
-			this.listView1.UseCompatibleStateImageBehavior = false;
-			// 
-			// lvUsers
-			// 
-			this.lvUsers.Location = new System.Drawing.Point(3, 28);
-			this.lvUsers.Name = "lvUsers";
-			this.lvUsers.Size = new System.Drawing.Size(628, 108);
-			this.lvUsers.TabIndex = 1;
-			this.lvUsers.UseCompatibleStateImageBehavior = false;
+			this.lVersions.AutoSize = true;
+			this.lVersions.Location = new System.Drawing.Point(6, 149);
+			this.lVersions.Name = "lVersions";
+			this.lVersions.Size = new System.Drawing.Size(47, 13);
+			this.lVersions.TabIndex = 3;
+			this.lVersions.Text = "Versions";
 			// 
 			// lUsers
 			// 
@@ -211,14 +208,39 @@
 			this.lUsers.TabIndex = 2;
 			this.lUsers.Text = "Users:";
 			// 
-			// lVersions
+			// lvUsers
 			// 
-			this.lVersions.AutoSize = true;
-			this.lVersions.Location = new System.Drawing.Point(6, 149);
-			this.lVersions.Name = "lVersions";
-			this.lVersions.Size = new System.Drawing.Size(47, 13);
-			this.lVersions.TabIndex = 3;
-			this.lVersions.Text = "Versions";
+			this.lvUsers.Location = new System.Drawing.Point(3, 28);
+			this.lvUsers.Name = "lvUsers";
+			this.lvUsers.Size = new System.Drawing.Size(628, 108);
+			this.lvUsers.TabIndex = 1;
+			this.lvUsers.UseCompatibleStateImageBehavior = false;
+			// 
+			// listView1
+			// 
+			this.listView1.Location = new System.Drawing.Point(3, 165);
+			this.listView1.Name = "listView1";
+			this.listView1.Size = new System.Drawing.Size(628, 231);
+			this.listView1.TabIndex = 0;
+			this.listView1.UseCompatibleStateImageBehavior = false;
+			// 
+			// lConnectedUser
+			// 
+			this.lConnectedUser.AutoSize = true;
+			this.lConnectedUser.Location = new System.Drawing.Point(475, 368);
+			this.lConnectedUser.Name = "lConnectedUser";
+			this.lConnectedUser.Size = new System.Drawing.Size(85, 13);
+			this.lConnectedUser.TabIndex = 1;
+			this.lConnectedUser.Text = "Connected user:";
+			// 
+			// lConnectedNum
+			// 
+			this.lConnectedNum.AutoSize = true;
+			this.lConnectedNum.Location = new System.Drawing.Point(566, 368);
+			this.lConnectedNum.Name = "lConnectedNum";
+			this.lConnectedNum.Size = new System.Drawing.Size(13, 13);
+			this.lConnectedNum.TabIndex = 9;
+			this.lConnectedNum.Text = "0";
 			// 
 			// fSyncServer
 			// 
@@ -256,6 +278,8 @@
 		private System.Windows.Forms.Label lUsers;
 		private System.Windows.Forms.ListView lvUsers;
 		private System.Windows.Forms.ListView listView1;
+		private System.Windows.Forms.Label lConnectedNum;
+		private System.Windows.Forms.Label lConnectedUser;
     }
 }
 

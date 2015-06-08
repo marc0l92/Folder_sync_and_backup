@@ -28,10 +28,10 @@ namespace sync_server
 			Stream fs = File.OpenRead(this.fileNameServer);
 			this.checksum = md5.ComputeHash(fs).ToString();
 		}
-        public FileChecksum(String fileS, String fileC, String checksum)
+        public FileChecksum(String fileServer, String fileClient, String checksum)
 		{
-			this.fileNameServer = fileS;
-            this.fileNameClient = fileC;
+			this.fileNameServer = fileServer;
+            this.fileNameClient = fileClient;
 			this.checksum = checksum;
 		}
 
