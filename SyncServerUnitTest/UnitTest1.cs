@@ -14,7 +14,6 @@ namespace SyncServerUnitTest
 			syncSql = new sync_server.SyncSQLite();
 			Assert.AreEqual(true, syncSql.newUser("admin", "admin", "/"));
 			Assert.AreEqual(false, syncSql.newUser("admin", "admin", "/"));
-			syncSql.destroyDatabase();
 		}
 
 		[TestMethod]
@@ -24,8 +23,7 @@ namespace SyncServerUnitTest
 			syncSql.destroyDatabase();
 			syncSql = new sync_server.SyncSQLite();
 			Assert.AreEqual(true, syncSql.newUser("admin", "admin", "/"));
-			Assert.AreEqual(true, syncSql.deleteUser("admin"));
-			syncSql.destroyDatabase();
+			Assert.AreEqual(true, syncSql.deleteUser(1));
 		}
 	}
 }
