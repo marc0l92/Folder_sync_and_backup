@@ -135,8 +135,8 @@ namespace sync_server
                         return NewFile();
                     case SyncCommand.CommandSet.EDIT:
                         return EditFile();
-                //   case SyncCommand.CommandSet.NEWUSER: //todo delete comment
-                    //       return NewUser();       //todo delete comment  
+                   case SyncCommand.CommandSet.NEWUSER: 
+                           return NewUser();       
                     //   	case SyncCommand.CommandSet.AUTHORIZED:
                     //           statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
                     //           return false;
