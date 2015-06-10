@@ -20,7 +20,6 @@ namespace sync_server
         public StringBuilder sb = new StringBuilder();
         // Received Cmd
         public SyncCommand cmd;
-        // Served Client
 
     }
 }

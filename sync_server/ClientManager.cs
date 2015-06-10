@@ -15,23 +15,27 @@ namespace sync_server
         private Thread clientThread;
         private StateObject stateClient;
         private SyncClient client= new SyncClient();
-        public delegate void StatusDelegate(String s, int type);
-        private StatusDelegate statusDelegate;
+        private AsyncManagerServer.StatusDelegate statusDelegate;
         private ManualResetEvent receiveDone = new ManualResetEvent(false);
         private Boolean syncEnd = false;
         private Boolean wellEnd = false;
         private List<FileChecksum> userChecksum;
 
-        public ClientManager(StateObject state)
+        public ClientManager(Socket sock)
         {
-            stateClient = state;
+            stateClient.workSocket = sock;
             clientThread = new Thread(new ThreadStart(doClient));
             clientThread.IsBackground = true;
             clientThread.Start();
             statusDelegate("Start ClientTheard Successfully ", fSyncServer.LOG_INFO);
         }
 
-        public void setStatusDelegate(StatusDelegate sd)
+        public void stop() {
+            // todo Cosa succede se sto sincronizzando? devo fare un restore?
+            syncEnd = true;
+        }
+
+        public void setStatusDelegate(AsyncManagerServer.StatusDelegate sd)
         {
             statusDelegate = sd;
         }
@@ -64,12 +68,11 @@ namespace sync_server
             {
                 // Begin receiving the data from the remote device.
                 client.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReceiveCallback), stateClient);
+                    new AsyncCallback(ReceiveCallback), null);
             }
             catch (Exception e)
             {
-
-                statusDelegate("Exception: " + e.ToString(), fSyncServer.LOG_INFO);
+                statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
             }
         }
 
@@ -94,7 +97,7 @@ namespace sync_server
                 {
                     // Get the rest of the data.
                     stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReceiveCallback), stateClient);
+                        new AsyncCallback(ReceiveCallback), null);
                 }
                 else
                 {
@@ -109,7 +112,7 @@ namespace sync_server
             }
             catch (Exception e)
             {
-                statusDelegate("Exception: " + e.ToString(), fSyncServer.LOG_INFO);
+                statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
             }
         }
 
@@ -126,7 +129,7 @@ namespace sync_server
                     case SyncCommand.CommandSet.GET:
                         return SendFileClient();
                     case SyncCommand.CommandSet.RESTORE: // Todo Da implementare RESTORE
-                        return false;
+                        return RestoreVersion();
                     case SyncCommand.CommandSet.ENDSYNC:
                         return EndSync();
                     case SyncCommand.CommandSet.DEL:
@@ -154,7 +157,7 @@ namespace sync_server
                     //          return false;
                     //			break;
                     default:
-                        statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
+                        statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO);
                         return true;
                 }
             }
@@ -175,14 +178,14 @@ namespace sync_server
             statusDelegate("Get user data on DB ", fSyncServer.LOG_INFO);
             if (true) //compared to the sended is true
             {
-                statusDelegate("User Credential Confermed ", fSyncServer.LOG_INFO);
+                statusDelegate("User Credential Confermed", fSyncServer.LOG_INFO);
                 client.usrNam = username;
                 client.usrPwd = password;
                 client.usrDir = directory;
                 client.vers = version;
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
-                statusDelegate("Send Back Authorized Message ", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Authorized Message", fSyncServer.LOG_INFO);
                 return true;
             }
             else
@@ -190,7 +193,7 @@ namespace sync_server
                 statusDelegate("User Credential NOT Confirmed", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
                 SendCommand(stateClient.workSocket, unauthorized.convertToString());
-                statusDelegate("Send Back Unauthorized Message ", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Unauthorized Message", fSyncServer.LOG_INFO);
                 return true;
             }
         }
@@ -199,20 +202,20 @@ namespace sync_server
             String username = "";
             String password = "";
             String directory = "";
-            int version = 0;
+            int version = 1;
            
             //todo check if doesn't exists add to DB
             
             if (true) //compared to the sended is true
             {
-                statusDelegate("User Added Succesfully  ", fSyncServer.LOG_INFO);
+                statusDelegate("User Added Succesfully", fSyncServer.LOG_INFO);
                 client.usrNam = username;
                 client.usrPwd = password;
                 client.usrDir = directory;
                 client.vers = version;
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
-                statusDelegate("Send Back Authorized Message ", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Authorized Message", fSyncServer.LOG_INFO);
                 return true;
             }
             else
@@ -220,15 +223,14 @@ namespace sync_server
                 statusDelegate("Username in CONFLICT choose another one", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
                 SendCommand(stateClient.workSocket, unauthorized.convertToString());
-                statusDelegate("Send Back Unauthorized Message ", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Unauthorized Message", fSyncServer.LOG_INFO);
                 return true;
             }
         }
 
         public  Boolean StartSession()
         {
-
-            if (string.Compare(client.usrDir, stateClient.cmd.Directory) != 0)
+            if (!client.usrDir.Equals(stateClient.cmd.Directory))
             {
                 statusDelegate("User Directory Change NOT Authorized", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
@@ -238,7 +240,6 @@ namespace sync_server
             }
             else
             {
-
                 statusDelegate("User Directory Authorized, Start Send Check", fSyncServer.LOG_INFO);
                 // todo Retreive filechecksum from the DB and save it into the state.userChecksum List to keep track of changes 
                 // Assignment stt.UserChecksum=;
@@ -246,12 +247,12 @@ namespace sync_server
                 {
                     SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum);
                     SendCommand(stateClient.workSocket, checkCommand.convertToString());
-                    statusDelegate("Send check Message ", fSyncServer.LOG_INFO);
+                    statusDelegate("Send check Message", fSyncServer.LOG_INFO);
                 }
 
                 SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
                 SendCommand(stateClient.workSocket, endcheck.convertToString());
-                statusDelegate("Send End check Message ", fSyncServer.LOG_INFO);
+                statusDelegate("Send End check Message", fSyncServer.LOG_INFO);
                 return true;
             }
         }
@@ -311,7 +312,6 @@ namespace sync_server
             return true;
         }
 
-
         public  Boolean EditFile()
         {
             int index = userChecksum.FindIndex(x => x.FileNameClient == stateClient.cmd.FileName);
@@ -328,7 +328,6 @@ namespace sync_server
         public  Boolean RestoreVersion( )
         {
             //todo Get list of all file belonging to the selected version
-
             foreach (FileChecksum check in userChecksum)
             {
                 if (File.Exists(check.FileNameServer))
@@ -354,14 +353,13 @@ namespace sync_server
         {
             try
             {
-
                 // Begin receiving the data from the remote device.
                 stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReceiveFileCallback), stateClient);
+                    new AsyncCallback(ReceiveFileCallback), null);
             }
             catch (Exception e)
             {
-                statusDelegate("Exception:" + e.ToString(), fSyncServer.LOG_INFO);
+                statusDelegate("Exception:" + e.Message, fSyncServer.LOG_INFO);
             }
         }
 
@@ -378,13 +376,8 @@ namespace sync_server
 
                 string fileName = stateClient.cmd.FileName + "_" + client.vers.ToString();
 
-
-                // Delete the file if it exists. 
-                if (File.Exists(fileName))
-                    fs = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
-                else
-                    fs = File.Create(fileName);
-
+                fs = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
+                
                 // Read data from the remote device.
                 int bytesRead = stateClient.workSocket.EndReceive(ar);
 
@@ -405,7 +398,7 @@ namespace sync_server
             }
             catch (Exception e)
             {
-                statusDelegate("Exception:" + e.ToString(), fSyncServer.LOG_INFO);
+                statusDelegate("Exception:" + e.Message, fSyncServer.LOG_INFO);
             }
         }
 
@@ -431,17 +424,14 @@ namespace sync_server
                 // Complete sending the data to the remote device.
                 int bytesSent = stateClient.workSocket.EndSend(ar);
                 statusDelegate("Send Command Byte number: " + bytesSent, fSyncServer.LOG_INFO);
-
-                stateClient.workSocket.Shutdown(SocketShutdown.Both);
-                stateClient.workSocket.Close();
-
             }
             catch (Exception e)
             {
-                statusDelegate("Exception: " + e.ToString(), fSyncServer.LOG_INFO);
+                statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
             }
         }
 
+        /*
         private void generateChecksum(String dir, int version)
         {
             String pattern = "[" + "_" + version.ToString() + "\\" + "Z" + "]";
@@ -460,6 +450,6 @@ namespace sync_server
             {
                 generateChecksum(subdirectoryPath, version);
             }
-        }
+        }*/
     }
 }
