@@ -9,7 +9,7 @@ namespace sync_clientWPF
 {
 	class SyncCommand
 	{
-		public enum CommandSet {START, LOGIN, AUTHORIZED, UNAUTHORIZED, REGISTER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ENDFILE};
+		public enum CommandSet {START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ENDFILE};
 		private CommandSet type;
 		private String directory;
 		private String fileName;
@@ -39,7 +39,7 @@ namespace sync_clientWPF
 				case CommandSet.UNAUTHORIZED:
 					if (args.Length != 0) throw new Exception("Wrong params count");
 					break;
-				case CommandSet.REGISTER:
+				case CommandSet.NEWUSER:
 					if (args.Length != 2) throw new Exception("Wrong params count");
 					username = args[0];
 					passwrod = args[1];
