@@ -20,6 +20,7 @@ namespace sync_server
         private Boolean syncEnd = false;
         private Boolean wellEnd = false;
         private List<FileChecksum> userChecksum;
+        private SyncCommand cmd;
 
         public ClientManager(Socket sock)
         {
@@ -104,7 +105,7 @@ namespace sync_server
                     // All the data has arrived; put it in response.
                     if (stateClient.sb.Length > 1)
                     {
-                        stateClient.cmd = SyncCommand.convertFromString(stateClient.sb.ToString());
+                        cmd = SyncCommand.convertFromString(stateClient.sb.ToString());
                     }
                     // Signal that all bytes have been received.
                     receiveDone.Set();
@@ -118,9 +119,9 @@ namespace sync_server
 
         public  Boolean doCommand()
         {
-            if (stateClient.cmd != null)
+            if (cmd != null)
             {
-                switch (stateClient.cmd.Type)
+                switch (cmd.Type)
                 {
                     case SyncCommand.CommandSet.LOGIN:
                         return LoginUser();
@@ -230,7 +231,7 @@ namespace sync_server
 
         public  Boolean StartSession()
         {
-            if (!client.usrDir.Equals(stateClient.cmd.Directory))
+            if (!client.usrDir.Equals(cmd.Directory))
             {
                 statusDelegate("User Directory Change NOT Authorized", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
@@ -260,9 +261,9 @@ namespace sync_server
 
         public  Boolean SendFileClient()
         {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == stateClient.cmd.FileName);
+            int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
             String fileName = userChecksum[index].FileNameServer;
-            SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, stateClient.cmd.FileName);
+            SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, cmd.FileName);
 
             if (File.Exists(fileName))
             {
@@ -285,7 +286,7 @@ namespace sync_server
 
         public  Boolean DeleteFile()
         {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == stateClient.cmd.FileName);
+            int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
             userChecksum.RemoveAt(index);
             statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
             return true; // Da Implementare Meglio
@@ -306,7 +307,7 @@ namespace sync_server
         {
             ReceiveFile();
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(stateClient.cmd.FileName + "_" + (client.vers + 1), stateClient.cmd.FileName);
+            FileChecksum file = new FileChecksum(cmd.FileName + "_" + (client.vers + 1), cmd.FileName);
             userChecksum.Add(file);
             statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
             return true;
@@ -314,12 +315,12 @@ namespace sync_server
 
         public  Boolean EditFile()
         {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == stateClient.cmd.FileName);
+            int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
             userChecksum.RemoveAt(index);
             statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
             ReceiveFile();
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(stateClient.cmd.FileName + "_" + (client.vers + 1), stateClient.cmd.FileName);
+            FileChecksum file = new FileChecksum(cmd.FileName + "_" + (client.vers + 1), cmd.FileName);
             userChecksum.Add(file);
             statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
             return true;
@@ -374,7 +375,7 @@ namespace sync_server
                 //Socket client = state.workSocket;
                 FileStream fs;
 
-                string fileName = stateClient.cmd.FileName + "_" + client.vers.ToString();
+                string fileName = cmd.FileName + "_" + client.vers.ToString();
 
                 fs = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
                 

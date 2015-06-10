@@ -18,8 +18,6 @@ namespace sync_server
         public byte[] buffer = new byte[BufferSize];
         // Received data string.
         public StringBuilder sb = new StringBuilder();
-        // Received Cmd
-        public SyncCommand cmd;
 
     }
 }
