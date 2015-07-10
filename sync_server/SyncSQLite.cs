@@ -124,7 +124,7 @@ namespace sync_server
             Int64 lastId = (Int64)command.ExecuteScalar();
 
             // todo create a table with the right name
-            this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL UNIQUE, client_file TEXT NOT NULL, checksum TEXT NOT NULL);");
+            this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL, client_file TEXT NOT NULL, checksum TEXT NOT NULL);");
             return lastId;
         }
 

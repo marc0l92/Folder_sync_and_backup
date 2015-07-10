@@ -147,23 +147,7 @@ namespace sync_server
                     case SyncCommand.CommandSet.EDIT:
                         return EditFile();
                    case SyncCommand.CommandSet.NEWUSER: 
-                           return NewUser();       
-                    //   	case SyncCommand.CommandSet.AUTHORIZED:
-                    //           statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
-                    //           return false;
-                    //		case SyncCommand.CommandSet.UNAUTHORIZED:
-                    //           statusDelegate("Recieved Wrong Command ", fSyncServer.LOG_INFO);
-                    //			return false;
-                    //		case SyncCommand.CommandSet.FILE:
-                    //          return false;
-                    //			break;
-
-                    //		case SyncCommand.CommandSet.CHECK:
-                    //          return false;
-                    //			break;
-                    //		case SyncCommand.CommandSet.ENDCHECK:
-                    //          return false;
-                    //			break;
+                           return NewUser();
                     default:
                         statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
                         return true;

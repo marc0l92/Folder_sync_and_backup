@@ -54,6 +54,9 @@
 			// 
 			// tabControl1
 			// 
+			this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.tabControl1.Controls.Add(this.tSettings);
 			this.tabControl1.Controls.Add(this.tVersions);
 			this.tabControl1.Location = new System.Drawing.Point(12, 12);
@@ -77,7 +80,7 @@
 			this.tSettings.Controls.Add(this.bStart);
 			this.tSettings.Location = new System.Drawing.Point(4, 22);
 			this.tSettings.Name = "tSettings";
-			this.tSettings.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+			this.tSettings.Padding = new System.Windows.Forms.Padding(3);
 			this.tSettings.Size = new System.Drawing.Size(637, 402);
 			this.tSettings.TabIndex = 0;
 			this.tSettings.Text = "Settings";
@@ -85,6 +88,7 @@
 			// 
 			// lConnectedNum
 			// 
+			this.lConnectedNum.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
 			this.lConnectedNum.AutoSize = true;
 			this.lConnectedNum.Location = new System.Drawing.Point(566, 368);
 			this.lConnectedNum.Name = "lConnectedNum";
@@ -94,6 +98,7 @@
 			// 
 			// lConnectedUser
 			// 
+			this.lConnectedUser.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
 			this.lConnectedUser.AutoSize = true;
 			this.lConnectedUser.Location = new System.Drawing.Point(475, 368);
 			this.lConnectedUser.Name = "lConnectedUser";
@@ -103,6 +108,7 @@
 			// 
 			// bBrowse
 			// 
+			this.bBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.bBrowse.Location = new System.Drawing.Point(602, 29);
 			this.bBrowse.Name = "bBrowse";
 			this.bBrowse.Size = new System.Drawing.Size(29, 23);
@@ -113,6 +119,8 @@
 			// 
 			// tDirectory
 			// 
+			this.tDirectory.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.tDirectory.Location = new System.Drawing.Point(117, 29);
 			this.tDirectory.Name = "tDirectory";
 			this.tDirectory.Size = new System.Drawing.Size(479, 20);
@@ -130,6 +138,9 @@
 			// 
 			// lbLog
 			// 
+			this.lbLog.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.lbLog.FormattingEnabled = true;
 			this.lbLog.Items.AddRange(new object[] {
             "Application started."});
@@ -175,6 +186,7 @@
 			// 
 			// bStop
 			// 
+			this.bStop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.bStop.Enabled = false;
 			this.bStop.Location = new System.Drawing.Point(114, 353);
 			this.bStop.Name = "bStop";
@@ -186,6 +198,7 @@
 			// 
 			// bStart
 			// 
+			this.bStart.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.bStart.Location = new System.Drawing.Point(6, 353);
 			this.bStart.Name = "bStart";
 			this.bStart.Size = new System.Drawing.Size(102, 43);
@@ -202,7 +215,7 @@
 			this.tVersions.Controls.Add(this.listView1);
 			this.tVersions.Location = new System.Drawing.Point(4, 22);
 			this.tVersions.Name = "tVersions";
-			this.tVersions.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+			this.tVersions.Padding = new System.Windows.Forms.Padding(3);
 			this.tVersions.Size = new System.Drawing.Size(637, 402);
 			this.tVersions.TabIndex = 1;
 			this.tVersions.Text = "Versions";
@@ -228,6 +241,8 @@
 			// 
 			// lvUsers
 			// 
+			this.lvUsers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.lvUsers.Location = new System.Drawing.Point(3, 28);
 			this.lvUsers.Name = "lvUsers";
 			this.lvUsers.Size = new System.Drawing.Size(628, 108);
@@ -236,6 +251,9 @@
 			// 
 			// listView1
 			// 
+			this.listView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.listView1.Location = new System.Drawing.Point(3, 165);
 			this.listView1.Name = "listView1";
 			this.listView1.Size = new System.Drawing.Size(628, 231);

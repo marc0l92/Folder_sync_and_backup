@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,6 +15,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml;
+
 
 namespace sync_clientWPF
 {
@@ -31,6 +35,10 @@ namespace sync_clientWPF
 			addVersion("test1", 1, 2, 3);
 			addVersion("test2", 2, 3, 4);
 			addVersion("test3", 3, 4, 5);
+
+			// load last settings
+			tAddress.Text = ConfigurationManager.AppSettings["address"].ToString();
+			tPort.Text = ConfigurationManager.AppSettings["port"].ToString();
 
 			// initialize my data structure
 			syncManager = new SyncManager(tAddress.Text, Convert.ToInt32(tPort.Text));
@@ -208,6 +216,7 @@ namespace sync_clientWPF
 			lbi.Content = newStatus;
 			lbStatus.Items.Add(lbi);
 		}
+
 	}
 
 	class VersionsListViewItem
