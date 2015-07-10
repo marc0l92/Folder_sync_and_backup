@@ -110,6 +110,7 @@ namespace sync_server
                     if (stateClient.sb.Length > 1)
                     {
                         cmd = SyncCommand.convertFromString(stateClient.sb.ToString());
+                        stateClient.sb.Clear();
                     }
                     // Signal that all bytes have been received.
                     receiveDone.Set();
@@ -220,7 +221,7 @@ namespace sync_server
                 client.usrID = userID;
                 client.usrNam = cmd.Username;
                 client.usrPwd = cmd.Password;
-                client.usrDir = cmd.Directory;
+                //client.usrDir = cmd.Directory;
                 client.vers = 0;
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
