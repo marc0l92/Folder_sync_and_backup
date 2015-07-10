@@ -17,7 +17,6 @@ namespace sync_server
         private SyncClient client= new SyncClient();
         private AsyncManagerServer.StatusDelegate statusDelegate;
         private ManualResetEvent receiveDone = new ManualResetEvent(false);
-        private ManualResetEvent fileDone = new ManualResetEvent(false);
         private Boolean syncEnd = false;
         private Boolean wellEnd = false;
         private List<FileChecksum> userChecksum;
@@ -188,7 +187,6 @@ namespace sync_server
                 statusDelegate("User Credential Confermed", fSyncServer.LOG_INFO);
                 client.usrNam = cmd.Username;
                 client.usrPwd = cmd.Password;
-                //client.usrDir = directory;
                 //client.vers = mySQLite.getUserLastVersion();
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
@@ -248,6 +246,8 @@ namespace sync_server
             else
             {
                 client.usrID = userID;
+                serverDir += "\\user" + client.usrID;
+                client.usrDir = cmd.Directory;
                 client.vers = mySQLite.getUserLastVersion(client.usrID); //Call DB Get Last Version
                 statusDelegate("User Directory Authorized, Start Send Check", fSyncServer.LOG_INFO);
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
@@ -316,13 +316,10 @@ namespace sync_server
 
         public  Boolean NewFile()
         {
-            fileDone.Reset();
-            ReceiveFile();
-            fileDone.WaitOne();
+            string fileName = serverDir + cmd.FileName + "_" + (client.vers);
+            ReceiveFile(fileName, cmd.FileSize);
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            String flnm;
-            flnm = serverDir + cmd.FileName + "_" + client.vers;
-            FileChecksum file = new FileChecksum(flnm, cmd.FileName);
+            FileChecksum file = new FileChecksum(fileName, cmd.FileName);
             userChecksum.Add(file);
             statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
             return true;
@@ -333,7 +330,8 @@ namespace sync_server
             int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
             userChecksum.RemoveAt(index);
             statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
-            ReceiveFile();
+            string fileName = serverDir + cmd.FileName + "_" + (client.vers);
+            ReceiveFile(fileName, cmd.FileSize);
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
             FileChecksum file = new FileChecksum(serverDir + cmd.FileName + "_" + client.vers, cmd.FileName);
             userChecksum.Add(file);
@@ -369,61 +367,82 @@ namespace sync_server
         }
 
 
-        public  void ReceiveFile( )
+        public  void ReceiveFile(String fileName, Int64 fileLength)
         {
-            try
+            if (!Directory.Exists(Path.GetDirectoryName(fileName)))
             {
-                // Begin receiving the data from the remote device.
-                stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReceiveFileCallback), null);
+                Directory.CreateDirectory(Path.GetDirectoryName(fileName));
             }
-            catch (Exception e)
+            byte[] data = new byte[1024];
+            System.IO.StreamWriter file = new System.IO.StreamWriter(fileName);
+            // Receive data from the server
+            while (fileLength > 0)
             {
-                statusDelegate("Exception:" + e.Message, fSyncServer.LOG_INFO);
+                fileLength -= stateClient.workSocket.Receive(data);
+                file.Write(data);
             }
+            file.Close();
+            SyncCommand command = new SyncCommand(SyncCommand.CommandSet.ENDFILE);
+            SendCommand(stateClient.workSocket, command.convertToString());
+            
+
+
+            //try
+            //{
+            //    // Begin receiving the data from the remote device.
+            //    stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
+            //        new AsyncCallback(ReceiveFileCallback), null);
+            //}
+            //catch (Exception e)
+            //{
+            //    statusDelegate("Exception:" + e.Message, fSyncServer.LOG_INFO);
+            //}
         }
 
 
-        public  void ReceiveFileCallback(IAsyncResult ar)
-        {
-            try
-            {
-                // Retrieve the state object and the client socket 
-                // from the asynchronous state object.
-               // StateObject state = (StateObject)ar.AsyncState;
-                //Socket client = state.workSocket;
-                FileStream fs;
+        //public  void ReceiveFileCallback(IAsyncResult ar)
+        //{
+        //    try
+        //    {
+        //        // Retrieve the state object and the client socket 
+        //        // from the asynchronous state object.
+        //       // StateObject state = (StateObject)ar.AsyncState;
+        //        //Socket client = state.workSocket;
+        //        FileStream fs;
+        //        string fileName = serverDir + cmd.FileName + "_" + (client.vers);
 
+        //        if (!Directory.Exists(Path.GetDirectoryName(fileName)))
+        //        {
+        //            Directory.CreateDirectory( Path.GetDirectoryName(fileName));
+        //        }
 
-                string fileName = serverDir + cmd.FileName + "_" + (client.vers);
-
-                fs = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
+        //        fs = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
                 
-                // Read data from the remote device.
-                int bytesRead = stateClient.workSocket.EndReceive(ar);
+        //        // Read data from the remote device.
+        //        int bytesRead = stateClient.workSocket.EndReceive(ar);
 
-                if (bytesRead > 0)
-                {
-                    fs.WriteAsync(stateClient.buffer, 0, bytesRead);
-                    // There might be more data, so store the data received so far.
-                    //state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
+        //        if (bytesRead > 0)
+        //        {
+        //            fs.WriteAsync(stateClient.buffer, 0, bytesRead);
+        //            // There might be more data, so store the data received so far.
+        //            //state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
+        //            fs.Close();
 
-                    // Get the rest of the data.
-                    stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReceiveCallback), stateClient);
-                }
-                else
-                {
-                    fs.Close();
-
-                    fileDone.Set();
-                }
-            }
-            catch (Exception e)
-            {
-                statusDelegate("Exception:" + e.Message, fSyncServer.LOG_INFO);
-            }
-        }
+        //            // Get the rest of the data.
+        //            stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
+        //                new AsyncCallback(ReceiveFileCallback), stateClient);
+        //        }
+        //        else
+        //        {
+        //            fs.Close();
+        //            fileDone.Set();
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        statusDelegate("Exception:" + e.Message, fSyncServer.LOG_INFO);
+        //    }
+        //}
 
         public  void SendCommand(Socket handler, String data)
         {

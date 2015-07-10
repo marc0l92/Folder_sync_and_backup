@@ -100,12 +100,13 @@ namespace sync_server
 			return JsonConvert.DeserializeObject<SyncCommand>(jsonString);
 		}
 		[JsonConstructor]
-		public SyncCommand(CommandSet Type, String Directory, String FileName, int Version, String Checksum, String Username, String Password)
+        public SyncCommand(CommandSet Type, String Directory, String FileName, Int64 Version, Int64 FileSize, String Checksum, String Username, String Password)
 		{
 			this.type = Type;
 			this.directory = Directory;
 			this.fileName = FileName;
 			this.version = Version;
+            this.fileSize = FileSize;
 			this.checksum = Checksum;
 			this.username = Username;
 			this.passwrod = Password;
@@ -157,7 +158,7 @@ namespace sync_server
 					return null;
 			}
 		}
-		public int Version
+		public Int64 Version
 		{
 			get
 			{
