@@ -46,9 +46,9 @@ namespace sync_server
             if (!Directory.Exists(workDir))
             {
                 throw new Exception("Directory not exists");
-                defaultDir = workDir;
             }
             // Server start
+            defaultDir = workDir;
             Thread listeningThread = new Thread(new ThreadStart(StartListening));
             listeningThread.IsBackground = true;
             listeningThread.Start();
