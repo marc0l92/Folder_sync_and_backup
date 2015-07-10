@@ -21,10 +21,12 @@ namespace sync_server
         private Boolean wellEnd = false;
         private List<FileChecksum> userChecksum;
         private SyncCommand cmd;
+        private SyncSQLite mySQLite;
 
         public ClientManager(Socket sock)
         {
             stateClient.workSocket = sock;
+            mySQLite = new SyncSQLite();
             clientThread = new Thread(new ThreadStart(doClient));
             clientThread.IsBackground = true;
             clientThread.Start();
@@ -158,7 +160,7 @@ namespace sync_server
                     //          return false;
                     //			break;
                     default:
-                        statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO);
+                        statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
                         return true;
                 }
             }
@@ -170,20 +172,18 @@ namespace sync_server
         }
         public  Boolean LoginUser()
         {
-            String username = "";
-            String password = "";
-            String directory = "";
-            int version = 0;
-            //Get credential by DB
-            //Check if user is just logged in
+
+           // String directory = "";
+            // int version = 0;
+
             statusDelegate("Get user data on DB ", fSyncServer.LOG_INFO);
-            if (true) //compared to the sended is true
+            if (mySQLite.authenticateUser(cmd.Username, cmd.Password)) //Call DB Authentication User
             {
                 statusDelegate("User Credential Confermed", fSyncServer.LOG_INFO);
-                client.usrNam = username;
-                client.usrPwd = password;
-                client.usrDir = directory;
-                client.vers = version;
+                client.usrNam = cmd.Username;
+                client.usrPwd = cmd.Password;
+                //client.usrDir = directory;
+                //client.vers = mySQLite.getUserLastVersion();
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
                 statusDelegate("Send Back Authorized Message", fSyncServer.LOG_INFO);
@@ -198,6 +198,7 @@ namespace sync_server
                 return true;
             }
         }
+
         public Boolean NewUser()
         {
             String username = "";
@@ -231,7 +232,9 @@ namespace sync_server
 
         public  Boolean StartSession()
         {
-            if (!client.usrDir.Equals(cmd.Directory))
+            Int64 userID = mySQLite.checkUserDirectory(client.usrNam, cmd.Directory); //Call DB Check Directory User
+
+            if (userID==-1)
             {
                 statusDelegate("User Directory Change NOT Authorized", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
@@ -241,9 +244,11 @@ namespace sync_server
             }
             else
             {
+                client.usrID = userID;
+                client.vers = mySQLite.getUserLastVersion(client.usrID); //Call DB Get Last Version
                 statusDelegate("User Directory Authorized, Start Send Check", fSyncServer.LOG_INFO);
-                // todo Retreive filechecksum from the DB and save it into the state.userChecksum List to keep track of changes 
-                // Assignment stt.UserChecksum=;
+                userChecksum = mySQLite.getUserFiles(client.usrID, client.vers); //Call DB Get Users Files
+               
                 foreach (FileChecksum check in userChecksum)
                 {
                     SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum);

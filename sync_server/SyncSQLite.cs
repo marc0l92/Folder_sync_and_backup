@@ -54,6 +54,7 @@ namespace sync_server
 			SQLiteCommand command = new SQLiteCommand(query, connection);
 			return command.ExecuteNonQuery();
 		}
+
 		private int executeQuery(String query, Object param1)
 		{
 			// Example: "SELECT something FROM tabletop WHERE color = @param1"

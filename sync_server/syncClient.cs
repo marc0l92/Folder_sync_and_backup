@@ -11,6 +11,7 @@ namespace sync_server
         public String usrDir;
         public String usrNam;
         public String usrPwd;
-        public int vers;
+        public Int64 usrID;
+        public Int64 vers;
     }
 }
