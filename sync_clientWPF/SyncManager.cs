@@ -24,10 +24,12 @@ namespace sync_clientWPF
 		private Socket tcpClient;
 		private String receivedBuffer = "";
 
-		public SyncManager()
+		public SyncManager(String address, int port)
 		{
 			serverFileChecksum = new List<FileChecksum>();
 			clientFileChecksum = new List<FileChecksum>();
+			this.address = address;
+			this.port = port;
 		}
 
 		public void setStatusDelegate(StatusDelegate sd)
@@ -37,9 +39,10 @@ namespace sync_clientWPF
 
 		public bool login(String username, String password, bool register = false)
 		{
+			serverConnect(); // todo async connection
 			if (register)
 			{
-				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.REGISTER, username, password));
+				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEWUSER, username, password));
 			}
 			else
 			{
@@ -72,10 +75,11 @@ namespace sync_clientWPF
 		{
 			this.thread_stopped = true;
 			// Release the socket.
+			/*
 			if (tcpClient.IsBound)
 			{
 				tcpClient.Shutdown(SocketShutdown.Both);
-			}
+			}*/
 			tcpClient.Close();
 			if (syncThread.IsAlive)
 			{
@@ -83,22 +87,27 @@ namespace sync_clientWPF
 			}
 		}
 
+		private void serverConnect()
+		{
+			statusDelegate("Request address form DNS");
+			// Generate the remote endpoint
+			IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
+
+			//IPAddress ipAddress = ipHostInfo.AddressList[0];
+			IPAddress ipAddress = new IPAddress(new byte[] { 127, 0, 0, 1 }); // localhost
+			IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
+			// Create a TCP/IP socket
+			tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+			// Connect to the remote endpoint
+			statusDelegate("Starting connection...");
+			tcpClient.Connect(remoteEP);
+			statusDelegate("Connected to: " + tcpClient.RemoteEndPoint.ToString());
+		}
+
 		private void doSync()
 		{
 			try
 			{
-				statusDelegate("Request address form DNS");
-				// Generate the remote endpoint
-				IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
-				IPAddress ipAddress = ipHostInfo.AddressList[0];
-				IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
-				// Create a TCP/IP socket
-				tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-				// Connect to the remote endpoint
-				statusDelegate("Starting connection...");
-				tcpClient.Connect(remoteEP);
-				statusDelegate("Connected to: " + tcpClient.RemoteEndPoint.ToString());
-
 				// Do the first connection
 				statusDelegate("Send START");
 				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
@@ -207,8 +216,8 @@ namespace sync_clientWPF
 				dataRec = tcpClient.Receive(data);
 				receivedBuffer += Encoding.ASCII.GetString(data, 0, dataRec);
 			}
-			sc = SyncCommand.convertFromString(receivedBuffer.Substring(0, jsonEnd));
-			receivedBuffer = receivedBuffer.Substring(jsonEnd); 
+			sc = SyncCommand.convertFromString(receivedBuffer.Substring(0, jsonEnd+1));
+			receivedBuffer = receivedBuffer.Substring(jsonEnd+1); 
 			return sc;
 		}
 

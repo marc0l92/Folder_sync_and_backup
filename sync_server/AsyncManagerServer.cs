@@ -15,12 +15,14 @@ namespace sync_server
     {
         // Thread signal.
         private int localport;
-        private IPAddress localAddr = IPAddress.Parse("192.168.1.109");
+        //private IPAddress localAddr = IPAddress.Parse("192.168.1.109");
+		private IPAddress localAddr = IPAddress.Parse("127.0.0.1");
 
         public delegate void StatusDelegate(String s, int type);
         private delegate void EndClientDelegate();
-        private EndClientDelegate endClientDelegate;
+        private EndClientDelegate endClientDelegate = null;
         private StatusDelegate statusDelegate;
+		private Socket listener;
 
         public ManualResetEvent allDone = new ManualResetEvent(false);
         private bool serverStopped = false;
@@ -61,8 +63,8 @@ namespace sync_server
             IPEndPoint localEndPoint = new IPEndPoint(localAddr, localport);
 
             // Create a TCP/IP socket.
-            Socket listener = new Socket(AddressFamily.InterNetwork,
-                SocketType.Stream, ProtocolType.Tcp);
+            listener = new Socket(AddressFamily.InterNetwork,
+            SocketType.Stream, ProtocolType.Tcp);
 
             // Bind the socket to the local endpoint and listen for incoming connections.
             try
@@ -70,7 +72,7 @@ namespace sync_server
                 listener.Bind(localEndPoint);
                 listener.Listen(100);
 
-                statusDelegate("Start Listening on Port: " + localport + "Address: " + localAddr, fSyncServer.LOG_INFO);
+                statusDelegate("Start Listening on Port: " + localport + "; Address: " + localAddr, fSyncServer.LOG_INFO);
                 while (!serverStopped)
                 {
                     // Set the event to nonsignaled state.
@@ -80,11 +82,8 @@ namespace sync_server
                     listener.BeginAccept(
                         new AsyncCallback(AcceptCallback),
                         listener);
-
-                    statusDelegate("Connected and Created New Thred to Serve Client", fSyncServer.LOG_INFO);
-                    // Wait until a connection is made before continuing.
-                    allDone.WaitOne();
-                    statusDelegate("Main Thread Free", fSyncServer.LOG_INFO);
+					// Wait until a connection is made before continuing.
+					allDone.WaitOne();
                 }
 
             }
@@ -99,26 +98,34 @@ namespace sync_server
         {
             // Signal the main thread to continue.
             allDone.Set();
-            statusDelegate("Slave Thread created Successfully ", fSyncServer.LOG_INFO);
             // Get the socket that handles the client request.
-            Socket listener = (Socket)ar.AsyncState;
-            Socket handler = listener.EndAccept(ar);
+			if (!serverStopped)
+			{
+				Socket handler = listener.EndAccept(ar);
 
-            // Create the state object.
-            //StateObject state = new StateObject();
-            //state.workSocket = handler;
-            // handler.BeginReceive( state.buffer, 0, StateObject.BufferSize, 0,
-            //   new AsyncCallback(ReadCallback), state);
-            ClientManager client = new ClientManager(handler);
-            client.setStatusDelegate(statusDelegate);
-            endClientDelegate += new EndClientDelegate(client.stop);
+				// Create the state object.
+				//StateObject state = new StateObject();
+				//state.workSocket = handler;
+				// handler.BeginReceive( state.buffer, 0, StateObject.BufferSize, 0,
+				//   new AsyncCallback(ReadCallback), state);
+				ClientManager client = new ClientManager(handler);
+				client.setStatusDelegate(statusDelegate);
+				if (endClientDelegate == null)
+					endClientDelegate = new EndClientDelegate(client.stop);
+				else
+					endClientDelegate += new EndClientDelegate(client.stop);
+
+				statusDelegate("Connected and Created New Thred to Serve Client", fSyncServer.LOG_INFO);
+			}
         }
 
         //Function Stop Sync Button
         public void stopSync()
         {
-            endClientDelegate();
-            serverStopped = true;
+			if (endClientDelegate != null)
+				endClientDelegate();
+			serverStopped = true;
+			listener.Close();
             statusDelegate("Server stopped", fSyncServer.LOG_INFO);
         }
     }

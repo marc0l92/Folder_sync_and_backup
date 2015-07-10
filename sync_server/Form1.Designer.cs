@@ -30,6 +30,8 @@
         {
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tSettings = new System.Windows.Forms.TabPage();
+			this.lConnectedNum = new System.Windows.Forms.Label();
+			this.lConnectedUser = new System.Windows.Forms.Label();
 			this.bBrowse = new System.Windows.Forms.Button();
 			this.tDirectory = new System.Windows.Forms.TextBox();
 			this.lDirectory = new System.Windows.Forms.Label();
@@ -44,8 +46,6 @@
 			this.lUsers = new System.Windows.Forms.Label();
 			this.lvUsers = new System.Windows.Forms.ListView();
 			this.listView1 = new System.Windows.Forms.ListView();
-			this.lConnectedUser = new System.Windows.Forms.Label();
-			this.lConnectedNum = new System.Windows.Forms.Label();
 			this.tabControl1.SuspendLayout();
 			this.tSettings.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.nPort)).BeginInit();
@@ -83,6 +83,24 @@
 			this.tSettings.Text = "Settings";
 			this.tSettings.UseVisualStyleBackColor = true;
 			// 
+			// lConnectedNum
+			// 
+			this.lConnectedNum.AutoSize = true;
+			this.lConnectedNum.Location = new System.Drawing.Point(566, 368);
+			this.lConnectedNum.Name = "lConnectedNum";
+			this.lConnectedNum.Size = new System.Drawing.Size(13, 13);
+			this.lConnectedNum.TabIndex = 9;
+			this.lConnectedNum.Text = "0";
+			// 
+			// lConnectedUser
+			// 
+			this.lConnectedUser.AutoSize = true;
+			this.lConnectedUser.Location = new System.Drawing.Point(475, 368);
+			this.lConnectedUser.Name = "lConnectedUser";
+			this.lConnectedUser.Size = new System.Drawing.Size(85, 13);
+			this.lConnectedUser.TabIndex = 1;
+			this.lConnectedUser.Text = "Connected user:";
+			// 
 			// bBrowse
 			// 
 			this.bBrowse.Location = new System.Drawing.Point(602, 29);
@@ -99,7 +117,7 @@
 			this.tDirectory.Name = "tDirectory";
 			this.tDirectory.Size = new System.Drawing.Size(479, 20);
 			this.tDirectory.TabIndex = 7;
-			this.tDirectory.Text = "C:\\Users\\Andrea Ferri\\Desktop\\SyncFolder";
+			this.tDirectory.Text = "D:\\ProgettoMalnati\\server";
 			// 
 			// lDirectory
 			// 
@@ -223,24 +241,6 @@
 			this.listView1.Size = new System.Drawing.Size(628, 231);
 			this.listView1.TabIndex = 0;
 			this.listView1.UseCompatibleStateImageBehavior = false;
-			// 
-			// lConnectedUser
-			// 
-			this.lConnectedUser.AutoSize = true;
-			this.lConnectedUser.Location = new System.Drawing.Point(475, 368);
-			this.lConnectedUser.Name = "lConnectedUser";
-			this.lConnectedUser.Size = new System.Drawing.Size(85, 13);
-			this.lConnectedUser.TabIndex = 1;
-			this.lConnectedUser.Text = "Connected user:";
-			// 
-			// lConnectedNum
-			// 
-			this.lConnectedNum.AutoSize = true;
-			this.lConnectedNum.Location = new System.Drawing.Point(566, 368);
-			this.lConnectedNum.Name = "lConnectedNum";
-			this.lConnectedNum.Size = new System.Drawing.Size(13, 13);
-			this.lConnectedNum.TabIndex = 9;
-			this.lConnectedNum.Text = "0";
 			// 
 			// fSyncServer
 			// 

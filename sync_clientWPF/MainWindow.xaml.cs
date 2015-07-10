@@ -33,7 +33,7 @@ namespace sync_clientWPF
 			addVersion("test3", 3, 4, 5);
 
 			// initialize my data structure
-			syncManager = new SyncManager();
+			syncManager = new SyncManager(tAddress.Text, Convert.ToInt32(tPort.Text));
 			syncManager.setStatusDelegate(updateStatus);
 		}
 
@@ -197,7 +197,7 @@ namespace sync_clientWPF
 			{
 				// TODO login at startup
 				// i have to create the connection in order to perform the login
-				//openLogin();
+				openLogin();
 			}));
 		}
 

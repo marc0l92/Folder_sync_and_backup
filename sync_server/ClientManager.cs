@@ -36,6 +36,7 @@ namespace sync_server
         public void stop() {
             // todo Cosa succede se sto sincronizzando? devo fare un restore?
             syncEnd = true;
+            stateClient.workSocket.Close();
         }
 
         public void setStatusDelegate(AsyncManagerServer.StatusDelegate sd)
@@ -201,20 +202,16 @@ namespace sync_server
 
         public Boolean NewUser()
         {
-            String username = "";
-            String password = "";
-            String directory = "";
-            int version = 1;
-           
-            //todo check if doesn't exists add to DB
-            
-            if (true) //compared to the sended is true
+            client.usrID = mySQLite.newUser(cmd.Username, cmd.Password, cmd.Directory);
+
+
+            if (client.usrID!=-1) //Call DB New User
             {
                 statusDelegate("User Added Succesfully", fSyncServer.LOG_INFO);
-                client.usrNam = username;
-                client.usrPwd = password;
-                client.usrDir = directory;
-                client.vers = version;
+                client.usrNam = cmd.Username;
+                client.usrPwd = cmd.Password;
+                client.usrDir = cmd.Directory;
+                client.vers = 0;
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
                 statusDelegate("Send Back Authorized Message", fSyncServer.LOG_INFO);
