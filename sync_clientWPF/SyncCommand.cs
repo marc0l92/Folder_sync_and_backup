@@ -176,7 +176,7 @@ namespace sync_clientWPF
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN)
+				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return username;
 				else
 					return null;
@@ -186,7 +186,7 @@ namespace sync_clientWPF
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN)
+				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return passwrod;
 				else
 					return null;

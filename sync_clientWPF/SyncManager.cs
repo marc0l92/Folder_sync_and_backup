@@ -93,8 +93,8 @@ namespace sync_clientWPF
 			// Generate the remote endpoint
 			IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
 
-			//IPAddress ipAddress = ipHostInfo.AddressList[0];
-			IPAddress ipAddress = new IPAddress(new byte[] { 127, 0, 0, 1 }); // localhost
+			IPAddress ipAddress = ipHostInfo.AddressList[0];
+			//IPAddress ipAddress = new IPAddress(new byte[] { 127, 0, 0, 1 }); // localhost
 			IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 			// Create a TCP/IP socket
 			tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
