@@ -178,7 +178,7 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN)
+                if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return username;
 				else
 					return null;
@@ -188,7 +188,7 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN)
+                if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return passwrod;
 				else
 					return null;

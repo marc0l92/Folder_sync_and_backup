@@ -25,12 +25,13 @@ namespace sync_server
 
         public ClientManager(Socket sock)
         {
+            stateClient = new StateObject();
             stateClient.workSocket = sock;
             mySQLite = new SyncSQLite();
             clientThread = new Thread(new ThreadStart(doClient));
             clientThread.IsBackground = true;
             clientThread.Start();
-            statusDelegate("Start ClientTheard Successfully ", fSyncServer.LOG_INFO);
+            //statusDelegate("Start ClientTheard Successfully ", fSyncServer.LOG_INFO);
         }
 
         public void stop() {
@@ -202,12 +203,21 @@ namespace sync_server
 
         public Boolean NewUser()
         {
-            client.usrID = mySQLite.newUser(cmd.Username, cmd.Password, cmd.Directory);
+            Int64 userID = mySQLite.newUser(cmd.Username, cmd.Password, "/Directory");
 
-
-            if (client.usrID!=-1) //Call DB New User
+            if (userID==-1) //Call DB New User
+            {
+                
+                statusDelegate("Username in CONFLICT choose another one", fSyncServer.LOG_INFO);
+                SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
+                SendCommand(stateClient.workSocket, unauthorized.convertToString());
+                statusDelegate("Send Back Unauthorized Message", fSyncServer.LOG_INFO);
+                return true;
+            }
+            else
             {
                 statusDelegate("User Added Succesfully", fSyncServer.LOG_INFO);
+                client.usrID = userID;
                 client.usrNam = cmd.Username;
                 client.usrPwd = cmd.Password;
                 client.usrDir = cmd.Directory;
@@ -215,14 +225,6 @@ namespace sync_server
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
                 statusDelegate("Send Back Authorized Message", fSyncServer.LOG_INFO);
-                return true;
-            }
-            else
-            {
-                statusDelegate("Username in CONFLICT choose another one", fSyncServer.LOG_INFO);
-                SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
-                SendCommand(stateClient.workSocket, unauthorized.convertToString());
-                statusDelegate("Send Back Unauthorized Message", fSyncServer.LOG_INFO);
                 return true;
             }
         }
@@ -296,8 +298,9 @@ namespace sync_server
 
         public  Boolean EndSync()
         {
-            //todo Update in the DB all file of the current version with a value equal to current version plus one 
-            //todo Update user version on DB
+           
+            client.vers++;
+            mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
             statusDelegate("DB Updated Correctly, Start Rename Files ", fSyncServer.LOG_INFO);
             //Get List
             syncEnd = true;
@@ -331,6 +334,7 @@ namespace sync_server
         public  Boolean RestoreVersion( )
         {
             //todo Get list of all file belonging to the selected version
+            userChecksum = mySQLite.getUserFiles(client.usrID, cmd.Version); //Call DB Retrieve Version to Restore
             foreach (FileChecksum check in userChecksum)
             {
                 if (File.Exists(check.FileNameServer))
@@ -348,6 +352,9 @@ namespace sync_server
                     statusDelegate("File doesn't exists  " + check.FileNameServer, fSyncServer.LOG_INFO);
                 }
             }
+
+            client.vers++;
+            mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
             return true;
         }
 
