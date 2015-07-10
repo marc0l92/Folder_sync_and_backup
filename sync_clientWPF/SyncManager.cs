@@ -233,13 +233,16 @@ namespace sync_clientWPF
 
 		private void sendFile(String path)
 		{
-			int bytesSent;
-			byte[] fileContent = File.ReadAllBytes(path);
-			while (fileContent.Length > 0)
-			{
-				bytesSent = tcpClient.Send(fileContent);
-				fileContent.CopyTo(fileContent, bytesSent); // cat the message part already sent
-			}
+			tcpClient.SendFile(path);
+			
+			//int bytesSent;
+			//byte[] fileContent = File.ReadAllBytes(path);
+			
+			//while (fileContent.Length > 0)
+			//{
+			//	bytesSent = tcpClient.Send(fileContent);
+			//	fileContent.CopyTo(fileContent, bytesSent); // cat the message part already sent
+			//}
 			if (receiveCommand().Type != SyncCommand.CommandSet.ENDFILE)
 			{
 				statusDelegate("Error during file trasmission", true);

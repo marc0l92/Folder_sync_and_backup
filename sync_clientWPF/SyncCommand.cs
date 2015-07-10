@@ -13,7 +13,7 @@ namespace sync_clientWPF
 		private CommandSet type;
 		private String directory;
 		private String fileName;
-		private int version;
+		private Int64 version, fileSize;
 		private String checksum;
 		private String username, passwrod;
 
@@ -55,8 +55,9 @@ namespace sync_clientWPF
 					fileName = args[0];
 					break;
 				case CommandSet.NEW:
-					if (args.Length != 1) throw new Exception("Wrong params count");
+					if (args.Length != 2) throw new Exception("Wrong params count");
 					fileName = args[0];
+					fileSize = Int64.Parse(args[1]);
 					break;
 				case CommandSet.FILE:
 					if (args.Length != 1) throw new Exception("Wrong params count");
@@ -194,5 +195,17 @@ namespace sync_clientWPF
 					return null;
 			}
 		}
+
+		public Int64 FileSize
+		{
+			get
+			{
+				if (this.type == CommandSet.NEW)
+					return fileSize;
+				else
+					return -1;
+			}
+		}
+
 	}
 }

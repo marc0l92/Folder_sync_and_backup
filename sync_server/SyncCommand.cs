@@ -13,7 +13,7 @@ namespace sync_server
 		private CommandSet type;
 		private String directory;
 		private String fileName;
-		private int version;
+		private Int64 version, fileSize;
 		private String checksum;
 		private String username, passwrod;
 
@@ -56,8 +56,9 @@ namespace sync_server
 					fileName = args[0];
 					break;
 				case CommandSet.NEW:
-					if (args.Length != 1) throw new Exception("Wrong params count");
+					if (args.Length != 2) throw new Exception("Wrong params count");
 					fileName = args[0];
+					fileSize = Int64.Parse(args[1]);
 					break;
 				case CommandSet.FILE:
 					if (args.Length != 1) throw new Exception("Wrong params count");
@@ -180,7 +181,7 @@ namespace sync_server
 		{
 			get
 			{
-                if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
+				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return username;
 				else
 					return null;
@@ -190,11 +191,23 @@ namespace sync_server
 		{
 			get
 			{
-                if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
+				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return passwrod;
 				else
 					return null;
 			}
 		}
+
+		public Int64 FileSize
+		{
+			get
+			{
+				if (this.type == CommandSet.NEW)
+					return fileSize;
+				else
+					return -1;
+			}
+		}
+
 	}
 }
