@@ -164,7 +164,7 @@ namespace sync_clientWPF
 				if (pos < 0)
 				{
 					// create a new file on the server
-					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, this.removeBaseDir(currentFile.FileName)));
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, this.removeBaseDir(currentFile.FileName), currentFile.FileName##));
 					this.sendFile(currentFile.FileName);
 				}
 				else
@@ -268,13 +268,14 @@ namespace sync_clientWPF
 
 			return serverCheckList;
 		}
-		private void getFile(String path)
+		private void getFile(String path, Int64 fileLength)
 		{
 			byte[] data = new byte[1024];
 			System.IO.StreamWriter file = new System.IO.StreamWriter(path);
 			// Receive data from the server
-			while (tcpClient.Receive(data)>0)
+			while (fileLength>0)
 			{
+				fileLength -= tcpClient.Receive(data);
 				file.Write(data);
 			}
 			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ENDFILE));
