@@ -319,7 +319,7 @@ namespace sync_server
             string fileName = serverDir + cmd.FileName + "_" + (client.vers);
             ReceiveFile(fileName, cmd.FileSize);
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(fileName, cmd.FileName);
+            FileChecksum file = new FileChecksum(cmd.FileName, fileName);
             userChecksum.Add(file);
             statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
             return true;
