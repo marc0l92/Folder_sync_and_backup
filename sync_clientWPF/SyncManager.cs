@@ -37,12 +37,12 @@ namespace sync_clientWPF
 			this.statusDelegate = sd;
 		}
 
-		public bool login(String username, String password, bool register = false)
+		public bool login(String username, String password, String directory = "", bool register = false)
 		{
 			serverConnect(); // todo async connection
 			if (register)
 			{
-				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEWUSER, username, password));
+				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEWUSER, username, password, directory));
 			}
 			else
 			{

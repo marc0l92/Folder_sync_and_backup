@@ -155,7 +155,7 @@ namespace sync_clientWPF
 							}
 							break;
 						case LoginWindow.LoginResponse.REGISTER:
-							loginAuthorized = syncManager.login(lw.Username, lw.Password, true);
+							loginAuthorized = syncManager.login(lw.Username, lw.Password, tDirectory.Text, true);
 							if (!loginAuthorized)
 							{
 								lw.ErrorMessage = "Registration faild";

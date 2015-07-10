@@ -20,6 +20,7 @@ namespace sync_clientWPF
 		public SyncCommand(CommandSet type) : this(type, new String[]{}) {}
 		public SyncCommand(CommandSet type, String arg1) : this(type, new String[]{arg1}) {}
 		public SyncCommand(CommandSet type, String arg1, String arg2) : this(type, new String[] { arg1, arg2 }) { }
+		public SyncCommand(CommandSet type, String arg1, String arg2, String arg3) : this(type, new String[] { arg1, arg2, arg3 }) { }
 		public SyncCommand(CommandSet type, String[] args){
 			this.type = type;
 			switch (type)

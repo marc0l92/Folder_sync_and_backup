@@ -20,6 +20,7 @@ namespace sync_server
 		public SyncCommand(CommandSet type) : this(type, new String[] { }) { }
 		public SyncCommand(CommandSet type, String arg1) : this(type, new String[] { arg1 }) { }
 		public SyncCommand(CommandSet type, String arg1, String arg2) : this(type, new String[] { arg1, arg2 }) { }
+		public SyncCommand(CommandSet type, String arg1, String arg2, String arg3) : this(type, new String[] { arg1, arg2, arg3 }) { }
 		public SyncCommand(CommandSet type, String[] args)
 		{
 			this.type = type;
@@ -179,7 +180,7 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
+                if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return username;
 				else
 					return null;
@@ -189,7 +190,7 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
+                if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return passwrod;
 				else
 					return null;

@@ -15,8 +15,8 @@ namespace sync_server
     {
         // Thread signal.
         private int localport;
-        //private IPAddress localAddr = IPAddress.Parse("192.168.1.109");
-		private IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+        private IPAddress localAddr = IPAddress.Parse("192.168.1.130");
+		//private IPAddress localAddr = IPAddress.Parse("127.0.0.1");
 
         public delegate void StatusDelegate(String s, int type);
         private delegate void EndClientDelegate();
@@ -101,8 +101,13 @@ namespace sync_server
             // Get the socket that handles the client request.
 			if (!serverStopped)
 			{
-				Socket handler = listener.EndAccept(ar);
 
+                // Retrieve the socket from the state object.
+                 //   Socket client = (Socket) ar.AsyncState;
+				//
+                Socket handler = listener.EndAccept(ar);
+                //Socket handler = (Socket)ar.AsyncState;
+                //handler.EndAccept(ar);
 				// Create the state object.
 				//StateObject state = new StateObject();
 				//state.workSocket = handler;
