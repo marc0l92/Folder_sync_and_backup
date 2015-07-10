@@ -99,7 +99,7 @@ namespace sync_server
 			}
 		}
 
-		public bool newUser(String username, String password, String directory)
+		public Int64 newUser(String username, String password, String directory)
 		{
 			// test if there is an user with the same username
 			bool usernameAlereadyUsed;
@@ -110,7 +110,7 @@ namespace sync_server
 			reader.Close();
 			if (usernameAlereadyUsed)
 			{
-				return false;
+				return -1;
 			}
 			// create a new user
 			command = new SQLiteCommand("INSERT INTO users (username, password, user_dir) VALUES (@username, @password, @directory)", connection);
@@ -123,7 +123,7 @@ namespace sync_server
 
 			// todo create a table with the right name
 			this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL UNIQUE, client_file TEXT NOT NULL, checksum TEXT NOT NULL);");
-			return true;
+			return lastId;
 		}
 
 		public bool deleteUser(int userId)
