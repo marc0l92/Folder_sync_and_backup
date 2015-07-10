@@ -24,16 +24,17 @@ namespace sync_server
 
         public ClientManager(Socket sock)
         {
+			stateClient = new StateObject();
             stateClient.workSocket = sock;
             clientThread = new Thread(new ThreadStart(doClient));
             clientThread.IsBackground = true;
             clientThread.Start();
-            statusDelegate("Start ClientTheard Successfully ", fSyncServer.LOG_INFO);
         }
 
         public void stop() {
             // todo Cosa succede se sto sincronizzando? devo fare un restore?
             syncEnd = true;
+			stateClient.workSocket.Close();
         }
 
         public void setStatusDelegate(AsyncManagerServer.StatusDelegate sd)
@@ -230,8 +231,8 @@ namespace sync_server
         }
 
         public  Boolean StartSession()
-        {
-            if (!client.usrDir.Equals(cmd.Directory))
+		{
+            if (client.usrDir == null || !client.usrDir.Equals(cmd.Directory))
             {
                 statusDelegate("User Directory Change NOT Authorized", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
