@@ -164,7 +164,8 @@ namespace sync_clientWPF
 				if (pos < 0)
 				{
 					// create a new file on the server
-					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, this.removeBaseDir(currentFile.FileName), currentFile.FileName##));
+					FileInfo fi = new FileInfo(currentFile.FileName);
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, this.removeBaseDir(currentFile.FileName), fi.Length.ToString()));
 					this.sendFile(currentFile.FileName);
 				}
 				else
