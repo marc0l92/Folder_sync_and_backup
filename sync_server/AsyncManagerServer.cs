@@ -17,6 +17,7 @@ namespace sync_server
         private int localport;
         private IPAddress localAddr = IPAddress.Parse("192.168.1.130");
 		//private IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+        private String defaultDir;
 
         public delegate void StatusDelegate(String s, int type);
         private delegate void EndClientDelegate();
@@ -45,6 +46,7 @@ namespace sync_server
             if (!Directory.Exists(workDir))
             {
                 throw new Exception("Directory not exists");
+                defaultDir = workDir;
             }
             // Server start
             Thread listeningThread = new Thread(new ThreadStart(StartListening));
@@ -56,7 +58,6 @@ namespace sync_server
         {
             // Data buffer for incoming data.
             byte[] bytes = new Byte[1024];
-
             // Establish the local endpoint for the socket.
             // The DNS name of the computer
             // running the listener is "host.contoso.com".
@@ -113,7 +114,11 @@ namespace sync_server
 				//state.workSocket = handler;
 				// handler.BeginReceive( state.buffer, 0, StateObject.BufferSize, 0,
 				//   new AsyncCallback(ReadCallback), state);
-				ClientManager client = new ClientManager(handler);
+                if(defaultDir[defaultDir.Length-1]=='\\')
+                {
+                    defaultDir=defaultDir.Substring(0, defaultDir.Length - 1);
+                }
+				ClientManager client = new ClientManager(handler, defaultDir);
 				client.setStatusDelegate(statusDelegate);
 				if (endClientDelegate == null)
 					endClientDelegate = new EndClientDelegate(client.stop);

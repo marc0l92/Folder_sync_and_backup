@@ -17,16 +17,19 @@ namespace sync_server
         private SyncClient client= new SyncClient();
         private AsyncManagerServer.StatusDelegate statusDelegate;
         private ManualResetEvent receiveDone = new ManualResetEvent(false);
+        private ManualResetEvent fileDone = new ManualResetEvent(false);
         private Boolean syncEnd = false;
         private Boolean wellEnd = false;
         private List<FileChecksum> userChecksum;
         private SyncCommand cmd;
         private SyncSQLite mySQLite;
+        private String serverDir;
 
-        public ClientManager(Socket sock)
+        public ClientManager(Socket sock, String workDir)
         {
             stateClient = new StateObject();
             stateClient.workSocket = sock;
+            serverDir = workDir;
             mySQLite = new SyncSQLite();
             clientThread = new Thread(new ThreadStart(doClient));
             clientThread.IsBackground = true;
@@ -204,7 +207,7 @@ namespace sync_server
 
         public Boolean NewUser()
         {
-            Int64 userID = mySQLite.newUser(cmd.Username, cmd.Password, "/Directory");
+            Int64 userID = mySQLite.newUser(cmd.Username, cmd.Password, cmd.Directory);
 
             if (userID==-1) //Call DB New User
             {
@@ -221,7 +224,7 @@ namespace sync_server
                 client.usrID = userID;
                 client.usrNam = cmd.Username;
                 client.usrPwd = cmd.Password;
-                //client.usrDir = cmd.Directory;
+                client.usrDir = cmd.Directory;
                 client.vers = 0;
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
@@ -247,6 +250,8 @@ namespace sync_server
                 client.usrID = userID;
                 client.vers = mySQLite.getUserLastVersion(client.usrID); //Call DB Get Last Version
                 statusDelegate("User Directory Authorized, Start Send Check", fSyncServer.LOG_INFO);
+                SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
+                SendCommand(stateClient.workSocket, authorized.convertToString());
                 userChecksum = mySQLite.getUserFiles(client.usrID, client.vers); //Call DB Get Users Files
                
                 foreach (FileChecksum check in userChecksum)
@@ -311,9 +316,13 @@ namespace sync_server
 
         public  Boolean NewFile()
         {
+            fileDone.Reset();
             ReceiveFile();
+            fileDone.WaitOne();
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(cmd.FileName + "_" + (client.vers + 1), cmd.FileName);
+            String flnm;
+            flnm = serverDir + cmd.FileName + "_" + client.vers;
+            FileChecksum file = new FileChecksum(flnm, cmd.FileName);
             userChecksum.Add(file);
             statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
             return true;
@@ -326,7 +335,7 @@ namespace sync_server
             statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
             ReceiveFile();
             statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(cmd.FileName + "_" + (client.vers + 1), cmd.FileName);
+            FileChecksum file = new FileChecksum(serverDir + cmd.FileName + "_" + client.vers, cmd.FileName);
             userChecksum.Add(file);
             statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
             return true;
@@ -385,7 +394,8 @@ namespace sync_server
                 //Socket client = state.workSocket;
                 FileStream fs;
 
-                string fileName = cmd.FileName + "_" + client.vers.ToString();
+
+                string fileName = serverDir + cmd.FileName + "_" + (client.vers);
 
                 fs = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
                 
@@ -405,6 +415,8 @@ namespace sync_server
                 else
                 {
                     fs.Close();
+
+                    fileDone.Set();
                 }
             }
             catch (Exception e)
