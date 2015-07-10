@@ -148,7 +148,7 @@ namespace sync_server
 			}
 		}
 
-		public List<FileChecksum> getUserFiles(Int64 userId, int version)
+		public List<FileChecksum> getUserFiles(Int64 userId, Int64 version)
 		{
 			List<FileChecksum> userFiles = new List<FileChecksum>();
 			SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE version = " + version, connection);
@@ -160,7 +160,7 @@ namespace sync_server
 			return userFiles;
 		}
 
-		public void setUserFiles(Int64 userId, int version, List<FileChecksum> fileList)
+		public void setUserFiles(Int64 userId, Int64 version, List<FileChecksum> fileList)
 		{
 			SQLiteCommand command;
 			foreach (FileChecksum file in fileList)
