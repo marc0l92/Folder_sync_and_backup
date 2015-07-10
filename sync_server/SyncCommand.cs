@@ -41,9 +41,10 @@ namespace sync_server
 					if (args.Length != 0) throw new Exception("Wrong params count");
 					break;
 				case CommandSet.NEWUSER:
-					if (args.Length != 2) throw new Exception("Wrong params count");
+					if (args.Length != 3) throw new Exception("Wrong params count");
 					username = args[0];
 					passwrod = args[1];
+					directory = args[2];
 					break;
 				case CommandSet.EDIT:
 					if (args.Length != 1) throw new Exception("Wrong params count");
@@ -138,7 +139,7 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.START)
+				if (this.type == CommandSet.START || this.type == CommandSet.NEWUSER)
 					return directory;
 				else
 					return null;
@@ -178,7 +179,7 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN)
+				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return username;
 				else
 					return null;
@@ -188,7 +189,7 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN)
+				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
 					return passwrod;
 				else
 					return null;

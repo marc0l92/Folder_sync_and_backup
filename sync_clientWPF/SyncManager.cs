@@ -60,6 +60,10 @@ namespace sync_clientWPF
 				throw new Exception("ERROR: Directory not exists");
 			}
 			this.directory = directory;
+			if (directory[directory.Length - 1] == '\\')
+			{
+				directory.Substring(0, directory.Length-1);
+			}
 			this.username = username;
 			this.password = password;
 			this.address = address;
@@ -108,11 +112,17 @@ namespace sync_clientWPF
 		{
 			try
 			{
+				if (!tcpClient.Connected)
+				{
+					serverConnect();
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+				}
 				// Do the first connection
 				statusDelegate("Send START");
 				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
 				if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED) {
 					statusDelegate("Wrong directory", true);
+					return;
 				};
 				statusDelegate("Waiting for CHECK list...");
 				serverFileChecksum = getServerCheckList();
@@ -154,7 +164,7 @@ namespace sync_clientWPF
 				if (pos < 0)
 				{
 					// create a new file on the server
-					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, currentFile.FileName));
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, this.removeBaseDir(currentFile.FileName)));
 					this.sendFile(currentFile.FileName);
 				}
 				else
@@ -224,7 +234,6 @@ namespace sync_clientWPF
 		private void sendFile(String path)
 		{
 			int bytesSent;
-			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.FILE, path));
 			byte[] fileContent = File.ReadAllBytes(path);
 			while (fileContent.Length > 0)
 			{
@@ -237,6 +246,12 @@ namespace sync_clientWPF
 			}
 			
 		}
+
+		private String removeBaseDir(String fullDir)
+		{
+			return fullDir.Substring(directory.Length);
+		}
+
 		private List<FileChecksum> getServerCheckList()
 		{
 			SyncCommand sc;

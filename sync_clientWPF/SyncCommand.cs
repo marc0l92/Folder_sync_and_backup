@@ -40,9 +40,10 @@ namespace sync_clientWPF
 					if (args.Length != 0) throw new Exception("Wrong params count");
 					break;
 				case CommandSet.NEWUSER:
-					if (args.Length != 2) throw new Exception("Wrong params count");
+					if (args.Length != 3) throw new Exception("Wrong params count");
 					username = args[0];
 					passwrod = args[1];
+					directory = args[2];
 					break;
 				case CommandSet.EDIT:
 					if (args.Length != 1) throw new Exception("Wrong params count");
@@ -136,7 +137,7 @@ namespace sync_clientWPF
 		public String Directory
 		{
 			get {
-				if (this.type == CommandSet.START)
+				if (this.type == CommandSet.START || this.type == CommandSet.NEWUSER)
 					return directory;
 				else
 					return null;
