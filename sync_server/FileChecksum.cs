@@ -12,7 +12,7 @@ namespace sync_server
 	{
 		private String fileNameClient;
         private String fileNameServer;
-		private String checksum;
+		private byte[] checksum;
 
 		public FileChecksum(String fileClient , String fileServer)
 		{
@@ -26,7 +26,7 @@ namespace sync_server
 			// Generate checksum
 			MD5 md5 = MD5.Create();
 			Stream fs = File.OpenRead(this.fileNameServer);
-			this.checksum = md5.ComputeHash(fs).ToString();
+			this.checksum = md5.ComputeHash(fs);
 		}
         public FileChecksum(String fileServer)
         {
@@ -39,20 +39,20 @@ namespace sync_server
             // Generate checksum
             MD5 md5 = MD5.Create();
             Stream fs = File.OpenRead(this.fileNameServer);
-            this.checksum = md5.ComputeHash(fs).ToString();
+            this.checksum = md5.ComputeHash(fs);
         }
 
         public FileChecksum(String fileServer, String fileClient, String checksum)
 		{
 			this.fileNameServer = fileServer;
             this.fileNameClient = fileClient;
-			this.checksum = checksum;
+			this.checksum = System.Text.Encoding.ASCII.GetBytes(checksum);
 		}
 
 		public String Checksum
 		{
-			get { return this.checksum; }
-			set { this.checksum = value; }
+			get { return System.Text.Encoding.ASCII.GetString(this.checksum); }
+			set { this.checksum = System.Text.Encoding.ASCII.GetBytes(value); }
 		}
 		public String FileNameServer
 		{

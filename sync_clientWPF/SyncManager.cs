@@ -97,8 +97,8 @@ namespace sync_clientWPF
 			// Generate the remote endpoint
 			IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
 
-			IPAddress ipAddress = ipHostInfo.AddressList[0];
-			//IPAddress ipAddress = new IPAddress(new byte[] { 127, 0, 0, 1 }); // localhost
+			//IPAddress ipAddress = ipHostInfo.AddressList[0];
+			IPAddress ipAddress = new IPAddress(new byte[] { 127, 0, 0, 1 }); // localhost
 			IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 			// Create a TCP/IP socket
 			tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -269,17 +269,25 @@ namespace sync_clientWPF
 
 			return serverCheckList;
 		}
-		private void getFile(String path, Int64 fileLength)
+		private void getFile(String fileName, Int64 fileLength)
 		{
-			byte[] data = new byte[1024];
-			System.IO.StreamWriter file = new System.IO.StreamWriter(path);
-			// Receive data from the server
-			while (fileLength>0)
+			byte[] buffer = new byte[1024];
+			int rec = 0;
+
+			if (!Directory.Exists(Path.GetDirectoryName(fileName)))
 			{
-				fileLength -= tcpClient.Receive(data);
-				file.Write(data);
+				Directory.CreateDirectory(Path.GetDirectoryName(fileName));
 			}
-			file.Close();
+			BinaryWriter bFile = new BinaryWriter(File.Open(fileName, FileMode.Create));
+
+			// Receive data from the server
+			while (fileLength > 0)
+			{
+				rec = tcpClient.Receive(buffer);
+				fileLength -= rec;
+				bFile.Write(buffer, 0, rec);
+			}
+			bFile.Close();
 			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ENDFILE));
 		}
 

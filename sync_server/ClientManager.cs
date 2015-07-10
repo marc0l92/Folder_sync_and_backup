@@ -369,19 +369,24 @@ namespace sync_server
 
         public  void ReceiveFile(String fileName, Int64 fileLength)
         {
-            if (!Directory.Exists(Path.GetDirectoryName(fileName)))
+            byte[] buffer = new byte[1024];
+			int rec = 0;
+
+			if (!Directory.Exists(Path.GetDirectoryName(fileName)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(fileName));
             }
-            byte[] data = new byte[1024];
-            System.IO.StreamWriter file = new System.IO.StreamWriter(fileName);
-            // Receive data from the server
+            BinaryWriter bFile = new BinaryWriter(File.Open(fileName, FileMode.Create));
+
+			// Receive data from the server
             while (fileLength > 0)
             {
-                fileLength -= stateClient.workSocket.Receive(data);
-                file.Write(data);
+                rec = stateClient.workSocket.Receive(buffer);
+				fileLength -= rec;
+            	bFile.Write(buffer, 0, rec);
             }
-            file.Close();
+			bFile.Close();
+
             SyncCommand command = new SyncCommand(SyncCommand.CommandSet.ENDFILE);
             SendCommand(stateClient.workSocket, command.convertToString());
             

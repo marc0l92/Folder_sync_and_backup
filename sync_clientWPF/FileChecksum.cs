@@ -11,7 +11,7 @@ namespace sync_clientWPF
 	class FileChecksum //: IEquatable<FileChecksum>
     {
         private String fileName;
-        private String checksum;
+        private byte[] checksum;
 
         public FileChecksum(String file)
         {
@@ -23,18 +23,18 @@ namespace sync_clientWPF
             // Generate checksum
             MD5 md5 = MD5.Create();
 			Stream fs = File.OpenRead(this.fileName);
-            this.checksum = md5.ComputeHash(fs).ToString();
+            this.checksum = md5.ComputeHash(fs);
         }
 		public FileChecksum(String file, String checksum)
 		{
 			this.fileName = file;
-			this.checksum = checksum;
+			this.checksum = System.Text.Encoding.ASCII.GetBytes(checksum);
 		}
 
 		public String Checksum
 		{
-			get { return this.checksum; }
-			set { this.checksum = value; }
+			get { return System.Text.Encoding.ASCII.GetString(this.checksum); }
+			set { this.checksum = System.Text.Encoding.ASCII.GetBytes(value); }
 		}
 		public String FileName
 		{
