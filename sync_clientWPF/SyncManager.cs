@@ -62,7 +62,7 @@ namespace sync_clientWPF
 			this.directory = directory;
 			if (directory[directory.Length - 1] == '\\')
 			{
-				directory.Substring(0, directory.Length-1);
+				directory = directory.Substring(0, directory.Length-1);
 			}
 			this.username = username;
 			this.password = password;
