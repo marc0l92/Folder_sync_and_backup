@@ -278,6 +278,7 @@ namespace sync_clientWPF
 				fileLength -= tcpClient.Receive(data);
 				file.Write(data);
 			}
+			file.Close();
 			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ENDFILE));
 		}
 
