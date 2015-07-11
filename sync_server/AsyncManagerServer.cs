@@ -120,8 +120,7 @@ namespace sync_server
                 {
                     defaultDir=defaultDir.Substring(0, defaultDir.Length - 1);
                 }
-				ClientManager client = new ClientManager(handler, defaultDir);
-				client.setStatusDelegate(statusDelegate);
+				ClientManager client = new ClientManager(handler, defaultDir, statusDelegate);
 				if (endClientDelegate == null)
 					endClientDelegate = new EndClientDelegate(client.stop);
 				else

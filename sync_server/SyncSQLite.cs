@@ -33,6 +33,11 @@ namespace sync_server
             }
         }
 
+        public void closeConnection()
+        {
+            connection.Close();
+            connection.Dispose();
+        }
         public void destroyDatabase()
         {
             if (File.Exists(this.databaseFile))
@@ -176,6 +181,7 @@ namespace sync_server
                 command.Parameters.AddWithValue("checksum", file.Checksum);
                 command.ExecuteNonQuery();
             }
+
         }
     }
 }
