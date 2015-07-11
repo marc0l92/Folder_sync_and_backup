@@ -9,7 +9,7 @@ namespace sync_server
 {
 	public class SyncCommand
 	{
-		public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ENDFILE };
+        public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC };
 		private CommandSet type;
 		private String directory;
 		private String fileName;
@@ -48,8 +48,9 @@ namespace sync_server
 					directory = args[2];
 					break;
 				case CommandSet.EDIT:
-					if (args.Length != 1) throw new Exception("Wrong params count");
+					if (args.Length != 2) throw new Exception("Wrong params count");
 					fileName = args[0];
+                    fileSize = Int64.Parse(args[1]);
 					break;
 				case CommandSet.DEL:
 					if (args.Length != 1) throw new Exception("Wrong params count");
@@ -74,7 +75,10 @@ namespace sync_server
 					break;
 				case CommandSet.ENDSYNC:
 					if (args.Length != 0) throw new Exception("Wrong params count");
-					break;
+                    break;
+                case CommandSet.NOSYNC:
+                    if (args.Length != 0) throw new Exception("Wrong params count");
+                    break;
 				case CommandSet.CHECK:
 					if (args.Length != 2) throw new Exception("Wrong params count");
 					fileName = args[0];
@@ -83,7 +87,7 @@ namespace sync_server
 				case CommandSet.ENDCHECK:
 					if (args.Length != 0) throw new Exception("Wrong params count");
 					break;
-				case CommandSet.ENDFILE:
+                case CommandSet.ACK:
 					if (args.Length != 0) throw new Exception("Wrong params count");
 					break;
 				default:
@@ -203,7 +207,7 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.NEW)
+                if (this.type == CommandSet.NEW || this.type == CommandSet.EDIT)
 					return fileSize;
 				else
 					return -1;

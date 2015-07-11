@@ -24,8 +24,9 @@ namespace sync_server
         private SyncSQLite mySQLite;
         private String serverDir;
 
-        public ClientManager(Socket sock, String workDir)
+        public ClientManager(Socket sock, String workDir, AsyncManagerServer.StatusDelegate sd)
         {
+            statusDelegate = sd;
             stateClient = new StateObject();
             stateClient.workSocket = sock;
             serverDir = workDir;
@@ -145,6 +146,9 @@ namespace sync_server
                     case SyncCommand.CommandSet.ENDSYNC:
                         statusDelegate("Command EndSync ", fSyncServer.LOG_INFO);
                         return EndSync();
+                    case SyncCommand.CommandSet.NOSYNC:
+                        statusDelegate("Command NoSync ", fSyncServer.LOG_INFO);
+                        return NoSync();
                     case SyncCommand.CommandSet.DEL:
                         statusDelegate("Command Delete ", fSyncServer.LOG_INFO);
                         return DeleteFile();
@@ -267,6 +271,8 @@ namespace sync_server
         {
             int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
             userChecksum.RemoveAt(index);
+            SyncCommand command = new SyncCommand(SyncCommand.CommandSet.ACK);
+            SendCommand(stateClient.workSocket, command.convertToString());
             statusDelegate("File Correctly Delete from the list of the files of the current Version (DeleteFile)", fSyncServer.LOG_INFO);
             return true; // Da Implementare Meglio
         }
@@ -280,6 +286,17 @@ namespace sync_server
             //Get List
             syncEnd = true;
             wellEnd = true;
+            mySQLite.closeConnection();
+            return true;
+        }
+
+        public Boolean NoSync()
+        {
+            //Get List
+            syncEnd = true;
+            wellEnd = true;
+
+            mySQLite.closeConnection();
             return true;
         }
 
@@ -290,7 +307,6 @@ namespace sync_server
             statusDelegate("Received New File correcty (NewFile)", fSyncServer.LOG_INFO);
             FileChecksum file = new FileChecksum(cmd.FileName, serverDir + fileNameDB, fileNameDB);
             userChecksum.Add(file);
-            statusDelegate("DB Updated Correctly (NewFile)", fSyncServer.LOG_INFO);
             return true;
         }
 
@@ -304,7 +320,6 @@ namespace sync_server
             statusDelegate("Received File to Edit correcty  (EditFile)", fSyncServer.LOG_INFO);
             FileChecksum file = new FileChecksum(cmd.FileName, serverDir + fileNameDB, fileNameDB);
             userChecksum.Add(file);
-            statusDelegate("DB Updated Correctly (EditFile)", fSyncServer.LOG_INFO);
             return true;
         }
 
@@ -349,7 +364,13 @@ namespace sync_server
                 // Send file fileName to remote device
                 stateClient.workSocket.SendFile(fileName);
                 statusDelegate("File Sended Succesfully", fSyncServer.LOG_INFO);
-
+                // TODO wait for ack
+                receiveDone.Reset();
+                // Receive the response from the remote device.
+                this.ReceiveCommand(stateClient.workSocket);
+                receiveDone.WaitOne();
+                if (cmd.Type != SyncCommand.CommandSet.ACK) 
+                    return false;
                 return true;
             }
             else
@@ -381,7 +402,7 @@ namespace sync_server
             }
 			bFile.Close();
 
-            SyncCommand command = new SyncCommand(SyncCommand.CommandSet.ENDFILE);
+            SyncCommand command = new SyncCommand(SyncCommand.CommandSet.ACK);
             SendCommand(stateClient.workSocket, command.convertToString());
             
 

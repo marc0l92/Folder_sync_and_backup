@@ -29,6 +29,7 @@ namespace sync_server
 			MD5 md5 = MD5.Create();
 			Stream fs = File.OpenRead(fileServer);
 			this.checksum = md5.ComputeHash(fs);
+            fs.Close();
 		}
         public FileChecksum(String fileServer)
         {

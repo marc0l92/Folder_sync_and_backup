@@ -11,9 +11,9 @@ namespace sync_server
     {
 
         public static String FilePathWithVers(String path, Int64 Version){
-
-            return Path.GetDirectoryName(path) + '\\' + Path.GetFileNameWithoutExtension(path) + '_' + Version + Path.GetExtension(path) ;
-
+            if (Path.GetDirectoryName(path) =="\\")
+                return '\\' + Path.GetFileNameWithoutExtension(path) + '_' + Version + Path.GetExtension(path) ;
+            else  return Path.GetDirectoryName(path)+ '\\' + Path.GetFileNameWithoutExtension(path) + '_' + Version + Path.GetExtension(path) ;
         }
     }
 }
