@@ -256,7 +256,7 @@ namespace sync_server
                
                 foreach (FileChecksum check in userChecksum)
                 {
-                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum);
+                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum.ToString());
                     SendCommand(stateClient.workSocket, checkCommand.convertToString());
                     statusDelegate("Send check Message(StartSession)", fSyncServer.LOG_INFO);
                 }
