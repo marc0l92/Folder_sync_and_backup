@@ -23,6 +23,7 @@ namespace sync_clientWPF
 		private StatusDelegate statusDelegate;
 		private Socket tcpClient;
 		private String receivedBuffer = "";
+		private bool someChanges = false;
 
 		public SyncManager(String address, int port)
 		{
@@ -62,7 +63,7 @@ namespace sync_clientWPF
 			this.directory = directory;
 			if (directory[directory.Length - 1] == '\\')
 			{
-				directory = directory.Substring(0, directory.Length-1);
+				directory = directory.Substring(0, directory.Length - 1);
 			}
 			this.username = username;
 			this.password = password;
@@ -70,6 +71,7 @@ namespace sync_clientWPF
 			this.port = port;
 
 			// Start the sync thread
+			this.thread_stopped = false;
 			this.syncThread = new Thread(new ThreadStart(this.doSync));
 			this.syncThread.IsBackground = true;
 			this.syncThread.Start();
@@ -79,11 +81,11 @@ namespace sync_clientWPF
 		{
 			this.thread_stopped = true;
 			// Release the socket.
-			
+
 			if (tcpClient.Connected)
 			{
-				tcpClient.Close();
 				tcpClient.Shutdown(SocketShutdown.Both);
+				tcpClient.Close();
 			}
 			if (syncThread.IsAlive)
 			{
@@ -116,32 +118,44 @@ namespace sync_clientWPF
 				{
 					serverConnect();
 					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
+					{
+						statusDelegate("Wrong directory", true);
+						return;
+					};
 				}
 				// Do the first connection
 				statusDelegate("Send START");
 				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
-				if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED) {
+				if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
+				{
 					statusDelegate("Wrong directory", true);
 					return;
 				};
 				statusDelegate("Waiting for CHECK list...");
 				serverFileChecksum = getServerCheckList();
 				statusDelegate("Scan client changes...");
+				someChanges = false;
 				scanForClientChanges(directory);
 				scanForDeletedFiles();
-				commitChangesToServer();
+				commitChangesToServer(someChanges);
 				tcpClient.Close();
-
+				statusDelegate("First sinc completed");
 				// Do syncking
 				while (!thread_stopped)
 				{
 					statusDelegate("Idle");
 					Thread.Sleep(SYNC_SLEEPING_TIME);
-					statusDelegate("Syncing...");
 					// connect
 					serverConnect();
+					statusDelegate("Syncing...");
 					// login
 					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
+					{
+						statusDelegate("Wrong directory", true);
+						return;
+					};
 					// start
 					sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
 					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
@@ -150,13 +164,14 @@ namespace sync_clientWPF
 						return;
 					};
 					serverFileChecksum = getServerCheckList();
+					someChanges = false;
 					scanForClientChanges(directory);
 					scanForDeletedFiles();
-					commitChangesToServer();
+					commitChangesToServer(someChanges);
 					tcpClient.Close();
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				statusDelegate(ex.Message, true);
 			}
@@ -166,7 +181,7 @@ namespace sync_clientWPF
 		{
 			// Get directory file list
 			string[] fileList = Directory.GetFiles(dir);
-			
+
 			// Scan for changes
 			foreach (string filePath in fileList)
 			{
@@ -177,6 +192,7 @@ namespace sync_clientWPF
 				if (pos < 0)
 				{
 					// create a new file on the server
+					someChanges = true;
 					FileInfo fi = new FileInfo(currentFile.FileName);
 					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, currentFile.BaseFileName, fi.Length.ToString()));
 					this.sendFile(currentFile.FileName);
@@ -187,7 +203,9 @@ namespace sync_clientWPF
 					if (currentFile.Checksum != serverFileChecksum[pos].Checksum)
 					{
 						// on the server there is a different version of the file
-						this.sendCommand(new SyncCommand(SyncCommand.CommandSet.EDIT, currentFile.FileName));
+						someChanges = true;
+						FileInfo fi = new FileInfo(currentFile.FileName);
+						this.sendCommand(new SyncCommand(SyncCommand.CommandSet.EDIT, currentFile.BaseFileName, fi.Length.ToString()));
 						this.sendFile(currentFile.FileName);
 					}
 					serverFileChecksum.RemoveAt(pos);
@@ -206,8 +224,14 @@ namespace sync_clientWPF
 
 		private void scanForDeletedFiles()
 		{
-			foreach(FileChecksum currentFile in serverFileChecksum){
-				sendCommand(new SyncCommand(SyncCommand.CommandSet.DEL, currentFile.FileName));
+			foreach (FileChecksum currentFile in serverFileChecksum)
+			{
+				someChanges = true;
+				sendCommand(new SyncCommand(SyncCommand.CommandSet.DEL, currentFile.BaseFileName));
+				if (receiveCommand().Type != SyncCommand.CommandSet.ACK)
+				{
+					statusDelegate("Error during file cancellation", true);
+				}
 			}
 		}
 
@@ -240,28 +264,19 @@ namespace sync_clientWPF
 				dataRec = tcpClient.Receive(data);
 				receivedBuffer += Encoding.ASCII.GetString(data, 0, dataRec);
 			}
-			sc = SyncCommand.convertFromString(receivedBuffer.Substring(0, jsonEnd+1));
-			receivedBuffer = receivedBuffer.Substring(jsonEnd+1); 
+			sc = SyncCommand.convertFromString(receivedBuffer.Substring(0, jsonEnd + 1));
+			receivedBuffer = receivedBuffer.Substring(jsonEnd + 1);
 			return sc;
 		}
 
 		private void sendFile(String path)
 		{
 			tcpClient.SendFile(path);
-			
-			//int bytesSent;
-			//byte[] fileContent = File.ReadAllBytes(path);
-			
-			//while (fileContent.Length > 0)
-			//{
-			//	bytesSent = tcpClient.Send(fileContent);
-			//	fileContent.CopyTo(fileContent, bytesSent); // cat the message part already sent
-			//}
-			if (receiveCommand().Type != SyncCommand.CommandSet.ENDFILE)
+			if (receiveCommand().Type != SyncCommand.CommandSet.ACK)
 			{
 				statusDelegate("Error during file trasmission", true);
 			}
-			
+
 		}
 
 		private List<FileChecksum> getServerCheckList()
@@ -296,12 +311,15 @@ namespace sync_clientWPF
 				bFile.Write(buffer, 0, rec);
 			}
 			bFile.Close();
-			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ENDFILE));
+			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ACK));
 		}
 
-		private void commitChangesToServer()
+		private void commitChangesToServer(bool changes)
 		{
-			sendCommand(new SyncCommand(SyncCommand.CommandSet.ENDSYNC));
+			if (changes)
+				sendCommand(new SyncCommand(SyncCommand.CommandSet.ENDSYNC));
+			else
+				sendCommand(new SyncCommand(SyncCommand.CommandSet.NOSYNC));
 			serverFileChecksum = clientFileChecksum;
 			clientFileChecksum.Clear();
 		}

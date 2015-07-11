@@ -22,25 +22,20 @@ namespace sync_clientWPF
 	{
 		public enum LoginResponse {LOGIN, REGISTER, CANCEL};
 		private LoginResponse lastResponse;
-		//private ManualResetEvent dataLock;
 		private String username, password;
 
 		public LoginWindow()
 		{
 			InitializeComponent();
 			lError.Content = "";
-			//dataLock = new ManualResetEvent(false);
 		}
 
-		public void showLogin()
-		{
-			//dataLock.Reset();
+		public void showLogin(){
 			this.ShowDialog();
 		}
 
 		public LoginResponse waitResponse()
 		{
-			//dataLock.WaitOne();
 			return lastResponse;
 		}
 
@@ -49,7 +44,6 @@ namespace sync_clientWPF
 			set {username = value;}
 			get
 			{
-				//dataLock.WaitOne();
 				return username;
 			}
 		}
@@ -58,7 +52,6 @@ namespace sync_clientWPF
 			private set {password = value;}
 			get
 			{
-				//dataLock.WaitOne();
 				return password;
 			}
 		}
@@ -75,7 +68,6 @@ namespace sync_clientWPF
 			username = tUsername.Text;
 			password = tPassword.Password;
 			lastResponse = LoginResponse.LOGIN;
-			//dataLock.Set();
 			this.Hide();
 		}
 
@@ -84,22 +76,23 @@ namespace sync_clientWPF
 			username = tUsername.Text;
 			password = tPassword.Password;
 			lastResponse = LoginResponse.REGISTER;
-			//dataLock.Set();
 			this.Hide();
 		}
 		private void Cancel_Click(object sender, RoutedEventArgs e)
 		{
 			lastResponse = LoginResponse.CANCEL;
-			//dataLock.Set();
 			this.Hide();
 		}
 
 		private void Window_Closed(object sender, EventArgs e)
 		{
 			lastResponse = LoginResponse.CANCEL;
-			//dataLock.Set();
 			this.Hide();
 		}
 
+		private void Window_Loaded(object sender, RoutedEventArgs e)
+		{
+			FocusManager.SetFocusedElement(this, tUsername);
+		}
 	}
 }

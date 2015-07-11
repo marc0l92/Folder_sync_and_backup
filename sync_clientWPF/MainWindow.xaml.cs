@@ -201,6 +201,7 @@ namespace sync_clientWPF
 		{
 			if (loggedin)
 			{
+				forceStop();
 				lUsername.Content = "Please login";
 				bLogInOut.Content = "Login";
 				bStart.IsEnabled = false;

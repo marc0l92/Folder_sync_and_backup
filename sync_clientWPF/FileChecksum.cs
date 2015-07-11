@@ -26,6 +26,7 @@ namespace sync_clientWPF
             MD5 md5 = MD5.Create();
 			Stream fs = File.OpenRead(this.fileName);
             this.checksum = md5.ComputeHash(fs);
+			fs.Close();
         }
 		public FileChecksum(String baseFile, byte[] checksum)
 		{
