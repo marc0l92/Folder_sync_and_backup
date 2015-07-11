@@ -160,7 +160,10 @@ namespace sync_server
                         return EditFile();
                    case SyncCommand.CommandSet.NEWUSER:
                         statusDelegate(" Command NewUser ", fSyncServer.LOG_INFO);
-                           return NewUser();
+                        return NewUser();
+                   case SyncCommand.CommandSet.GETVERSIONS:
+                        statusDelegate("Command Edit ", fSyncServer.LOG_INFO);
+                        return Vers();
                     default:
                         statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
                         return true;
@@ -174,7 +177,7 @@ namespace sync_server
         }
         public  Boolean LoginUser()
         {
-
+    
            // String directory = "";
             // int version = 0;
 
@@ -263,6 +266,69 @@ namespace sync_server
                 statusDelegate("Send End check Message (StartSession)", fSyncServer.LOG_INFO);
                 return true;
             }
+        }
+        public Boolean Vers()
+        {
+                Int64 userID = mySQLite.checkUserDirectory(client.usrNam, cmd.Directory); //Call DB Check Directory User   
+                Int64 lastVers = mySQLite.getUserLastVersion( client.usrID);
+                int index;
+                int currentVersion = 1;
+                List<FileChecksum> userChecksumA = mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
+                while (currentVersion <= lastVers )
+                {
+                    if (currentVersion == 1)
+                    {
+                        foreach (FileChecksum check in userChecksumA)
+                        {
+
+                            SyncCommand checkVersCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERS, check.FileNameClient, "NEW");
+                            SendCommand(stateClient.workSocket, checkVersCommand.convertToString());
+                            statusDelegate("Send check Message(Version Command)", fSyncServer.LOG_INFO);
+                        }
+                    }
+                    else { 
+
+                    List<FileChecksum> userChecksumB =mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;;
+
+                    foreach (FileChecksum checkB in userChecksumA)
+                    {
+                        Boolean found = false;
+
+                        foreach (FileChecksum checkB in userChecksumB)
+                        {
+
+                            if(checkA.FileNameClient==checkB.FileNameClient)
+                                if((checkA.FileNameServer==checkB.FileNameServer)&&(checkA.Checksum==checkB.Checksum))
+                                {
+                                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERS, checkA.FileNameClient, "NOTHING");
+                                    SendCommand(stateClient.workSocket, checkCommand.convertToString());
+                                    statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
+                                    found = true;
+                                }
+                                else
+                                {
+                                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERS, checkA.FileNameClient, "EDITED");
+                                    SendCommand(stateClient.workSocket, checkCommand.convertToString());
+                                    statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
+                                    found = true;
+                                }
+                        }
+                        if(!found)
+                        {
+                            SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERS, checkA.FileNameClient, "EDITED");
+                            SendCommand(stateClient.workSocket, checkCommand.convertToString());
+                            statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
+                        }
+                    }
+                    }
+                    currentVersion++;
+                }
+
+
+                SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
+                SendCommand(stateClient.workSocket, endcheck.convertToString());
+                statusDelegate("Send End check Message (Version Command)", fSyncServer.LOG_INFO);
+                return true;
         }
 
 
