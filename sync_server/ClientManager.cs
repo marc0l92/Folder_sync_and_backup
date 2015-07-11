@@ -267,64 +267,82 @@ namespace sync_server
                 return true;
             }
         }
+
         public Boolean Vers()
         {
-                Int64 userID = mySQLite.checkUserDirectory(client.usrNam, cmd.Directory); //Call DB Check Directory User   
                 Int64 lastVers = mySQLite.getUserLastVersion( client.usrID);
-                int index;
                 int currentVersion = 1;
                 List<FileChecksum> userChecksumA = mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
                 while (currentVersion <= lastVers )
                 {
+                    SyncCommand VersCommand = new SyncCommand(SyncCommand.CommandSet.VERSION, currentVersion.ToString(), userChecksumA.Count.ToString(), "Timestamp");
+                    SendCommand(stateClient.workSocket, VersCommand.convertToString());
+                    statusDelegate("Send Version Message(Version Command)", fSyncServer.LOG_INFO);
+
                     if (currentVersion == 1)
                     {
                         foreach (FileChecksum check in userChecksumA)
                         {
-
-                            SyncCommand checkVersCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERS, check.FileNameClient, "NEW");
+                            SyncCommand checkVersCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW");
                             SendCommand(stateClient.workSocket, checkVersCommand.convertToString());
-                            statusDelegate("Send check Message(Version Command)", fSyncServer.LOG_INFO);
+                            statusDelegate("Send check Version Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
                     else { 
 
-                    List<FileChecksum> userChecksumB =mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;;
+                    List<FileChecksum> userChecksumB =mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
 
-                    foreach (FileChecksum checkB in userChecksumA)
+                    foreach (FileChecksum checkB in userChecksumB)
                     {
                         Boolean found = false;
 
-                        foreach (FileChecksum checkB in userChecksumB)
+                        foreach (FileChecksum checkA in userChecksumA)
                         {
 
                             if(checkA.FileNameClient==checkB.FileNameClient)
-                                if((checkA.FileNameServer==checkB.FileNameServer)&&(checkA.Checksum==checkB.Checksum))
+                                if(checkA.FileNameServer==checkB.FileNameServer)
                                 {
-                                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERS, checkA.FileNameClient, "NOTHING");
+                                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "NOTHING");
                                     SendCommand(stateClient.workSocket, checkCommand.convertToString());
                                     statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                                     found = true;
+                                    userChecksumA.Remove(checkA);
+                                    break;
                                 }
                                 else
                                 {
-                                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERS, checkA.FileNameClient, "EDITED");
+                                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "EDITED");
                                     SendCommand(stateClient.workSocket, checkCommand.convertToString());
                                     statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                                     found = true;
+                                    userChecksumA.Remove(checkA);
+                                    break;
                                 }
                         }
+
+                       
                         if(!found)
                         {
-                            SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERS, checkA.FileNameClient, "EDITED");
+                            SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkB.FileNameClient, "NEW");
                             SendCommand(stateClient.workSocket, checkCommand.convertToString());
                             statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
+
+                    if (userChecksumA.Count != 0)
+                    {
+                        foreach (FileChecksum checkA in userChecksumA)
+                        {
+                            SyncCommand checkVersCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "DELETE");
+                            SendCommand(stateClient.workSocket, checkVersCommand.convertToString());
+                            statusDelegate("Send check Message(Version Command)", fSyncServer.LOG_INFO);
+                        }
+                    }
+                    userChecksumA = userChecksumB;
                     }
                     currentVersion++;
+                   
                 }
-
-
                 SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
                 SendCommand(stateClient.workSocket, endcheck.convertToString());
                 statusDelegate("Send End check Message (Version Command)", fSyncServer.LOG_INFO);
