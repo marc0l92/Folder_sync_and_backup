@@ -140,7 +140,7 @@ namespace sync_server
 
         public Int64 getUserLastVersion(Int64 userId)
         {
-            SQLiteCommand command = new SQLiteCommand("SELECT IFNULL(MAX(version), 1) AS max_version FROM user_" + userId, connection);
+            SQLiteCommand command = new SQLiteCommand("SELECT IFNULL(MAX(version), 0) AS max_version FROM user_" + userId, connection);
             SQLiteDataReader reader = command.ExecuteReader();
             if (reader.Read())
             {
