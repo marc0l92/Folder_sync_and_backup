@@ -9,89 +9,47 @@ namespace sync_server
 {
 	public class SyncCommand
 	{
-        public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC };
-		private CommandSet type;
-		private String directory;
-		private String fileName;
-		private Int64 version, fileSize;
-		private byte[] checksum;
-		private String username, passwrod;
+		public enum CommandSet { NONE, START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC, VERSION, CHECKVERSION, GETVERSIONS };
+		/*
+			 		TYPE	|  data[0]  |  data[1]  |  data[2]  |  data[3]  |
+			----------------+-----------+-----------+-----------+-----------+
+			START			| directory |			|			|			|
+			LOGIN			| username  | password  |			|			|
+			AUTHORIZED		|			|			|			|			|
+			UNAUTHORIZED	|			|			|			|			|
+			NEWUSER			| username  | password  | directory |			|
+			EDIT			| filename  | filesize  |			|			|
+			DEL				| filename  |			|			|			|
+			NEW				| filename  | filesize  |			|			|
+			FILE			| filename  |			|			|			|
+			GET				| filename  |			|			|			|
+			RESTORE			| version   |			|			|			|
+			ENDSYNC			|			|			|			|			|
+			CHECK			| filename  | checksum  |			|			|
+			ENDCHECK		|			|			|			|			|
+			ACK				|			|			|			|			|
+			NOSYNC			|			|			|			|			|
+		    VERSION			| version   | numFiles  | timestamp |			|
+		   	CHECKVERSION	| filename  | operation |			|			|
+		 
+		 */
 
-		public SyncCommand(CommandSet type) : this(type, new String[] { }) { }
-		public SyncCommand(CommandSet type, String arg1) : this(type, new String[] { arg1 }) { }
-		public SyncCommand(CommandSet type, String arg1, String arg2) : this(type, new String[] { arg1, arg2 }) { }
-		public SyncCommand(CommandSet type, String arg1, String arg2, String arg3) : this(type, new String[] { arg1, arg2, arg3 }) { }
-		public SyncCommand(CommandSet type, String[] args)
+		private CommandSet type;
+		private string[] data = new string[4];
+
+		public SyncCommand(CommandSet type) : this(type, new string[] { }) { }
+		public SyncCommand(CommandSet type, string arg1) : this(type, new string[] { arg1 }) { }
+		public SyncCommand(CommandSet type, string arg1, string arg2) : this(type, new string[] { arg1, arg2 }) { }
+		public SyncCommand(CommandSet type, string arg1, string arg2, string arg3) : this(type, new string[] { arg1, arg2, arg3 }) { }
+		public SyncCommand(CommandSet type, string arg1, string arg2, string arg3, string arg4) : this(type, new string[] { arg1, arg2, arg3, arg4 }) { }
+		[JsonConstructor]
+		public SyncCommand(CommandSet type, string[] args)
 		{
 			this.type = type;
-			switch (type)
+			int i = 0;
+			foreach (string s in args)
 			{
-				case CommandSet.START:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					directory = args[0];
-					break;
-				case CommandSet.LOGIN:
-					if (args.Length != 2) throw new Exception("Wrong params count");
-					username = args[0];
-					passwrod = args[1];
-					break;
-				case CommandSet.AUTHORIZED:
-					if (args.Length != 0) throw new Exception("Wrong params count");
-					break;
-				case CommandSet.UNAUTHORIZED:
-					if (args.Length != 0) throw new Exception("Wrong params count");
-					break;
-				case CommandSet.NEWUSER:
-					if (args.Length != 3) throw new Exception("Wrong params count");
-					username = args[0];
-					passwrod = args[1];
-					directory = args[2];
-					break;
-				case CommandSet.EDIT:
-					if (args.Length != 2) throw new Exception("Wrong params count");
-					fileName = args[0];
-                    fileSize = Int64.Parse(args[1]);
-					break;
-				case CommandSet.DEL:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileName = args[0];
-					break;
-				case CommandSet.NEW:
-					if (args.Length != 2) throw new Exception("Wrong params count");
-					fileName = args[0];
-					fileSize = Int64.Parse(args[1]);
-					break;
-				case CommandSet.FILE:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileName = args[0];
-					break;
-				case CommandSet.GET:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					fileName = args[0];
-					break;
-				case CommandSet.RESTORE:
-					if (args.Length != 1) throw new Exception("Wrong params count");
-					version = Convert.ToInt32(args[0]);
-					break;
-				case CommandSet.ENDSYNC:
-					if (args.Length != 0) throw new Exception("Wrong params count");
-                    break;
-                case CommandSet.NOSYNC:
-                    if (args.Length != 0) throw new Exception("Wrong params count");
-                    break;
-				case CommandSet.CHECK:
-					if (args.Length != 2) throw new Exception("Wrong params count");
-					fileName = args[0];
-					checksum = System.Text.Encoding.ASCII.GetBytes(args[1]);
-					break;
-				case CommandSet.ENDCHECK:
-					if (args.Length != 0) throw new Exception("Wrong params count");
-					break;
-                case CommandSet.ACK:
-					if (args.Length != 0) throw new Exception("Wrong params count");
-					break;
-				default:
-					throw new Exception("Command not implemented");
+				this.data[i++] = s;
 			}
 		}
 
@@ -102,18 +60,6 @@ namespace sync_server
 		public static SyncCommand convertFromString(String jsonString)
 		{
 			return JsonConvert.DeserializeObject<SyncCommand>(jsonString);
-		}
-		[JsonConstructor]
-        public SyncCommand(CommandSet Type, String Directory, String FileName, Int64 Version, Int64 FileSize, byte[] Checksum, String Username, String Password)
-		{
-			this.type = Type;
-			this.directory = Directory;
-			this.fileName = FileName;
-			this.version = Version;
-            this.fileSize = FileSize;
-			this.checksum = Checksum;
-			this.username = Username;
-			this.passwrod = Password;
 		}
 		public static int searchJsonEnd(String jsonText)
 		{
@@ -146,60 +92,98 @@ namespace sync_server
 		{
 			get
 			{
-				if (this.type == CommandSet.START || this.type == CommandSet.NEWUSER)
-					return directory;
-				else
-					return null;
+				switch (this.type)
+				{
+					case CommandSet.START:
+						return data[0];
+					case CommandSet.NEWUSER:
+						return data[2];
+					default:
+						return null;
+				}
 			}
 		}
 		public String FileName
 		{
 			get
 			{
-				if (this.type == CommandSet.EDIT || this.type == CommandSet.DEL || this.type == CommandSet.NEW || this.type == CommandSet.GET || this.type == CommandSet.CHECK)
-					return fileName;
-				else
-					return null;
+				switch (this.type)
+				{
+					case CommandSet.EDIT:
+						return data[0];
+					case CommandSet.DEL:
+						return data[0];
+					case CommandSet.NEW:
+						return data[0];
+					case CommandSet.FILE:
+						return data[0];
+					case CommandSet.GET:
+						return data[0];
+					case CommandSet.CHECK:
+						return data[0];
+					case CommandSet.CHECKVERSION:
+						return data[0];
+					default:
+						return null;
+				}
 			}
 		}
 		public Int64 Version
 		{
 			get
 			{
-				if (this.type == CommandSet.RESTORE)
-					return version;
-				else
-					return -1;
+				switch (this.type)
+				{
+					case CommandSet.RESTORE:
+						return Int64.Parse(data[0]);
+					case CommandSet.VERSION:
+						return Int64.Parse(data[0]);
+					default:
+						return -1;
+				}
 			}
 		}
 		public byte[] Checksum
 		{
 			get
 			{
-				if (this.type == CommandSet.CHECK)
-					return checksum;
-				else
-					return null;
+				switch (this.type)
+				{
+					case CommandSet.RESTORE:
+						return System.Text.Encoding.ASCII.GetBytes(data[1]);
+					default:
+						return null;
+				}
 			}
 		}
 		public String Username
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
-					return username;
-				else
-					return null;
+				switch (this.type)
+				{
+					case CommandSet.LOGIN:
+						return data[0];
+					case CommandSet.NEWUSER:
+						return data[0];
+					default:
+						return null;
+				}
 			}
 		}
 		public String Password
 		{
 			get
 			{
-				if (this.type == CommandSet.LOGIN || this.type == CommandSet.NEWUSER)
-					return passwrod;
-				else
-					return null;
+				switch (this.type)
+				{
+					case CommandSet.LOGIN:
+						return data[1];
+					case CommandSet.NEWUSER:
+						return data[1];
+					default:
+						return null;
+				}
 			}
 		}
 
@@ -207,10 +191,55 @@ namespace sync_server
 		{
 			get
 			{
-                if (this.type == CommandSet.NEW || this.type == CommandSet.EDIT)
-					return fileSize;
-				else
-					return -1;
+				switch (this.type)
+				{
+					case CommandSet.EDIT:
+						return Int64.Parse(data[1]);
+					case CommandSet.NEW:
+						return Int64.Parse(data[1]);
+					default:
+						return -1;
+				}
+			}
+		}
+
+		public CommandSet Operation
+		{
+			get
+			{
+				switch (this.type)
+				{
+					case CommandSet.CHECKVERSION:
+						return (CommandSet)Int64.Parse(data[1]);
+					default:
+						return CommandSet.NONE;
+				}
+			}
+		}
+		public Int64 NumFiles
+		{
+			get
+			{
+				switch (this.type)
+				{
+					case CommandSet.VERSION:
+						return Int64.Parse(data[1]);
+					default:
+						return -1;
+				}
+			}
+		}
+		public string Timestamp
+		{
+			get
+			{
+				switch (this.type)
+				{
+					case CommandSet.VERSION:
+						return data[2];
+					default:
+						return null;
+				}
 			}
 		}
 
