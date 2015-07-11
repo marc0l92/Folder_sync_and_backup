@@ -24,7 +24,7 @@ namespace sync_server
         {
             InitializeComponent();
             syncManager = new AsyncManagerServer();
-            syncManager.setStatusDelegate(appendStatus);
+            syncManager.setStatusDelegate(appendStatus, editConnectedUser);
         }
 
         private void bBrowse_Click(object sender, EventArgs e)
@@ -83,6 +83,11 @@ namespace sync_server
             // Send the command to add a new item on the listbox on the UI thread
             lbLog.BeginInvoke(new AppendItem((String str) => { lbLog.Items.Add(str); }), new object[] { s });
             lbLog.BeginInvoke(new Action(() => { lbLog.SelectedIndex = lbLog.Items.Count - 1; }));
+        }
+
+        private void editConnectedUser(String s, int type=LOG_NORMAL)
+        {
+            lConnectedNum.Text = s;
         }
     }
 }
