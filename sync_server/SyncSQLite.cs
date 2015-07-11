@@ -124,7 +124,7 @@ namespace sync_server
             Int64 lastId = (Int64)command.ExecuteScalar();
 
             // todo create a table with the right name
-            this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL UNIQUE, client_file TEXT NOT NULL, checksum TEXT NOT NULL);");
+            this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL, client_file TEXT NOT NULL, checksum TEXT NOT NULL);");
             return lastId;
         }
 
@@ -140,7 +140,7 @@ namespace sync_server
 
         public Int64 getUserLastVersion(Int64 userId)
         {
-            SQLiteCommand command = new SQLiteCommand("SELECT IFNULL(MAX(version), 1) AS max_version FROM user_" + userId, connection);
+            SQLiteCommand command = new SQLiteCommand("SELECT IFNULL(MAX(version), 0) AS max_version FROM user_" + userId, connection);
             SQLiteDataReader reader = command.ExecuteReader();
             if (reader.Read())
             {

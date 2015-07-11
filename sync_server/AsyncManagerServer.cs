@@ -15,8 +15,9 @@ namespace sync_server
     {
         // Thread signal.
         private int localport;
-        private IPAddress localAddr = IPAddress.Parse("192.168.1.130");
+        //private IPAddress localAddr = IPAddress.Parse("192.168.1.130");
 		//private IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+		private IPAddress localAddr = IPAddress.Loopback;
         private String defaultDir;
 
         public delegate void StatusDelegate(String s, int type);

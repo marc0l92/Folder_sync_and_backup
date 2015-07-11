@@ -25,7 +25,6 @@ namespace sync_server
             InitializeComponent();
 			syncManager = new AsyncManagerServer();
 			syncManager.setStatusDelegate(appendStatus);
-            
 		}
 
 		private void bBrowse_Click(object sender, EventArgs e)
