@@ -79,12 +79,12 @@ namespace sync_clientWPF
 		{
 			this.thread_stopped = true;
 			// Release the socket.
-			/*
-			if (tcpClient.IsBound)
+			
+			if (tcpClient.Connected)
 			{
+				tcpClient.Close();
 				tcpClient.Shutdown(SocketShutdown.Both);
-			}*/
-			tcpClient.Close();
+			}
 			if (syncThread.IsAlive)
 			{
 				syncThread.Abort();
@@ -97,8 +97,8 @@ namespace sync_clientWPF
 			// Generate the remote endpoint
 			IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
 
-			//IPAddress ipAddress = ipHostInfo.AddressList[0];
-			IPAddress ipAddress = new IPAddress(new byte[] { 127, 0, 0, 1 }); // localhost
+			IPAddress ipAddress = ipHostInfo.AddressList[0];
+			//IPAddress ipAddress = new IPAddress(new byte[] { 127, 0, 0, 1 }); // localhost
 			IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 			// Create a TCP/IP socket
 			tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -130,6 +130,7 @@ namespace sync_clientWPF
 				scanForClientChanges(directory);
 				scanForDeletedFiles();
 				commitChangesToServer();
+				tcpClient.Close();
 
 				// Do syncking
 				while (!thread_stopped)
@@ -137,9 +138,22 @@ namespace sync_clientWPF
 					statusDelegate("Idle");
 					Thread.Sleep(SYNC_SLEEPING_TIME);
 					statusDelegate("Syncing...");
+					// connect
+					serverConnect();
+					// login
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+					// start
+					sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
+					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
+					{
+						statusDelegate("Wrong directory", true);
+						return;
+					};
+					serverFileChecksum = getServerCheckList();
 					scanForClientChanges(directory);
 					scanForDeletedFiles();
 					commitChangesToServer();
+					tcpClient.Close();
 				}
 			}
 			catch(Exception ex)
@@ -156,16 +170,15 @@ namespace sync_clientWPF
 			// Scan for changes
 			foreach (string filePath in fileList)
 			{
-				FileChecksum currentFile = new FileChecksum(filePath);
+				FileChecksum currentFile = new FileChecksum(filePath, directory);
 				// Search the file in the server list
-				int pos = serverFileChecksum.FindIndex(x => x.Equals(currentFile));
-				//int pos = serverFileChecksum.IndexOf(file);
+				int pos = serverFileChecksum.FindIndex(x => (x.BaseFileName == currentFile.BaseFileName));
 
 				if (pos < 0)
 				{
 					// create a new file on the server
 					FileInfo fi = new FileInfo(currentFile.FileName);
-					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, this.removeBaseDir(currentFile.FileName), fi.Length.ToString()));
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEW, currentFile.BaseFileName, fi.Length.ToString()));
 					this.sendFile(currentFile.FileName);
 				}
 				else
@@ -249,11 +262,6 @@ namespace sync_clientWPF
 				statusDelegate("Error during file trasmission", true);
 			}
 			
-		}
-
-		private String removeBaseDir(String fullDir)
-		{
-			return fullDir.Substring(directory.Length);
 		}
 
 		private List<FileChecksum> getServerCheckList()
