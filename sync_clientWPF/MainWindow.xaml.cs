@@ -55,7 +55,7 @@ namespace sync_clientWPF
 				bStart.IsEnabled = false;
 				syncManager.startSync(tAddress.Text, Convert.ToInt32(tPort.Text), username, password, tDirectory.Text);
 				bStop.IsEnabled = true;
-				bRestore.IsEnabled = true;
+				bGetVersions.IsEnabled = true;
 				tDirectory.IsEnabled = false;
 				bBrowse.IsEnabled = false;
 				tAddress.IsEnabled = false;
@@ -133,6 +133,7 @@ namespace sync_clientWPF
 			bStart.IsEnabled = true;
 			bStop.IsEnabled = false;
 			bRestore.IsEnabled = false;
+			bGetVersions.IsEnabled = false;
 			tDirectory.IsEnabled = true;
 			bBrowse.IsEnabled = true;
 			tAddress.IsEnabled = true;
@@ -227,6 +228,12 @@ namespace sync_clientWPF
 			ListBoxItem lbi = new ListBoxItem();
 			lbi.Content = newStatus;
 			lbStatus.Items.Add(lbi);
+		}
+
+		private void GetVersions_Click(object sender, RoutedEventArgs e)
+		{
+			//syncManager.getVersions();
+			bRestore.IsEnabled = true;
 		}
 
 	}

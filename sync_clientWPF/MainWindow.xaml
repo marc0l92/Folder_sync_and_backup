@@ -26,7 +26,8 @@
 							</GridView>
 						</ListView.View>
 					</ListView>
-					<Button Name="bRestore" Content="Restore" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="10,0,0,10" IsEnabled="False" Click="Restore_Click"/>
+					<Button Name="bRestore" Content="Restore" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="75" Margin="0,0,10,10" IsEnabled="False" Click="Restore_Click"/>
+					<Button Name="bGetVersions" Content="Get versions" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="10,0,0,10" IsEnabled="False" Click="GetVersions_Click"/>
 				</Grid>
 			</TabItem>
 			<TabItem Header="Settings">

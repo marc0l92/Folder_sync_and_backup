@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace sync_server
+namespace sync_clientWPF
 {
-	public class SyncCommand
+	class SyncCommand
 	{
 		public enum CommandSet { NONE, START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC, VERSION, CHECKVERSION, GETVERSIONS };
 		/*
@@ -53,6 +53,59 @@ namespace sync_server
 			}
 		}
 
+		[JsonConstructor]
+		public SyncCommand(CommandSet Type, string Directory, string FileName, Int64 Version, byte[] Checksum, string Username, string Password, Int64 FileSize, string Operation, Int64 NumFiles, string Timestamp)
+		{
+			type = Type;
+			switch (Type)
+			{
+				case CommandSet.START:
+					data[0] = Directory;
+					break;
+				case CommandSet.LOGIN:
+					data[0] = Username;
+					data[1] = Password;
+					break;
+				case CommandSet.NEWUSER:
+					data[0] = Username;
+					data[1] = Password;
+					data[2] = Directory;
+					break;
+				case CommandSet.EDIT:
+					data[0] = FileName;
+					data[1] = FileSize.ToString();
+					break;
+				case CommandSet.DEL:
+					data[0] = FileName;
+					break;
+				case CommandSet.NEW:
+					data[0] = Directory;
+					data[1] = FileSize.ToString();
+					break;
+				case CommandSet.FILE:
+					data[0] = FileName;
+					break;
+				case CommandSet.GET:
+					data[0] = FileName;
+					break;
+				case CommandSet.RESTORE:
+					data[0] = Version.ToString();
+					break;
+				case CommandSet.CHECK:
+					data[0] = FileName;
+					data[1] = System.Text.Encoding.ASCII.GetString(Checksum);
+					break;
+				case CommandSet.VERSION:
+					data[0] = Version.ToString();
+					data[1] = NumFiles.ToString();
+					data[2] = Timestamp;
+					break;
+				case CommandSet.CHECKVERSION:
+					data[0] = FileName;
+					data[1] = Operation;
+					break;
+			}
+		}
 		public String convertToString()
 		{
 			return JsonConvert.SerializeObject(this);
