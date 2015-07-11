@@ -14,7 +14,7 @@ namespace sync_clientWPF
 		private String directory;
 		private String fileName;
 		private Int64 version, fileSize;
-		private String checksum;
+		private byte[] checksum;
 		private String username, passwrod;
 
 		public SyncCommand(CommandSet type) : this(type, new String[]{}) {}
@@ -77,7 +77,7 @@ namespace sync_clientWPF
 				case CommandSet.CHECK:
 					if (args.Length != 2) throw new Exception("Wrong params count");
 					fileName = args[0];
-					checksum = args[1];
+					checksum = System.Text.Encoding.ASCII.GetBytes(args[1]);
 					break;
 				case CommandSet.ENDCHECK:
 					if (args.Length != 0) throw new Exception("Wrong params count");
@@ -99,7 +99,7 @@ namespace sync_clientWPF
 			return JsonConvert.DeserializeObject<SyncCommand>(jsonString);
 		}
 		[JsonConstructor]
-		public SyncCommand(CommandSet Type, String Directory, String FileName, Int64 Version, Int64 FileSize, String Checksum, String Username, String Password)
+		public SyncCommand(CommandSet Type, String Directory, String FileName, Int64 Version, Int64 FileSize, byte[] Checksum, String Username, String Password)
 		{
 			this.type = Type;
 			this.directory = Directory;
@@ -166,7 +166,7 @@ namespace sync_clientWPF
 					return -1;
 			}
 		}
-		public String Checksum
+		public byte[] Checksum
 		{
 			get
 			{

@@ -26,6 +26,8 @@ namespace sync_clientWPF
 	public partial class MainWindow : Window
 	{
 		SyncManager syncManager;
+		string username, password;
+		bool loggedin = false;
 		//private delegate void ResetGUI();
 
 		public MainWindow()
@@ -37,8 +39,8 @@ namespace sync_clientWPF
 			addVersion("test3", 3, 4, 5);
 
 			// load last settings
-			tAddress.Text = ConfigurationManager.AppSettings["address"].ToString();
-			tPort.Text = ConfigurationManager.AppSettings["port"].ToString();
+			//tAddress.Text = ConfigurationManager.AppSettings["address"].ToString();
+			//tPort.Text = ConfigurationManager.AppSettings["port"].ToString();
 
 			// initialize my data structure
 			syncManager = new SyncManager(tAddress.Text, Convert.ToInt32(tPort.Text));
@@ -51,13 +53,11 @@ namespace sync_clientWPF
 			try
 			{
 				bStart.IsEnabled = false;
-				syncManager.startSync(tAddress.Text, Convert.ToInt32(tPort.Text), tUsername.Text, tPassword.Password, tDirectory.Text);
+				syncManager.startSync(tAddress.Text, Convert.ToInt32(tPort.Text), username, password, tDirectory.Text);
 				bStop.IsEnabled = true;
 				bRestore.IsEnabled = true;
 				tDirectory.IsEnabled = false;
 				bBrowse.IsEnabled = false;
-				tUsername.IsEnabled = false;
-				tPassword.IsEnabled = false;
 				tAddress.IsEnabled = false;
 				tPort.IsEnabled = false;
 				updateStatus("Started");
@@ -135,8 +135,6 @@ namespace sync_clientWPF
 			bRestore.IsEnabled = false;
 			tDirectory.IsEnabled = true;
 			bBrowse.IsEnabled = true;
-			tUsername.IsEnabled = true;
-			tPassword.IsEnabled = true;
 			tAddress.IsEnabled = true;
 			tPort.IsEnabled = true;
 		}
@@ -153,7 +151,8 @@ namespace sync_clientWPF
 					switch (lw.waitResponse())
 					{
 						case LoginWindow.LoginResponse.CANCEL:
-							System.Windows.Application.Current.Shutdown();
+							//System.Windows.Application.Current.Shutdown();
+							lw.Close();
 							return;
 						case LoginWindow.LoginResponse.LOGIN:
 							loginAuthorized = syncManager.login(lw.Username, lw.Password);
@@ -175,6 +174,13 @@ namespace sync_clientWPF
 					if (loginAuthorized)
 					{
 						lUsername.Content = lw.Username;
+						bLogInOut.Content = "Logout";
+						lw.Close();
+						username = lw.Username;
+						password = lw.Password;
+						bStart.IsEnabled = true;
+						loggedin = true;
+						updateStatus("Logged in");
 					}
 
 				}
@@ -184,8 +190,6 @@ namespace sync_clientWPF
 					loginAuthorized = false;
 				}
 			}
-			lw.Close();
-			updateStatus("Logged in");
 		}
 
 		private void addVersion(String version, int newFiles = 0, int editFiles = 0, int delFiles = 0)
@@ -193,8 +197,15 @@ namespace sync_clientWPF
 			lVersions.Items.Add(new VersionsListViewItem(version, newFiles, editFiles, delFiles));
 		}
 
-		private void LogOut_Click(object sender, RoutedEventArgs e)
+		private void LogInOut_Click(object sender, RoutedEventArgs e)
 		{
+			if (loggedin)
+			{
+				lUsername.Content = "Please login";
+				bLogInOut.Content = "Login";
+				bStart.IsEnabled = false;
+				loggedin = false;
+			}
 			this.openLogin();
 		}
 
