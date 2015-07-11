@@ -287,7 +287,7 @@ namespace sync_clientWPF
 			while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
 			{
 				if (sc.Type != SyncCommand.CommandSet.CHECK) throw new Exception("Check list receive error");
-				serverCheckList.Add(new FileChecksum(sc.FileName, sc.Checksum));
+				serverCheckList.Add(new FileChecksum(sc.FileName, System.Text.Encoding.ASCII.GetBytes(sc.Checksum)));
 			}
 
 			return serverCheckList;

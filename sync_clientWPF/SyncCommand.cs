@@ -42,7 +42,6 @@ namespace sync_clientWPF
 		public SyncCommand(CommandSet type, string arg1, string arg2) : this(type, new string[] { arg1, arg2 }) { }
 		public SyncCommand(CommandSet type, string arg1, string arg2, string arg3) : this(type, new string[] { arg1, arg2, arg3 }) { }
 		public SyncCommand(CommandSet type, string arg1, string arg2, string arg3, string arg4) : this(type, new string[] { arg1, arg2, arg3, arg4 }) { }
-		[JsonConstructor]
 		public SyncCommand(CommandSet type, string[] args)
 		{
 			this.type = type;
@@ -54,7 +53,7 @@ namespace sync_clientWPF
 		}
 
 		[JsonConstructor]
-		public SyncCommand(CommandSet Type, string Directory, string FileName, Int64 Version, byte[] Checksum, string Username, string Password, Int64 FileSize, string Operation, Int64 NumFiles, string Timestamp)
+		public SyncCommand(CommandSet Type, string Directory, string FileName, Int64 Version, string Checksum, string Username, string Password, Int64 FileSize, string Operation, Int64 NumFiles, string Timestamp)
 		{
 			type = Type;
 			switch (Type)
@@ -79,7 +78,7 @@ namespace sync_clientWPF
 					data[0] = FileName;
 					break;
 				case CommandSet.NEW:
-					data[0] = Directory;
+					data[0] = FileName;
 					data[1] = FileSize.ToString();
 					break;
 				case CommandSet.FILE:
@@ -93,7 +92,7 @@ namespace sync_clientWPF
 					break;
 				case CommandSet.CHECK:
 					data[0] = FileName;
-					data[1] = System.Text.Encoding.ASCII.GetString(Checksum);
+					data[1] = Checksum;
 					break;
 				case CommandSet.VERSION:
 					data[0] = Version.ToString();
@@ -195,14 +194,14 @@ namespace sync_clientWPF
 				}
 			}
 		}
-		public byte[] Checksum
+		public string Checksum
 		{
 			get
 			{
 				switch (this.type)
 				{
-					case CommandSet.RESTORE:
-						return System.Text.Encoding.ASCII.GetBytes(data[1]);
+					case CommandSet.CHECK:
+						return data[1];
 					default:
 						return null;
 				}
@@ -255,15 +254,15 @@ namespace sync_clientWPF
 			}
 		}
 
-		public CommandSet Operation{
+		public string Operation{
 			get
 			{
 				switch (this.type)
 				{
 					case CommandSet.CHECKVERSION:
-						return (CommandSet) Int64.Parse(data[1]);
+						return data[1];
 					default:
-						return CommandSet.NONE;
+						return null;
 				}
 			}
 		}
