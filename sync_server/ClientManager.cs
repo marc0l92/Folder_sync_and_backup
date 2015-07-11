@@ -131,22 +131,31 @@ namespace sync_server
                 switch (cmd.Type)
                 {
                     case SyncCommand.CommandSet.LOGIN:
+                        statusDelegate(" Command Login ", fSyncServer.LOG_INFO);
                         return LoginUser();
                     case SyncCommand.CommandSet.START:
+                        statusDelegate(" Command Start ", fSyncServer.LOG_INFO);
                         return StartSession();
                     case SyncCommand.CommandSet.GET:
+                        statusDelegate(" Command Get ", fSyncServer.LOG_INFO);
                         return SendFileClient();
                     case SyncCommand.CommandSet.RESTORE: // Todo Da implementare RESTORE
+                        statusDelegate(" Command Restore ", fSyncServer.LOG_INFO);
                         return RestoreVersion();
                     case SyncCommand.CommandSet.ENDSYNC:
+                        statusDelegate("Command EndSync ", fSyncServer.LOG_INFO);
                         return EndSync();
                     case SyncCommand.CommandSet.DEL:
+                        statusDelegate("Command Delete ", fSyncServer.LOG_INFO);
                         return DeleteFile();
                     case SyncCommand.CommandSet.NEW:
+                        statusDelegate(" Command New ", fSyncServer.LOG_INFO);
                         return NewFile();
                     case SyncCommand.CommandSet.EDIT:
+                        statusDelegate("Command Edit ", fSyncServer.LOG_INFO);
                         return EditFile();
-                   case SyncCommand.CommandSet.NEWUSER: 
+                   case SyncCommand.CommandSet.NEWUSER:
+                        statusDelegate(" Command NewUser ", fSyncServer.LOG_INFO);
                            return NewUser();
                     default:
                         statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
@@ -165,24 +174,24 @@ namespace sync_server
            // String directory = "";
             // int version = 0;
 
-            statusDelegate("Get user data on DB ", fSyncServer.LOG_INFO);
+            statusDelegate("Get user data on DB (LoginUser)", fSyncServer.LOG_INFO);
             if (mySQLite.authenticateUser(cmd.Username, cmd.Password)) //Call DB Authentication User
             {
-                statusDelegate("User Credential Confermed", fSyncServer.LOG_INFO);
+                statusDelegate("User Credential Confermed (LoginUser)", fSyncServer.LOG_INFO);
                 client.usrNam = cmd.Username;
                 client.usrPwd = cmd.Password;
                 //client.vers = mySQLite.getUserLastVersion();
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
-                statusDelegate("Send Back Authorized Message", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Authorized Message (LoginUser)", fSyncServer.LOG_INFO);
                 return true;
             }
             else
             {
-                statusDelegate("User Credential NOT Confirmed", fSyncServer.LOG_INFO);
+                statusDelegate("User Credential NOT Confirmed (LoginUser)", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
                 SendCommand(stateClient.workSocket, unauthorized.convertToString());
-                statusDelegate("Send Back Unauthorized Message", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Unauthorized Message (LoginUser)", fSyncServer.LOG_INFO);
                 return true;
             }
         }
@@ -193,16 +202,16 @@ namespace sync_server
 
             if (userID==-1) //Call DB New User
             {
-                
-                statusDelegate("Username in CONFLICT choose another one", fSyncServer.LOG_INFO);
+
+                statusDelegate("Username in CONFLICT choose another one (NewUser)", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
                 SendCommand(stateClient.workSocket, unauthorized.convertToString());
-                statusDelegate("Send Back Unauthorized Message", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Unauthorized Message (NewUser)", fSyncServer.LOG_INFO);
                 return true;
             }
             else
             {
-                statusDelegate("User Added Succesfully", fSyncServer.LOG_INFO);
+                statusDelegate("User Added Succesfully (NewUser)", fSyncServer.LOG_INFO);
                 client.usrID = userID;
                 client.usrNam = cmd.Username;
                 client.usrPwd = cmd.Password;
@@ -210,7 +219,7 @@ namespace sync_server
                 client.vers = 0;
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
-                statusDelegate("Send Back Authorized Message", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Authorized Message (NewUser)", fSyncServer.LOG_INFO);
                 return true;
             }
         }
@@ -221,10 +230,10 @@ namespace sync_server
 
             if (userID==-1)
             {
-                statusDelegate("User Directory Change NOT Authorized", fSyncServer.LOG_INFO);
+                statusDelegate("User Directory Change NOT Authorized (StartSession)", fSyncServer.LOG_INFO);
                 SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
                 SendCommand(stateClient.workSocket, unauthorized.convertToString());
-                statusDelegate("Send Back Unauthorized Message because the user change the root directory for the connection ", fSyncServer.LOG_INFO);
+                statusDelegate("Send Back Unauthorized Message because the user change the root directory for the connection (StartSession)", fSyncServer.LOG_INFO);
                 return true;
             }
             else
@@ -233,27 +242,101 @@ namespace sync_server
                 serverDir += "\\user" + client.usrID;
                 client.usrDir = cmd.Directory;
                 client.vers = mySQLite.getUserLastVersion(client.usrID); //Call DB Get Last Version
-                statusDelegate("User Directory Authorized, Start Send Check", fSyncServer.LOG_INFO);
+                statusDelegate("User Directory Authorized, Start Send Check(StartSession)", fSyncServer.LOG_INFO);
                 SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
                 SendCommand(stateClient.workSocket, authorized.convertToString());
-                userChecksum = mySQLite.getUserFiles(client.usrID, client.vers); //Call DB Get Users Files
+                userChecksum = mySQLite.getUserFiles(client.usrID, client.vers, serverDir); //Call DB Get Users Files
                
                 foreach (FileChecksum check in userChecksum)
                 {
                     SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum);
                     SendCommand(stateClient.workSocket, checkCommand.convertToString());
-                    statusDelegate("Send check Message", fSyncServer.LOG_INFO);
+                    statusDelegate("Send check Message(StartSession)", fSyncServer.LOG_INFO);
                 }
 
                 SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
                 SendCommand(stateClient.workSocket, endcheck.convertToString());
-                statusDelegate("Send End check Message", fSyncServer.LOG_INFO);
+                statusDelegate("Send End check Message (StartSession)", fSyncServer.LOG_INFO);
                 return true;
             }
         }
 
 
-        public  Boolean SendFileClient()
+
+        public  Boolean DeleteFile()
+        {
+            int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
+            userChecksum.RemoveAt(index);
+            statusDelegate("File Correctly Delete from the list of the files of the current Version (DeleteFile)", fSyncServer.LOG_INFO);
+            return true; // Da Implementare Meglio
+        }
+
+        public  Boolean EndSync()
+        {
+           
+            client.vers++;
+            mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
+            statusDelegate("DB Updated Correctly (EndSync)", fSyncServer.LOG_INFO);
+            //Get List
+            syncEnd = true;
+            wellEnd = true;
+            return true;
+        }
+
+        public  Boolean NewFile()
+        {
+            string fileNameDB = Utility.FilePathWithVers(cmd.FileName, client.vers+1);
+            ReceiveFile(serverDir + fileNameDB, cmd.FileSize);
+            statusDelegate("Received New File correcty (NewFile)", fSyncServer.LOG_INFO);
+            FileChecksum file = new FileChecksum(cmd.FileName, serverDir + fileNameDB, fileNameDB);
+            userChecksum.Add(file);
+            statusDelegate("DB Updated Correctly (NewFile)", fSyncServer.LOG_INFO);
+            return true;
+        }
+
+        public  Boolean EditFile()
+        {
+            int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
+            userChecksum.RemoveAt(index);
+            statusDelegate("File Correctly Delete from the list of the files of the current Version (EditFile)", fSyncServer.LOG_INFO);
+            string fileNameDB = Utility.FilePathWithVers(cmd.FileName, client.vers + 1);
+            ReceiveFile(serverDir + fileNameDB, cmd.FileSize);
+            statusDelegate("Received File to Edit correcty  (EditFile)", fSyncServer.LOG_INFO);
+            FileChecksum file = new FileChecksum(cmd.FileName, serverDir + fileNameDB, fileNameDB);
+            userChecksum.Add(file);
+            statusDelegate("DB Updated Correctly (EditFile)", fSyncServer.LOG_INFO);
+            return true;
+        }
+
+        public  Boolean RestoreVersion( )
+        {
+            //todo Get list of all file belonging to the selected version
+            userChecksum = mySQLite.getUserFiles(client.usrID, cmd.Version, serverDir); //Call DB Retrieve Version to Restore
+            foreach (FileChecksum check in userChecksum)
+            {
+                if (File.Exists(check.FileNameServer))
+                {
+                    SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, check.FileNameClient);
+                    SendCommand(stateClient.workSocket, file.convertToString());
+                    statusDelegate("Send File Command (Restore Version)", fSyncServer.LOG_INFO);
+                    // Send file fileName to remote device
+                    stateClient.workSocket.SendFile(check.FileNameServer);
+                    statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient + "(Restore Version)", fSyncServer.LOG_INFO);
+                }
+                else
+                {
+                    // todo FILE DOESN'T EXISTS MESSAGGE
+                    statusDelegate("File doesn't exists  " + check.FileNameServer + "(Restore Version)", fSyncServer.LOG_INFO);
+                }
+            }
+
+            client.vers++;
+            mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
+            return true;
+        }
+
+
+        public Boolean SendFileClient()
         {
             int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
             String fileName = userChecksum[index].FileNameServer;
@@ -277,79 +360,6 @@ namespace sync_server
             }
 
         }
-
-        public  Boolean DeleteFile()
-        {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
-            userChecksum.RemoveAt(index);
-            statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
-            return true; // Da Implementare Meglio
-        }
-
-        public  Boolean EndSync()
-        {
-           
-            client.vers++;
-            mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
-            statusDelegate("DB Updated Correctly, Start Rename Files ", fSyncServer.LOG_INFO);
-            //Get List
-            syncEnd = true;
-            wellEnd = true;
-            return true;
-        }
-
-        public  Boolean NewFile()
-        {
-            string fileName = serverDir + cmd.FileName + "_" + (client.vers);
-            ReceiveFile(fileName, cmd.FileSize);
-            statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(cmd.FileName, fileName);
-            userChecksum.Add(file);
-            statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
-            return true;
-        }
-
-        public  Boolean EditFile()
-        {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
-            userChecksum.RemoveAt(index);
-            statusDelegate("File Correctly Delete from the list of the files of the current Version", fSyncServer.LOG_INFO);
-            string fileName = serverDir + cmd.FileName + "_" + (client.vers);
-            ReceiveFile(fileName, cmd.FileSize);
-            statusDelegate("Received File correcty ", fSyncServer.LOG_INFO);
-            FileChecksum file = new FileChecksum(serverDir + cmd.FileName + "_" + client.vers, cmd.FileName);
-            userChecksum.Add(file);
-            statusDelegate("DB Updated Correctly", fSyncServer.LOG_INFO);
-            return true;
-        }
-
-        public  Boolean RestoreVersion( )
-        {
-            //todo Get list of all file belonging to the selected version
-            userChecksum = mySQLite.getUserFiles(client.usrID, cmd.Version); //Call DB Retrieve Version to Restore
-            foreach (FileChecksum check in userChecksum)
-            {
-                if (File.Exists(check.FileNameServer))
-                {
-                    SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, check.FileNameClient);
-                    SendCommand(stateClient.workSocket, file.convertToString());
-                    statusDelegate("Send File Command ", fSyncServer.LOG_INFO);
-                    // Send file fileName to remote device
-                    stateClient.workSocket.SendFile(check.FileNameServer);
-                    statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient, fSyncServer.LOG_INFO);
-                }
-                else
-                {
-                    // todo FILE DOESN'T EXISTS MESSAGGE
-                    statusDelegate("File doesn't exists  " + check.FileNameServer, fSyncServer.LOG_INFO);
-                }
-            }
-
-            client.vers++;
-            mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
-            return true;
-        }
-
 
         public  void ReceiveFile(String fileName, Int64 fileLength)
         {

@@ -152,14 +152,14 @@ namespace sync_server
             }
         }
 
-        public List<FileChecksum> getUserFiles(Int64 userId, Int64 version)
+        public List<FileChecksum> getUserFiles(Int64 userId, Int64 version, String serverBaseDir)
         {
             List<FileChecksum> userFiles = new List<FileChecksum>();
             SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE version = " + version, connection);
             SQLiteDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
-                userFiles.Add(new FileChecksum((String)reader["server_file"], (String)reader["client_file"], (String)reader["checksum"]));
+                userFiles.Add(new FileChecksum(serverBaseDir + (String)reader["server_file"], (String)reader["server_file"], (String)reader["client_file"], (String)reader["checksum"]));
             }
             return userFiles;
         }
@@ -171,7 +171,7 @@ namespace sync_server
             {
                 command = new SQLiteCommand("INSERT INTO user_" + userId + " (version, server_file, client_file, checksum) VALUES (@version, @server_file, @client_file, @checksum);", connection);
                 command.Parameters.AddWithValue("version", version);
-                command.Parameters.AddWithValue("server_file", file.FileNameServer);
+                command.Parameters.AddWithValue("server_file", file.FileNameServerDB);
                 command.Parameters.AddWithValue("client_file", file.FileNameClient);
                 command.Parameters.AddWithValue("checksum", file.Checksum);
                 command.ExecuteNonQuery();

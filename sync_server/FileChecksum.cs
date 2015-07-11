@@ -12,9 +12,10 @@ namespace sync_server
 	{
 		private String fileNameClient;
         private String fileNameServer;
+        private String fileNameServerDB;
 		private byte[] checksum;
 
-		public FileChecksum(String fileClient , String fileServer)
+		public FileChecksum(String fileClient , String fileServer, String fileServerDB)
 		{
 			// Check if the file exists
 			if (!File.Exists(fileServer))
@@ -22,10 +23,11 @@ namespace sync_server
 				throw new Exception("ERROR: file not exists");
 			}
             this.fileNameServer = fileServer;
+            this.fileNameServerDB = fileServerDB;
             this.fileNameClient = fileClient;
 			// Generate checksum
 			MD5 md5 = MD5.Create();
-			Stream fs = File.OpenRead(this.fileNameServer);
+			Stream fs = File.OpenRead(fileServer);
 			this.checksum = md5.ComputeHash(fs);
 		}
         public FileChecksum(String fileServer)
@@ -42,11 +44,12 @@ namespace sync_server
             this.checksum = md5.ComputeHash(fs);
         }
 
-        public FileChecksum(String fileServer, String fileClient, String checksum)
+        public FileChecksum(String fileServer, String fileServerDB, String fileClient, String checksum)
 		{
 			this.fileNameServer = fileServer;
             this.fileNameClient = fileClient;
-			this.checksum = System.Text.Encoding.ASCII.GetBytes(checksum);
+            this.fileNameServerDB = fileServerDB;
+            this.checksum = System.Text.Encoding.ASCII.GetBytes(checksum);
 		}
 
 		public String Checksum
@@ -59,6 +62,11 @@ namespace sync_server
 			get { return this.fileNameServer; }
 			set { this.fileNameServer = value; }
 		}
+        public String FileNameServerDB
+        {
+            get { return this.fileNameServerDB; }
+            set { this.fileNameServerDB = value; }
+        }
         public String FileNameClient
         {
             get { return this.fileNameClient; }
