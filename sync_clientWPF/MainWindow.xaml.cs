@@ -34,14 +34,6 @@ namespace sync_clientWPF
 		{
 			InitializeComponent();
 
-			addVersion("test1", 1, 2, 3);
-			addVersion("test2", 2, 3, 4);
-			addVersion("test3", 3, 4, 5);
-
-			// load last settings
-			//tAddress.Text = ConfigurationManager.AppSettings["address"].ToString();
-			//tPort.Text = ConfigurationManager.AppSettings["port"].ToString();
-
 			// initialize my data structure
 			syncManager = new SyncManager(tAddress.Text, Convert.ToInt32(tPort.Text));
 			syncManager.setStatusDelegate(updateStatus);
@@ -193,11 +185,6 @@ namespace sync_clientWPF
 			}
 		}
 
-		private void addVersion(String version, int newFiles = 0, int editFiles = 0, int delFiles = 0)
-		{
-			lVersions.Items.Add(new VersionsListViewItem(version, newFiles, editFiles, delFiles));
-		}
-
 		private void LogInOut_Click(object sender, RoutedEventArgs e)
 		{
 			if (loggedin)
@@ -232,10 +219,14 @@ namespace sync_clientWPF
 
 		private void GetVersions_Click(object sender, RoutedEventArgs e)
 		{
-			//syncManager.getVersions();
+			List<Version> versions = syncManager.getVersions();
+			foreach (Version version in versions)
+			{
+				lVersions.Items.Add(new VersionsListViewItem(version.VersionNum, version.NewFiles, version.EditFiles, version.DelFiles));
+			}
+
 			bRestore.IsEnabled = true;
 		}
-
 	}
 
 	class VersionsListViewItem
@@ -245,17 +236,17 @@ namespace sync_clientWPF
 		public String sEditFiles { get; set; }
 		public String sDelFiles { get; set; }
 		public String sDateTime { get; set; }
-		public VersionsListViewItem(String version, int newFiles, int editFiles, int delFiles)
+		public VersionsListViewItem(Int64 version, int newFiles, int editFiles, int delFiles)
 		{
-			sVersion = version;
+			sVersion = version.ToString();
 			sNewFiles = newFiles.ToString();
 			sEditFiles = editFiles.ToString();
 			sDelFiles = delFiles.ToString();
 			sDateTime = DateTime.Now.ToString();
 		}
-		public VersionsListViewItem(String version, int newFiles, int editFiles, int delFiles, String dateTime)
+		public VersionsListViewItem(Int64 version, int newFiles, int editFiles, int delFiles, String dateTime)
 		{
-			sVersion = version;
+			sVersion = version.ToString();
 			sNewFiles = newFiles.ToString();
 			sEditFiles = editFiles.ToString();
 			sDelFiles = delFiles.ToString();

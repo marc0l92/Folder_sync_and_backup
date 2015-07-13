@@ -324,5 +324,28 @@ namespace sync_clientWPF
 			clientFileChecksum.Clear();
 		}
 
+		public List<Version> getVersions()
+		{
+			List<Version> versions = new List<Version>();
+			Version version = null;
+			SyncCommand sc;
+			sendCommand(new SyncCommand(SyncCommand.CommandSet.GETVERSIONS));
+			while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+			{
+				switch (sc.Type) {
+					case SyncCommand.CommandSet.VERSION:
+						version = new Version(sc.Version);
+						versions.Add(version);
+						break;
+					case SyncCommand.CommandSet.CHECKVERSION:
+						version.append(new VersionFile(sc.FileName, sc.Operation));
+						break;
+					default:
+						throw new Exception("Version receive error");
+				}
+			}
+			return versions;
+		}
+
 	}
 }
