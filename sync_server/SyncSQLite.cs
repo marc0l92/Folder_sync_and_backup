@@ -73,9 +73,9 @@ namespace sync_server
             this.executeQuery("CREATE TABLE users (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, user_dir TEXT NOT NULL);");
         }
 
-        public bool authenticateUser(String username, String password)
+        public Int64 authenticateUser(String username, String password)
         {
-            bool authenticated = false;
+            Int64 userId = -1;
             SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username AND password = @password", connection);
             command.Parameters.AddWithValue("username", username);
             command.Parameters.AddWithValue("password", password);
@@ -83,10 +83,10 @@ namespace sync_server
             if (reader.Read())
             {
                 // there at least a row
-                authenticated = true;
+				userId = (Int64)reader["id"];
             }
             reader.Close();
-            return authenticated;
+			return userId;
         }
 
         public Int64 checkUserDirectory(String username, String directory)

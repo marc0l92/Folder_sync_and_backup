@@ -25,11 +25,14 @@ namespace sync_clientWPF
 		private Socket tcpClient;
 		private String receivedBuffer = "";
 		private bool someChanges = false;
+		private Mutex connectionMutex;
+
 
 		public SyncManager(String address, int port)
 		{
 			serverFileChecksum = new List<FileChecksum>();
 			clientFileChecksum = new List<FileChecksum>();
+			connectionMutex = new Mutex();
 			this.address = address;
 			this.port = port;
 		}
@@ -90,7 +93,7 @@ namespace sync_clientWPF
 			}
 			if (syncThread.IsAlive)
 			{
-				syncThread.Abort();
+				syncThread.Abort(); // TODO evitare di usare Abort
 			}
 		}
 
@@ -109,7 +112,7 @@ namespace sync_clientWPF
 				IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
 				ipAddress = ipHostInfo.AddressList[0];
 			}
-			
+
 			IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 			// Create a TCP/IP socket
 			tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -123,6 +126,7 @@ namespace sync_clientWPF
 		{
 			try
 			{
+				connectionMutex.WaitOne();
 				if (!tcpClient.Connected)
 				{
 					serverConnect();
@@ -131,7 +135,7 @@ namespace sync_clientWPF
 					{
 						statusDelegate("Wrong directory", true);
 						return;
-					};
+					}
 				}
 				// Do the first connection
 				statusDelegate("Send START");
@@ -154,7 +158,9 @@ namespace sync_clientWPF
 				while (!thread_stopped)
 				{
 					statusDelegate("Idle");
+					connectionMutex.ReleaseMutex();
 					Thread.Sleep(SYNC_SLEEPING_TIME);
+					connectionMutex.WaitOne();
 					// connect
 					serverConnect();
 					statusDelegate("Syncing...");
@@ -164,14 +170,14 @@ namespace sync_clientWPF
 					{
 						statusDelegate("Wrong directory", true);
 						return;
-					};
+					}
 					// start
 					sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
 					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
 					{
 						statusDelegate("Wrong directory", true);
 						return;
-					};
+					}
 					serverFileChecksum = getServerCheckList();
 					someChanges = false;
 					scanForClientChanges(directory);
@@ -183,6 +189,10 @@ namespace sync_clientWPF
 			catch (Exception ex)
 			{
 				statusDelegate(ex.Message, true);
+			}
+			finally
+			{
+				connectionMutex.ReleaseMutex();
 			}
 		}
 
@@ -338,20 +348,44 @@ namespace sync_clientWPF
 			List<Version> versions = new List<Version>();
 			Version version = null;
 			SyncCommand sc;
-			sendCommand(new SyncCommand(SyncCommand.CommandSet.GETVERSIONS));
-			while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+			try
 			{
-				switch (sc.Type) {
-					case SyncCommand.CommandSet.VERSION:
-						version = new Version(sc.Version);
-						versions.Add(version);
-						break;
-					case SyncCommand.CommandSet.CHECKVERSION:
-						version.append(new VersionFile(sc.FileName, sc.Operation));
-						break;
-					default:
-						throw new Exception("Version receive error");
+				connectionMutex.WaitOne();
+				serverConnect();
+				// login
+				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
+				{
+
+					statusDelegate("Retrieve version list...");
+					sendCommand(new SyncCommand(SyncCommand.CommandSet.GETVERSIONS));
+					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+					{
+						switch (sc.Type)
+						{
+							case SyncCommand.CommandSet.VERSION:
+								version = new Version(sc.Version);
+								versions.Add(version);
+								break;
+							case SyncCommand.CommandSet.CHECKVERSION:
+								version.append(new VersionFile(sc.FileName, sc.Operation));
+								break;
+							default:
+								throw new Exception("Version receive error");
+						}
+					}
+					statusDelegate("Done");
 				}
+				else
+				{
+					statusDelegate("Login fail");
+				}
+
+			}
+			finally
+			{
+				tcpClient.Close();
+				connectionMutex.ReleaseMutex();
 			}
 			return versions;
 		}
