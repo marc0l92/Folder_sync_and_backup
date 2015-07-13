@@ -192,7 +192,11 @@ namespace sync_clientWPF
 			}
 			finally
 			{
-				connectionMutex.ReleaseMutex();
+				try
+				{
+					connectionMutex.ReleaseMutex(); // TODO
+				}catch(Exception e){
+				}
 			}
 		}
 
@@ -356,7 +360,6 @@ namespace sync_clientWPF
 				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
 				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
 				{
-
 					statusDelegate("Retrieve version list...");
 					sendCommand(new SyncCommand(SyncCommand.CommandSet.GETVERSIONS));
 					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
@@ -374,7 +377,7 @@ namespace sync_clientWPF
 								throw new Exception("Version receive error");
 						}
 					}
-					statusDelegate("Done");
+					statusDelegate("Versions retrieved");
 				}
 				else
 				{

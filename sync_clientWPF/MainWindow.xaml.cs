@@ -231,10 +231,12 @@ namespace sync_clientWPF
 		private void GetVersions_Click(object sender, RoutedEventArgs e)
 		{
 			List<Version> versions = syncManager.getVersions();
+			lVersions.Items.Clear();
 			foreach (Version version in versions)
 			{
 				lVersions.Items.Add(new VersionsListViewItem(version.VersionNum, version.NewFiles, version.EditFiles, version.DelFiles));
 			}
+			lVersions.SelectedIndex = 0;
 
 			bRestore.IsEnabled = true;
 		}
