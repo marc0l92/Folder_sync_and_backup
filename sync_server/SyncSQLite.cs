@@ -164,7 +164,7 @@ namespace sync_server
             SQLiteDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
-                userFiles.Add(new FileChecksum(serverBaseDir + (String)reader["server_file"], (String)reader["server_file"], (String)reader["client_file"], (String)reader["checksum"]));
+                userFiles.Add(new FileChecksum(serverBaseDir + (String)reader["server_file"], (String)reader["server_file"], (String)reader["client_file"], (byte[])reader["checksum"]));
             }
             return userFiles;
         }
@@ -178,7 +178,7 @@ namespace sync_server
                 command.Parameters.AddWithValue("version", version);
                 command.Parameters.AddWithValue("server_file", file.FileNameServerDB);
                 command.Parameters.AddWithValue("client_file", file.FileNameClient);
-                command.Parameters.AddWithValue("checksum", file.Checksum);
+                command.Parameters.AddWithValue("checksum", file.ChecksumBytes);
                 command.ExecuteNonQuery();
             }
 

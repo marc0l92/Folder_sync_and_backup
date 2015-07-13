@@ -45,18 +45,24 @@ namespace sync_server
             this.checksum = md5.ComputeHash(fs);
         }
 
-        public FileChecksum(String fileServer, String fileServerDB, String fileClient, String checksum)
+        public FileChecksum(String fileServer, String fileServerDB, String fileClient, byte[] checksum)
 		{
 			this.fileNameServer = fileServer;
             this.fileNameClient = fileClient;
             this.fileNameServerDB = fileServerDB;
-            this.checksum = System.Text.Encoding.ASCII.GetBytes(checksum);
+            //this.checksum = System.Text.Encoding.ASCII.GetBytes(checksum);
+			this.checksum = checksum;
 		}
 
 		public String Checksum
 		{
 			get { return System.Text.Encoding.ASCII.GetString(this.checksum); }
 			set { this.checksum = System.Text.Encoding.ASCII.GetBytes(value); }
+		}
+		public byte[] ChecksumBytes
+		{
+			get { return this.checksum; }
+			set { this.checksum = value; }
 		}
 		public String FileNameServer
 		{

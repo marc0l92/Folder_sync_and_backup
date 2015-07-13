@@ -133,7 +133,7 @@ namespace sync_clientWPF
 					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
 					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
 					{
-						statusDelegate("Wrong directory", true);
+						statusDelegate("Login fail", true);
 						return;
 					}
 				}
