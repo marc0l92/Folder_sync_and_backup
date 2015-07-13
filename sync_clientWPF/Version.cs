@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace sync_clientWPF
 {
-	class Version
+	public class Version
 	{
 		private List<VersionFile> vec;
 		private Int64 version = 0;
@@ -39,11 +39,15 @@ namespace sync_clientWPF
 			vec.Add(vf);
 		}
 
-		public VersionFile get(int i)
+		public List<VersionFile> Items
 		{
-			return vec[i];
+			get { return vec; }
 		}
 
+		public int FileCount
+		{
+			get { return vec.Count; }
+		}
 		public Int64 VersionNum
 		{
 			get { return this.version; }
@@ -62,15 +66,15 @@ namespace sync_clientWPF
 		}
 	}
 
-	class VersionFile
+	public class VersionFile
 	{
-		private String fileNameClient;
+		private String fileName;
 		private String fileOperation; /*EDIT, NEW, DEL*/
 
-		public VersionFile(String fileClient, String operation)
+		public VersionFile(String fileName, String operation)
 		{
 			this.fileOperation = operation;
-			this.fileNameClient = fileClient;
+			this.fileName = fileName;
 		}
 
 		public String FileOperation
@@ -78,9 +82,9 @@ namespace sync_clientWPF
 			get { return this.fileOperation; }
 		}
 
-		public String FileNameClient
+		public String FileName
 		{
-			get { return this.fileNameClient; }
+			get { return this.fileName; }
 		}
 	}
 }

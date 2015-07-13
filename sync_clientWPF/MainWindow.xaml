@@ -15,14 +15,14 @@
 			</TabItem>
 			<TabItem Header="Versions">
 				<Grid Background="#FFE5E5E5">
-					<ListView Name="lVersions" Margin="10,10,10,35" SelectionMode="Single">
+					<ListView Name="lVersions" Margin="10,10,10,35" SelectionMode="Single" MouseDoubleClick="lVersions_MouseDoubleClick">
 						<ListView.View>
 							<GridView>
 								<GridViewColumn Header="Version" Width="60" DisplayMemberBinding="{Binding sVersion}"/>
 								<GridViewColumn Header="NewFiles" Width="60" DisplayMemberBinding="{Binding sNewFiles}"/>
 								<GridViewColumn Header="EditFiles" Width="60" DisplayMemberBinding="{Binding sEditFiles}"/>
 								<GridViewColumn Header="DelFIles" Width="60" DisplayMemberBinding="{Binding sDelFiles}"/>
-								<GridViewColumn Header="DateTime" Width="100" DisplayMemberBinding="{Binding sDateTime}"/>
+								<GridViewColumn Header="DateTime" Width="150" DisplayMemberBinding="{Binding sDateTime}"/>
 							</GridView>
 						</ListView.View>
 					</ListView>

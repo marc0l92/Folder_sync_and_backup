@@ -196,6 +196,7 @@ namespace sync_clientWPF
 				{
 					connectionMutex.ReleaseMutex(); // TODO
 				}catch(Exception e){
+					statusDelegate(e.Message, true);
 				}
 			}
 		}

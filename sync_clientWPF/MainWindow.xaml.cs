@@ -27,6 +27,7 @@ namespace sync_clientWPF
 	public partial class MainWindow : Window
 	{
 		private SyncManager syncManager;
+		List<Version> versions=null;
 		private string username, password;
 		private bool loggedin = false;
 		//private NotifyIcon notifyIcon;
@@ -230,7 +231,7 @@ namespace sync_clientWPF
 
 		private void GetVersions_Click(object sender, RoutedEventArgs e)
 		{
-			List<Version> versions = syncManager.getVersions();
+			versions = syncManager.getVersions();
 			lVersions.Items.Clear();
 			foreach (Version version in versions)
 			{
@@ -240,6 +241,24 @@ namespace sync_clientWPF
 
 			bRestore.IsEnabled = true;
 		}
+
+		private void lVersions_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			DependencyObject obj = (DependencyObject)e.OriginalSource;
+
+			while (obj != null && obj != lVersions)
+			{
+				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
+				{
+					// Do something here
+					VersionDetailsWindow vdw = new VersionDetailsWindow(versions[lVersions.SelectedIndex]);
+					vdw.Show();
+					break;
+				}
+				obj = VisualTreeHelper.GetParent(obj);
+			}
+		}
+
 	}
 
 	class VersionsListViewItem
