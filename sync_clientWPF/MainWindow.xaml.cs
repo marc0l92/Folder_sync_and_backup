@@ -100,24 +100,6 @@ namespace sync_clientWPF
 			}
 		}
 
-		private void Restore_Click(object sender, EventArgs e)
-		{
-			String selVersion = lVersions.SelectedItems[0].ToString();
-			MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore this version?\n" + selVersion, "Restore system", System.Windows.MessageBoxButton.YesNo);
-			if (res == MessageBoxResult.Yes)
-			{
-				try
-				{
-					syncManager.restoreVersion(selVersion);
-					System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
-				}
-				catch (Exception ex)
-				{
-					System.Windows.MessageBox.Show("Restore failed\n" + ex.Message, "Restoring system", MessageBoxButton.OK, MessageBoxImage.Error);
-				}
-			}
-		}
-
 		private void updateStatus(String message, bool fatalError)
 		{
 			this.Dispatcher.BeginInvoke((Action)(() =>
@@ -256,6 +238,24 @@ namespace sync_clientWPF
 					break;
 				}
 				obj = VisualTreeHelper.GetParent(obj);
+			}
+		}
+
+		private void Restore_Click(object sender, EventArgs e)
+		{
+			Int64 selVersion = versions[lVersions.SelectedIndex].VersionNum;
+			MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore version number "+selVersion+" ?", "Restore system", System.Windows.MessageBoxButton.YesNo);
+			if (res == MessageBoxResult.Yes)
+			{
+				try
+				{
+					syncManager.restoreVersion(selVersion);
+					System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
+				}
+				catch (Exception ex)
+				{
+					System.Windows.MessageBox.Show("Restore failed\n" + ex.Message, "Restoring system", MessageBoxButton.OK, MessageBoxImage.Error);
+				}
 			}
 		}
 

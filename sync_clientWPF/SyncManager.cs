@@ -255,12 +255,6 @@ namespace sync_clientWPF
 			}
 		}
 
-		public void restoreVersion(String version)
-		{
-			throw new Exception("Function not implemented yet\nPlease contact the server admin:\nandrea.ferri@gmail.com");
-			// TODO restore
-		}
-
 		private void sendCommand(SyncCommand command)
 		{
 			int bytesSent;
@@ -394,5 +388,47 @@ namespace sync_clientWPF
 			return versions;
 		}
 
+		public void restoreVersion(Int64 versionNum)
+		{
+			SyncCommand sc;
+			try
+			{
+				connectionMutex.WaitOne();
+				serverConnect();
+				// login
+				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
+				{
+					statusDelegate("Start restore...");
+					//sendCommand(new SyncCommand(SyncCommand.CommandSet.GETVERSIONS));
+					//while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+					//{
+					//	switch (sc.Type)
+					//	{
+					//		case SyncCommand.CommandSet.VERSION:
+					//			version = new Version(sc.Version);
+					//			versions.Add(version);
+					//			break;
+					//		case SyncCommand.CommandSet.CHECKVERSION:
+					//			version.append(new VersionFile(sc.FileName, sc.Operation));
+					//			break;
+					//		default:
+					//			throw new Exception("Version receive error");
+					//	}
+					//}
+					statusDelegate("Restore done");
+				}
+				else
+				{
+					statusDelegate("Login fail");
+				}
+
+			}
+			finally
+			{
+				tcpClient.Close();
+				connectionMutex.ReleaseMutex();
+			}
+		}
 	}
 }
