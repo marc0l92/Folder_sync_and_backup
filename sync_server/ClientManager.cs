@@ -114,6 +114,7 @@ namespace sync_server
                     {
                         cmd = SyncCommand.convertFromString(stateClient.sb.ToString());
                         stateClient.sb.Clear();
+						SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ACK));
                     }
                     // Signal that all bytes have been received.
                     receiveDone.Set();
@@ -163,7 +164,7 @@ namespace sync_server
                         return NewUser();
                    case SyncCommand.CommandSet.GETVERSIONS:
                         statusDelegate("Command Edit ", fSyncServer.LOG_INFO);
-                        return Vers();
+                        return GetVersions();
                     default:
                         statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
                         return true;
@@ -188,16 +189,14 @@ namespace sync_server
                 client.usrNam = cmd.Username;
                 client.usrPwd = cmd.Password;
                 //client.vers = mySQLite.getUserLastVersion();
-                SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
-                SendCommand(stateClient.workSocket, authorized.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.AUTHORIZED));
                 statusDelegate("Send Back Authorized Message (LoginUser)", fSyncServer.LOG_INFO);
                 return true;
             }
             else
             {
                 statusDelegate("User Credential NOT Confirmed (LoginUser)", fSyncServer.LOG_INFO);
-                SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
-                SendCommand(stateClient.workSocket, unauthorized.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED));
                 statusDelegate("Send Back Unauthorized Message (LoginUser)", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -211,8 +210,7 @@ namespace sync_server
             {
 
                 statusDelegate("Username in CONFLICT choose another one (NewUser)", fSyncServer.LOG_INFO);
-                SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
-                SendCommand(stateClient.workSocket, unauthorized.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED));
                 statusDelegate("Send Back Unauthorized Message (NewUser)", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -224,8 +222,7 @@ namespace sync_server
                 client.usrPwd = cmd.Password;
                 client.usrDir = cmd.Directory;
                 client.vers = 0;
-                SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
-                SendCommand(stateClient.workSocket, authorized.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.AUTHORIZED));
                 statusDelegate("Send Back Authorized Message (NewUser)", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -238,8 +235,7 @@ namespace sync_server
             if (userID==-1)
             {
                 statusDelegate("User Directory Change NOT Authorized (StartSession)", fSyncServer.LOG_INFO);
-                SyncCommand unauthorized = new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED);
-                SendCommand(stateClient.workSocket, unauthorized.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED));
                 statusDelegate("Send Back Unauthorized Message because the user change the root directory for the connection (StartSession)", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -250,41 +246,36 @@ namespace sync_server
                 client.usrDir = cmd.Directory;
                 client.vers = mySQLite.getUserLastVersion(client.usrID); //Call DB Get Last Version
                 statusDelegate("User Directory Authorized, Start Send Check(StartSession)", fSyncServer.LOG_INFO);
-                SyncCommand authorized = new SyncCommand(SyncCommand.CommandSet.AUTHORIZED);
-                SendCommand(stateClient.workSocket, authorized.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.AUTHORIZED));
                 userChecksum = mySQLite.getUserFiles(client.usrID, client.vers, serverDir); //Call DB Get Users Files
                
                 foreach (FileChecksum check in userChecksum)
                 {
-                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum.ToString());
-                    SendCommand(stateClient.workSocket, checkCommand.convertToString());
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum.ToString()));
                     statusDelegate("Send check Message(StartSession)", fSyncServer.LOG_INFO);
                 }
 
-                SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
-                SendCommand(stateClient.workSocket, endcheck.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDCHECK));
                 statusDelegate("Send End check Message (StartSession)", fSyncServer.LOG_INFO);
                 return true;
             }
         }
 
-        public Boolean Vers()
+        public Boolean GetVersions()
         {
                 Int64 lastVers = mySQLite.getUserLastVersion( client.usrID);
                 int currentVersion = 1;
                 List<FileChecksum> userChecksumA = mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
                 while (currentVersion <= lastVers )
                 {
-                    SyncCommand VersCommand = new SyncCommand(SyncCommand.CommandSet.VERSION, currentVersion.ToString(), userChecksumA.Count.ToString(), "Timestamp");
-                    SendCommand(stateClient.workSocket, VersCommand.convertToString());
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.VERSION, currentVersion.ToString(), userChecksumA.Count.ToString(), "Timestamp"));
                     statusDelegate("Send Version Message(Version Command)", fSyncServer.LOG_INFO);
 
                     if (currentVersion == 1)
                     {
                         foreach (FileChecksum check in userChecksumA)
                         {
-                            SyncCommand checkVersCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW");
-                            SendCommand(stateClient.workSocket, checkVersCommand.convertToString());
+                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW"));
                             statusDelegate("Send check Version Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
@@ -302,8 +293,7 @@ namespace sync_server
                             if(checkA.FileNameClient==checkB.FileNameClient)
                                 if(checkA.FileNameServer==checkB.FileNameServer)
                                 {
-                                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "NOTHING");
-                                    SendCommand(stateClient.workSocket, checkCommand.convertToString());
+                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "NONE"));
                                     statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                                     found = true;
                                     userChecksumA.Remove(checkA);
@@ -311,8 +301,7 @@ namespace sync_server
                                 }
                                 else
                                 {
-                                    SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "EDITED");
-                                    SendCommand(stateClient.workSocket, checkCommand.convertToString());
+                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "EDIT"));
                                     statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                                     found = true;
                                     userChecksumA.Remove(checkA);
@@ -323,8 +312,7 @@ namespace sync_server
                        
                         if(!found)
                         {
-                            SyncCommand checkCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkB.FileNameClient, "NEW");
-                            SendCommand(stateClient.workSocket, checkCommand.convertToString());
+                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkB.FileNameClient, "NEW"));
                             statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
@@ -333,8 +321,7 @@ namespace sync_server
                     {
                         foreach (FileChecksum checkA in userChecksumA)
                         {
-                            SyncCommand checkVersCommand = new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "DELETE");
-                            SendCommand(stateClient.workSocket, checkVersCommand.convertToString());
+                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "DEL"));
                             statusDelegate("Send check Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
@@ -343,8 +330,7 @@ namespace sync_server
                     currentVersion++;
                    
                 }
-                SyncCommand endcheck = new SyncCommand(SyncCommand.CommandSet.ENDCHECK);
-                SendCommand(stateClient.workSocket, endcheck.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDCHECK));
                 statusDelegate("Send End check Message (Version Command)", fSyncServer.LOG_INFO);
                 return true;
         }
@@ -355,8 +341,6 @@ namespace sync_server
         {
             int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
             userChecksum.RemoveAt(index);
-            SyncCommand command = new SyncCommand(SyncCommand.CommandSet.ACK);
-            SendCommand(stateClient.workSocket, command.convertToString());
             statusDelegate("File Correctly Delete from the list of the files of the current Version (DeleteFile)", fSyncServer.LOG_INFO);
             return true; // Da Implementare Meglio
         }
@@ -415,8 +399,7 @@ namespace sync_server
             {
                 if (File.Exists(check.FileNameServer))
                 {
-                    SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, check.FileNameClient);
-                    SendCommand(stateClient.workSocket, file.convertToString());
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, check.FileNameClient));
                     statusDelegate("Send File Command (Restore Version)", fSyncServer.LOG_INFO);
                     // Send file fileName to remote device
                     stateClient.workSocket.SendFile(check.FileNameServer);
@@ -439,11 +422,10 @@ namespace sync_server
         {
             int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
             String fileName = userChecksum[index].FileNameServer;
-            SyncCommand file = new SyncCommand(SyncCommand.CommandSet.FILE, cmd.FileName);
 
             if (File.Exists(fileName))
             {
-                SendCommand(stateClient.workSocket, file.convertToString());
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, cmd.FileName));
                 statusDelegate("Send File Command  ", fSyncServer.LOG_INFO);
                 // Send file fileName to remote device
                 stateClient.workSocket.SendFile(fileName);
@@ -485,9 +467,7 @@ namespace sync_server
             	bFile.Write(buffer, 0, rec);
             }
 			bFile.Close();
-
-            SyncCommand command = new SyncCommand(SyncCommand.CommandSet.ACK);
-            SendCommand(stateClient.workSocket, command.convertToString());
+            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ACK));
             
 
 
@@ -548,10 +528,10 @@ namespace sync_server
         //    }
         //}
 
-        public  void SendCommand(Socket handler, String data)
+        public  void SendCommand(Socket handler, SyncCommand command)
         {
             // Convert the string data to byte data using ASCII encoding.
-            byte[] byteData = Encoding.ASCII.GetBytes(data);
+			byte[] byteData = Encoding.ASCII.GetBytes(command.convertToString());
 
             statusDelegate("SendCommand Started", fSyncServer.LOG_INFO);
 
@@ -569,7 +549,6 @@ namespace sync_server
 
                 // Complete sending the data to the remote device.
                 int bytesSent = stateClient.workSocket.EndSend(ar);
-                statusDelegate("Send Command Byte number: " + bytesSent, fSyncServer.LOG_INFO);
             }
             catch (Exception e)
             {

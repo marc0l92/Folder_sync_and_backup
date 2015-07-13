@@ -6,12 +6,13 @@ using System.Text;
 using System.Threading;
 using System.Net.Sockets;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace sync_clientWPF
 {
 	class SyncManager
 	{
-		private const int SYNC_SLEEPING_TIME = 2000;
+		private const int SYNC_SLEEPING_TIME = 5000;
 
 		private String address, username, password, directory;
 		private int port;
@@ -95,12 +96,20 @@ namespace sync_clientWPF
 
 		private void serverConnect()
 		{
-			statusDelegate("Request address form DNS");
+			IPAddress ipAddress;
 			// Generate the remote endpoint
-			IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
-
-			IPAddress ipAddress = ipHostInfo.AddressList[0];
-			//IPAddress ipAddress = new IPAddress(new byte[] { 127, 0, 0, 1 }); // localhost
+			if (Regex.IsMatch(address, "^\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}$"))
+			{
+				String[] parts = address.Split('.');
+				ipAddress = new IPAddress(new byte[] { Byte.Parse(parts[0]), Byte.Parse(parts[1]), Byte.Parse(parts[2]), Byte.Parse(parts[3]) });
+			}
+			else
+			{
+				statusDelegate("Request address form DNS");
+				IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
+				ipAddress = ipHostInfo.AddressList[0];
+			}
+			
 			IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 			// Create a TCP/IP socket
 			tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -228,10 +237,6 @@ namespace sync_clientWPF
 			{
 				someChanges = true;
 				sendCommand(new SyncCommand(SyncCommand.CommandSet.DEL, currentFile.BaseFileName));
-				if (receiveCommand().Type != SyncCommand.CommandSet.ACK)
-				{
-					statusDelegate("Error during file cancellation", true);
-				}
 			}
 		}
 
@@ -251,6 +256,10 @@ namespace sync_clientWPF
 			{
 				bytesSent = tcpClient.Send(Encoding.ASCII.GetBytes(sCommand));
 				sCommand = sCommand.Substring(bytesSent); // cat the message part already sent
+			}
+			if (receiveCommand().Type != SyncCommand.CommandSet.ACK)
+			{
+				statusDelegate("Protocol error", true);
 			}
 		}
 		private SyncCommand receiveCommand()

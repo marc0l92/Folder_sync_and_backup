@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -25,10 +26,11 @@ namespace sync_clientWPF
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		SyncManager syncManager;
-		string username, password;
-		bool loggedin = false;
-		//private delegate void ResetGUI();
+		private SyncManager syncManager;
+		private string username, password;
+		private bool loggedin = false;
+		//private NotifyIcon notifyIcon;
+		//private System.Windows.Forms.ContextMenu notifyIconMenu;
 
 		public MainWindow()
 		{
@@ -37,6 +39,15 @@ namespace sync_clientWPF
 			// initialize my data structure
 			syncManager = new SyncManager(tAddress.Text, Convert.ToInt32(tPort.Text));
 			syncManager.setStatusDelegate(updateStatus);
+
+			// initialize tray icon
+			//notifyIconMenu = new System.Windows.Forms.ContextMenu();
+			////notifyIconMenu.MenuItems.Add("Exit", );
+			//notifyIcon = new NotifyIcon();
+			//notifyIcon.Text = "SyncClient";
+			//notifyIcon.ContextMenu = notifyIconMenu;
+			//notifyIcon.Icon = new Icon(SystemIcons.Application, 40, 40);
+			//notifyIcon.Visible = true;
 		}
 
 		private void StartSync_Click(object sender, EventArgs e)

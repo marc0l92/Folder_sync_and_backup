@@ -31,6 +31,8 @@ namespace sync_clientWPF
 				case "DEL":
 					delFiles++;
 					break;
+				case "NONE":
+					break;
 				default:
 					throw new Exception("Invalid file operation");
 			}
