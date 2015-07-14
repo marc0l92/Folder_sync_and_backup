@@ -9,7 +9,7 @@ namespace sync_clientWPF
 {
 	class SyncCommand
 	{
-		public enum CommandSet { NONE, START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC, VERSION, CHECKVERSION, GETVERSIONS};
+		public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC, VERSION, CHECKVERSION, GETVERSIONS, ENDRESTORE};
 		/*
 			 		TYPE	|  data[0]  |  data[1]  |  data[2]  |  data[3]  |
 			----------------+-----------+-----------+-----------+-----------+

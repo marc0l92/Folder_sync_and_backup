@@ -287,7 +287,6 @@ namespace sync_clientWPF
 			{
 				statusDelegate("Error during file trasmission", true);
 			}
-
 		}
 
 		private List<FileChecksum> getServerCheckList()
