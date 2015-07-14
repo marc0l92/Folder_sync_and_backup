@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -25,26 +26,29 @@ namespace sync_clientWPF
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		SyncManager syncManager;
-		string username, password;
-		bool loggedin = false;
-		//private delegate void ResetGUI();
+		private SyncManager syncManager;
+		List<Version> versions=null;
+		private string username, password;
+		private bool loggedin = false;
+		//private NotifyIcon notifyIcon;
+		//private System.Windows.Forms.ContextMenu notifyIconMenu;
 
 		public MainWindow()
 		{
 			InitializeComponent();
 
-			addVersion("test1", 1, 2, 3);
-			addVersion("test2", 2, 3, 4);
-			addVersion("test3", 3, 4, 5);
-
-			// load last settings
-			//tAddress.Text = ConfigurationManager.AppSettings["address"].ToString();
-			//tPort.Text = ConfigurationManager.AppSettings["port"].ToString();
-
 			// initialize my data structure
 			syncManager = new SyncManager(tAddress.Text, Convert.ToInt32(tPort.Text));
-			syncManager.setStatusDelegate(updateStatus);
+			syncManager.setStatusDelegate(updateStatus, updateStatusBar);
+
+			// initialize tray icon
+			//notifyIconMenu = new System.Windows.Forms.ContextMenu();
+			////notifyIconMenu.MenuItems.Add("Exit", );
+			//notifyIcon = new NotifyIcon();
+			//notifyIcon.Text = "SyncClient";
+			//notifyIcon.ContextMenu = notifyIconMenu;
+			//notifyIcon.Icon = new Icon(SystemIcons.Application, 40, 40);
+			//notifyIcon.Visible = true;
 		}
 
 		private void StartSync_Click(object sender, EventArgs e)
@@ -96,24 +100,6 @@ namespace sync_clientWPF
 			}
 		}
 
-		private void Restore_Click(object sender, EventArgs e)
-		{
-			String selVersion = lVersions.SelectedItems[0].ToString();
-			MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore this version?\n" + selVersion, "Restore system", System.Windows.MessageBoxButton.YesNo);
-			if (res == MessageBoxResult.Yes)
-			{
-				try
-				{
-					syncManager.restoreVersion(selVersion);
-					System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
-				}
-				catch (Exception ex)
-				{
-					System.Windows.MessageBox.Show("Restore failed\n" + ex.Message, "Restoring system", MessageBoxButton.OK, MessageBoxImage.Error);
-				}
-			}
-		}
-
 		private void updateStatus(String message, bool fatalError)
 		{
 			this.Dispatcher.BeginInvoke((Action)(() =>
@@ -123,6 +109,13 @@ namespace sync_clientWPF
 				{
 					forceStop();
 				}
+			}));
+		}
+		private void updateStatusBar(int percentage)
+		{
+			this.Dispatcher.BeginInvoke((Action)(() =>
+			{
+				lStatusBar.Value = percentage;
 			}));
 		}
 
@@ -193,11 +186,6 @@ namespace sync_clientWPF
 			}
 		}
 
-		private void addVersion(String version, int newFiles = 0, int editFiles = 0, int delFiles = 0)
-		{
-			lVersions.Items.Add(new VersionsListViewItem(version, newFiles, editFiles, delFiles));
-		}
-
 		private void LogInOut_Click(object sender, RoutedEventArgs e)
 		{
 			if (loggedin)
@@ -232,8 +220,50 @@ namespace sync_clientWPF
 
 		private void GetVersions_Click(object sender, RoutedEventArgs e)
 		{
-			//syncManager.getVersions();
+			versions = syncManager.getVersions();
+			lVersions.Items.Clear();
+			foreach (Version version in versions)
+			{
+				lVersions.Items.Add(new VersionsListViewItem(version.VersionNum, version.NewFiles, version.EditFiles, version.DelFiles));
+			}
+			lVersions.SelectedIndex = 0;
+
 			bRestore.IsEnabled = true;
+		}
+
+		private void lVersions_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			DependencyObject obj = (DependencyObject)e.OriginalSource;
+
+			while (obj != null && obj != lVersions)
+			{
+				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
+				{
+					// Do something here
+					VersionDetailsWindow vdw = new VersionDetailsWindow(versions[lVersions.SelectedIndex]);
+					vdw.Show();
+					break;
+				}
+				obj = VisualTreeHelper.GetParent(obj);
+			}
+		}
+
+		private void Restore_Click(object sender, EventArgs e)
+		{
+			Int64 selVersion = versions[lVersions.SelectedIndex].VersionNum;
+			MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore version number "+selVersion+" ?", "Restore system", System.Windows.MessageBoxButton.YesNo);
+			if (res == MessageBoxResult.Yes)
+			{
+				try
+				{
+					syncManager.restoreVersionStart(selVersion);
+					System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
+				}
+				catch (Exception ex)
+				{
+					System.Windows.MessageBox.Show("Restore failed\n" + ex.Message, "Restoring system", MessageBoxButton.OK, MessageBoxImage.Error);
+				}
+			}
 		}
 
 	}
@@ -245,17 +275,17 @@ namespace sync_clientWPF
 		public String sEditFiles { get; set; }
 		public String sDelFiles { get; set; }
 		public String sDateTime { get; set; }
-		public VersionsListViewItem(String version, int newFiles, int editFiles, int delFiles)
+		public VersionsListViewItem(Int64 version, int newFiles, int editFiles, int delFiles)
 		{
-			sVersion = version;
+			sVersion = version.ToString();
 			sNewFiles = newFiles.ToString();
 			sEditFiles = editFiles.ToString();
 			sDelFiles = delFiles.ToString();
 			sDateTime = DateTime.Now.ToString();
 		}
-		public VersionsListViewItem(String version, int newFiles, int editFiles, int delFiles, String dateTime)
+		public VersionsListViewItem(Int64 version, int newFiles, int editFiles, int delFiles, String dateTime)
 		{
-			sVersion = version;
+			sVersion = version.ToString();
 			sNewFiles = newFiles.ToString();
 			sEditFiles = editFiles.ToString();
 			sDelFiles = delFiles.ToString();

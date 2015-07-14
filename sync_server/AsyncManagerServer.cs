@@ -24,17 +24,15 @@ namespace sync_server
         public delegate void StatusDelegate(String s, int type);
         private delegate void EndClientDelegate();
         private EndClientDelegate endClientDelegate = null;
-        private StatusDelegate statusDelegate, connectedUsersDelegate;
+        private StatusDelegate statusDelegate;
 		private Socket listener;
-        private int connectedUser = 0;
 
         public ManualResetEvent allDone = new ManualResetEvent(false);
         private bool serverStopped = false;
 
-        public void setStatusDelegate(StatusDelegate sd, StatusDelegate cud)
+        public void setStatusDelegate(StatusDelegate sd)
         {
             statusDelegate = sd;
-            connectedUsersDelegate = cud;
         }
 
         public AsyncManagerServer()
@@ -128,7 +126,6 @@ namespace sync_server
 				else
 					endClientDelegate += new EndClientDelegate(client.stop);
 
-                connectedUsersDelegate((++connectedUser).ToString(), 0);
 				statusDelegate("Connected and Created New Thred to Serve Client", fSyncServer.LOG_INFO);
 			}
         }

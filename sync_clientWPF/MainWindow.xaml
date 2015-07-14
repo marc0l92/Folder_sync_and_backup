@@ -15,14 +15,14 @@
 			</TabItem>
 			<TabItem Header="Versions">
 				<Grid Background="#FFE5E5E5">
-					<ListView Name="lVersions" Margin="10,10,10,35" SelectionMode="Single">
+					<ListView Name="lVersions" Margin="10,10,10,35" SelectionMode="Single" MouseDoubleClick="lVersions_MouseDoubleClick">
 						<ListView.View>
 							<GridView>
 								<GridViewColumn Header="Version" Width="60" DisplayMemberBinding="{Binding sVersion}"/>
 								<GridViewColumn Header="NewFiles" Width="60" DisplayMemberBinding="{Binding sNewFiles}"/>
 								<GridViewColumn Header="EditFiles" Width="60" DisplayMemberBinding="{Binding sEditFiles}"/>
 								<GridViewColumn Header="DelFIles" Width="60" DisplayMemberBinding="{Binding sDelFiles}"/>
-								<GridViewColumn Header="DateTime" Width="100" DisplayMemberBinding="{Binding sDateTime}"/>
+								<GridViewColumn Header="DateTime" Width="150" DisplayMemberBinding="{Binding sDateTime}"/>
 							</GridView>
 						</ListView.View>
 					</ListView>
@@ -36,7 +36,7 @@
 					<TextBox Name="tDirectory" Text="D:\ProgettoMalnati\client" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10,36,49,0"/>
 					<Button Name="bBrowse" Content="..." HorizontalAlignment="Right" VerticalAlignment="Top" Width="30" RenderTransformOrigin="3.136,8.118" Margin="0,36,14,0" Height="23" Click="Browse_Click"/>
 					<Label Content="Server address:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.473,0.501" Margin="10,64,0,0"/>
-					<TextBox Name="tAddress" Height="23" Margin="10,90,104,0" TextWrapping="Wrap" Text="192.168.1.130" VerticalAlignment="Top"/>
+					<TextBox Name="tAddress" Height="23" Margin="10,90,104,0" TextWrapping="Wrap" Text="127.0.0.1" VerticalAlignment="Top"/>
 					<Label Content="Port:" HorizontalAlignment="Right" Margin="0,64,60,0" VerticalAlignment="Top" RenderTransformOrigin="0.496,0.501"/>
 					<TextBox Name="tPort" HorizontalAlignment="Right" Height="23" Margin="0,90,10,0" TextWrapping="Wrap" Text="55555" VerticalAlignment="Top" Width="85"/>
 					<Button Name="bStart" Content="Start sync" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="10,0,0,10" Click="StartSync_Click" IsEnabled="False"/>
@@ -45,7 +45,10 @@
 			</TabItem>
 		</TabControl>
 		<StatusBar Height="25" VerticalAlignment="Bottom">
-			<StatusBarItem Name="lStatus" Content="Status" Height="25" VerticalAlignment="Top" Margin="0,0,0,0"/>
+			<StatusBarItem Name="lStatus" Content="Status" Height="25" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,0" Width="300"/>
+			<StatusBarItem HorizontalAlignment="Right">
+				<ProgressBar Name="lStatusBar" Value="0" Width="100" Height="12" VerticalAlignment="Center"/>
+			</StatusBarItem>
 		</StatusBar>
 	</Grid>
 </Window>

@@ -73,9 +73,9 @@ namespace sync_server
             this.executeQuery("CREATE TABLE users (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, user_dir TEXT NOT NULL);");
         }
 
-        public bool authenticateUser(String username, String password)
+        public Int64 authenticateUser(String username, String password)
         {
-            bool authenticated = false;
+            Int64 userId = -1;
             SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username AND password = @password", connection);
             command.Parameters.AddWithValue("username", username);
             command.Parameters.AddWithValue("password", password);
@@ -83,10 +83,10 @@ namespace sync_server
             if (reader.Read())
             {
                 // there at least a row
-                authenticated = true;
+				userId = (Int64)reader["id"];
             }
             reader.Close();
-            return authenticated;
+			return userId;
         }
 
         public Int64 checkUserDirectory(String username, String directory)
@@ -129,7 +129,7 @@ namespace sync_server
             Int64 lastId = (Int64)command.ExecuteScalar();
 
             // todo create a table with the right name
-            this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL, client_file TEXT NOT NULL, checksum TEXT NOT NULL);");
+			this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL, client_file TEXT NOT NULL, checksum BLOB NOT NULL);");
             return lastId;
         }
 
@@ -164,7 +164,7 @@ namespace sync_server
             SQLiteDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
-                userFiles.Add(new FileChecksum(serverBaseDir + (String)reader["server_file"], (String)reader["server_file"], (String)reader["client_file"], (String)reader["checksum"]));
+                userFiles.Add(new FileChecksum(serverBaseDir + (String)reader["server_file"], (String)reader["server_file"], (String)reader["client_file"], (byte[])reader["checksum"]));
             }
             return userFiles;
         }
@@ -178,7 +178,7 @@ namespace sync_server
                 command.Parameters.AddWithValue("version", version);
                 command.Parameters.AddWithValue("server_file", file.FileNameServerDB);
                 command.Parameters.AddWithValue("client_file", file.FileNameClient);
-                command.Parameters.AddWithValue("checksum", file.Checksum);
+                command.Parameters.AddWithValue("checksum", file.ChecksumBytes);
                 command.ExecuteNonQuery();
             }
 
