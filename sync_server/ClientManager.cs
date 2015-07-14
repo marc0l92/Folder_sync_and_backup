@@ -34,7 +34,7 @@ namespace sync_server
 			clientThread = new Thread(new ThreadStart(doClient));
 			clientThread.IsBackground = true;
 			clientThread.Start();
-			//statusDelegate("Start ClientTheard Successfully ", fSyncServer.LOG_INFO);
+			
 		}
 
 		public void stop()
@@ -142,7 +142,7 @@ namespace sync_server
 					case SyncCommand.CommandSet.GET:
 						statusDelegate(" Command Get ", fSyncServer.LOG_INFO);
 						return SendFileClient();
-					case SyncCommand.CommandSet.RESTORE: // Todo Da implementare RESTORE
+					case SyncCommand.CommandSet.RESTORE: 
 						statusDelegate(" Command Restore ", fSyncServer.LOG_INFO);
 						return RestoreVersion();
 					case SyncCommand.CommandSet.ENDSYNC:
@@ -185,6 +185,7 @@ namespace sync_server
 			{
 				statusDelegate("User Credential Confermed (LoginUser)", fSyncServer.LOG_INFO);
 				client.usrID = userID;
+                serverDir += "\\user" + client.usrID;
 				client.usrNam = cmd.Username;
 				client.usrPwd = cmd.Password;
 				//client.vers = mySQLite.getUserLastVersion();
@@ -220,6 +221,7 @@ namespace sync_server
 				client.usrNam = cmd.Username;
 				client.usrPwd = cmd.Password;
 				client.usrDir = cmd.Directory;
+                serverDir += "\\user" + client.usrID;
 				client.vers = 0;
 				SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.AUTHORIZED));
 				statusDelegate("Send Back Authorized Message (NewUser)", fSyncServer.LOG_INFO);
@@ -241,7 +243,6 @@ namespace sync_server
 			else
 			{
 				client.usrID = userID;
-				serverDir += "\\user" + client.usrID;
 				client.usrDir = cmd.Directory;
 				client.vers = mySQLite.getUserLastVersion(client.usrID); //Call DB Get Last Version
 				statusDelegate("User Directory Authorized, Start Send Check(StartSession)", fSyncServer.LOG_INFO);
@@ -489,64 +490,7 @@ namespace sync_server
 			bFile.Close();
 			SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ACK));
 
-
-
-			//try
-			//{
-			//    // Begin receiving the data from the remote device.
-			//    stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
-			//        new AsyncCallback(ReceiveFileCallback), null);
-			//}
-			//catch (Exception e)
-			//{
-			//    statusDelegate("Exception:" + e.Message, fSyncServer.LOG_INFO);
-			//}
 		}
-
-
-		//public  void ReceiveFileCallback(IAsyncResult ar)
-		//{
-		//    try
-		//    {
-		//        // Retrieve the state object and the client socket 
-		//        // from the asynchronous state object.
-		//       // StateObject state = (StateObject)ar.AsyncState;
-		//        //Socket client = state.workSocket;
-		//        FileStream fs;
-		//        string fileName = serverDir + cmd.FileName + "_" + (client.vers);
-
-		//        if (!Directory.Exists(Path.GetDirectoryName(fileName)))
-		//        {
-		//            Directory.CreateDirectory( Path.GetDirectoryName(fileName));
-		//        }
-
-		//        fs = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
-
-		//        // Read data from the remote device.
-		//        int bytesRead = stateClient.workSocket.EndReceive(ar);
-
-		//        if (bytesRead > 0)
-		//        {
-		//            fs.WriteAsync(stateClient.buffer, 0, bytesRead);
-		//            // There might be more data, so store the data received so far.
-		//            //state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
-		//            fs.Close();
-
-		//            // Get the rest of the data.
-		//            stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
-		//                new AsyncCallback(ReceiveFileCallback), stateClient);
-		//        }
-		//        else
-		//        {
-		//            fs.Close();
-		//            fileDone.Set();
-		//        }
-		//    }
-		//    catch (Exception e)
-		//    {
-		//        statusDelegate("Exception:" + e.Message, fSyncServer.LOG_INFO);
-		//    }
-		//}
 
 		public void SendCommand(Socket handler, SyncCommand command)
 		{
@@ -576,25 +520,5 @@ namespace sync_server
 			}
 		}
 
-		/*
-		private void generateChecksum(String dir, int version)
-		{
-			String pattern = "[" + "_" + version.ToString() + "\\" + "Z" + "]";
-			string[] fileList = Directory.GetFiles(dir);
-			foreach (string filePath in fileList)
-			{
-				if (Regex.IsMatch(filePath, pattern))
-				{
-					userChecksum.Add(new FileChecksum(filePath));
-				}
-			}
-
-			// Recurse into subdirectories of this directory.
-			string[] subdirectoryList = Directory.GetDirectories(dir);
-			foreach (string subdirectoryPath in subdirectoryList)
-			{
-				generateChecksum(subdirectoryPath, version);
-			}
-		}*/
 	}
 }
