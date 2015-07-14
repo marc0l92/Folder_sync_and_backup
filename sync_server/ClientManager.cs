@@ -397,8 +397,9 @@ namespace sync_server
 			{
 				if (File.Exists(check.FileNameServer))
 				{
-					RestoreFileClient(check.FileNameServer, check.FileNameClient);
-					statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient + "(Restore Version)", fSyncServer.LOG_INFO);
+					if(RestoreFileClient(check.FileNameServer, check.FileNameClient))
+					    statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient + "(Restore Version)", fSyncServer.LOG_INFO);
+                    else statusDelegate("Protocol Error Sending File (Restore Version)", fSyncServer.LOG_INFO);
 				}
 				else
 				{
@@ -406,11 +407,14 @@ namespace sync_server
 				}
 			}
 
+            client.vers++;
+            mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
+            statusDelegate("Update DB (Restore Command)", fSyncServer.LOG_INFO); 
+
             SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
             statusDelegate("Send End Restore Message (Restore Command)", fSyncServer.LOG_INFO); 
 
-			client.vers++;
-			mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
+			
 			return true;
 		}
 
@@ -447,12 +451,13 @@ namespace sync_server
 
         public Boolean RestoreFileClient(String serverName, String clientName)
         {
-                 FileInfo fi = new FileInfo(serverName);
+                 
+                FileInfo fi = new FileInfo(serverName);
                 SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, clientName, fi.Length.ToString()));
-                statusDelegate("Send File Command with Name and Size", fSyncServer.LOG_INFO);
+                statusDelegate("Send File Command with Name and Size (Restore Comand)", fSyncServer.LOG_INFO);
                 // Send file fileName to remote device
                 stateClient.workSocket.SendFile(serverName);
-                statusDelegate("File"+ serverName +" Sended Succesfully", fSyncServer.LOG_INFO);
+                statusDelegate("File" + serverName + " Sended Succesfully (Restore Comand)", fSyncServer.LOG_INFO);
                 receiveDone.Reset();
                 // Receive the response from the remote device.
                 this.ReceiveCommand(stateClient.workSocket);
