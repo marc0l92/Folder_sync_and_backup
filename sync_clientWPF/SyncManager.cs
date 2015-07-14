@@ -379,11 +379,15 @@ namespace sync_clientWPF
 				{
 					statusDelegate("Start restore...");
 					sendCommand(new SyncCommand(SyncCommand.CommandSet.RESTORE, versionToRestore.ToString()));
+					string tempDir = System.IO.Path.GetTempPath() + "\\syncClient";
 					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDRESTORE)
 					{
 						if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("Protocol error");
-						this.getFile(sc.FileName, sc.FileSize);
+						this.getFile(tempDir + sc.FileName, sc.FileSize);
 					}
+
+					this.moveFiles(tempDir, directory);
+
 					statusDelegate("Restore done");
 				}
 				else
@@ -418,6 +422,19 @@ namespace sync_clientWPF
 			}
 			bFile.Close();
 			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ACK));
+		}
+
+		private void moveFiles(string tempDir, string directory){
+			//string[] fileList = Directory.GetFiles(tempDir);
+
+			//// Copy the files and overwrite destination files if they already exist.
+			//foreach (string s in fileList)
+			//{
+			//	// Use static Path methods to extract only the file name from the path.
+			//	fileName = System.IO.Path.GetFileName(s);
+			//	destFile = System.IO.Path.Combine(targetPath, fileName);
+			//	System.IO.File.Copy(s, destFile, true);
+			//}
 		}
 	}
 }
