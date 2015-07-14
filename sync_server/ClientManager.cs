@@ -392,7 +392,6 @@ namespace sync_server
 
 		public Boolean RestoreVersion()
 		{
-			//todo Get list of all file belonging to the selected version
 			userChecksum = mySQLite.getUserFiles(client.usrID, cmd.Version, serverDir); //Call DB Retrieve Version to Restore
 			foreach (FileChecksum check in userChecksum)
 			{
@@ -401,15 +400,17 @@ namespace sync_server
 					SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, check.FileNameClient));
 					statusDelegate("Send File Command (Restore Version)", fSyncServer.LOG_INFO);
 					// Send file fileName to remote device
-					stateClient.workSocket.SendFile(check.FileNameServer);
+					stateClient.workSocket.SendFileClient(check.FileNameServer);
 					statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient + "(Restore Version)", fSyncServer.LOG_INFO);
 				}
 				else
 				{
-					// todo FILE DOESN'T EXISTS MESSAGGE
 					statusDelegate("File doesn't exists  " + check.FileNameServer + "(Restore Version)", fSyncServer.LOG_INFO);
 				}
 			}
+
+            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
+            statusDelegate("Send End Restore Message (Restore Command)", fSyncServer.LOG_INFO); 
 
 			client.vers++;
 			mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
@@ -446,6 +447,36 @@ namespace sync_server
 			}
 
 		}
+
+        public Boolean SendFileClient(String fileName)
+        {
+           
+
+            if (File.Exists(fileName))
+            {
+                FileInfo fi = new FileInfo(fileName);
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, fileName, fi.Length));
+                statusDelegate("Send File Command with Name and Size", fSyncServer.LOG_INFO);
+                // Send file fileName to remote device
+                stateClient.workSocket.SendFile(fileName);
+                statusDelegate("File Sended Succesfully", fSyncServer.LOG_INFO);
+                // TODO wait for ack
+                receiveDone.Reset();
+                // Receive the response from the remote device.
+                this.ReceiveCommand(stateClient.workSocket);
+                receiveDone.WaitOne();
+                if (cmd.Type != SyncCommand.CommandSet.ACK)
+                    return false;
+                return true;
+            }
+            else
+            {
+                // todo FILE DOESN'T EXISTS MESSAGGE
+                statusDelegate("File doesn't exists  " + fileName, fSyncServer.LOG_INFO);
+                return true;
+            }
+
+        }
 
 		public void ReceiveFile(String fileName, Int64 fileLength)
 		{
