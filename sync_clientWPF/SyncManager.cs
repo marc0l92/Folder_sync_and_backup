@@ -379,7 +379,7 @@ namespace sync_clientWPF
 				{
 					statusDelegate("Start restore...");
 					sendCommand(new SyncCommand(SyncCommand.CommandSet.RESTORE, versionToRestore.ToString()));
-					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDRESTORE)
 					{
 						if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("Protocol error");
 						this.getFile(sc.FileName, sc.FileSize);

@@ -21,7 +21,7 @@ namespace sync_clientWPF
 			EDIT			| filename  | filesize  |			|			|
 			DEL				| filename  |			|			|			|
 			NEW				| filename  | filesize  |			|			|
-			FILE			| filename  |			|			|			|
+			FILE			| filename  | filesize  |			|			|
 			GET				| filename  |			|			|			|
 			RESTORE			| version   |			|			|			|
 			ENDSYNC			|			|			|			|			|
@@ -83,6 +83,7 @@ namespace sync_clientWPF
 					break;
 				case CommandSet.FILE:
 					data[0] = FileName;
+					data[1] = FileSize.ToString();
 					break;
 				case CommandSet.GET:
 					data[0] = FileName;
@@ -247,6 +248,8 @@ namespace sync_clientWPF
 					case CommandSet.EDIT:
 						return Int64.Parse(data[1]);
 					case CommandSet.NEW:
+						return Int64.Parse(data[1]);
+					case CommandSet.FILE:
 						return Int64.Parse(data[1]);
 					default:
 						return -1;
