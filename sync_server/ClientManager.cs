@@ -397,9 +397,6 @@ namespace sync_server
 			{
 				if (File.Exists(check.FileNameServer))
 				{
-					SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, check.FileNameClient));
-					statusDelegate("Send File Command (Restore Version)", fSyncServer.LOG_INFO);
-					// Send file fileName to remote device
 					RestoreFileClient(check.FileNameServer, check.FileNameClient);
 					statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient + "(Restore Version)", fSyncServer.LOG_INFO);
 				}
@@ -450,11 +447,7 @@ namespace sync_server
 
         public Boolean RestoreFileClient(String serverName, String clientName)
         {
-           
-
-            if (File.Exists(serverName))
-            {
-                FileInfo fi = new FileInfo(serverName);
+                 FileInfo fi = new FileInfo(serverName);
                 SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, clientName, fi.Length.ToString()));
                 statusDelegate("Send File Command with Name and Size", fSyncServer.LOG_INFO);
                 // Send file fileName to remote device
@@ -467,12 +460,6 @@ namespace sync_server
                 if (cmd.Type != SyncCommand.CommandSet.ACK)
                     return false;
                 return true;
-            }
-            else
-            {
-                statusDelegate("File doesn't exists  " + serverName, fSyncServer.LOG_INFO);
-                return true;
-            }
 
         }
 
