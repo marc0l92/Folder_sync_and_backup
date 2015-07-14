@@ -13,19 +13,20 @@ namespace sync_clientWPF
 	class SyncManager
 	{
 		private const int SYNC_SLEEPING_TIME = 5000;
+		public delegate void StatusDelegate(String s, bool fatalError = false);
+		public delegate void StatusBarDelegate(int percentage);
 
 		private String address, username, password, directory;
 		private int port;
 		private Thread syncThread;
-		private List<FileChecksum> serverFileChecksum;
-		private List<FileChecksum> clientFileChecksum;
-		private bool thread_stopped = false;
-		public delegate void StatusDelegate(String s, bool fatalError = false);
+		private List<FileChecksum> serverFileChecksum, clientFileChecksum;
+		private bool thread_stopped = false, someChanges = false;
 		private StatusDelegate statusDelegate;
+		private StatusBarDelegate statusBarDelegate;
 		private Socket tcpClient;
 		private String receivedBuffer = "";
-		private bool someChanges = false;
 		private Mutex connectionMutex;
+		private Int64 versionToRestore;
 
 
 		public SyncManager(String address, int port)
@@ -37,14 +38,17 @@ namespace sync_clientWPF
 			this.port = port;
 		}
 
-		public void setStatusDelegate(StatusDelegate sd)
+		public void setStatusDelegate(StatusDelegate sd, StatusBarDelegate sbd)
 		{
 			this.statusDelegate = sd;
+			this.statusBarDelegate = sbd;
 		}
 
 		public bool login(String username, String password, String directory = "", bool register = false)
 		{
+			statusBarDelegate(0);
 			serverConnect(); // todo async connection
+			statusBarDelegate(50);
 			if (register)
 			{
 				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEWUSER, username, password, directory));
@@ -53,13 +57,16 @@ namespace sync_clientWPF
 			{
 				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
 			}
-
-			return (this.receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED);
+			bool authorized = (this.receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED);
+			tcpClient.Close();
+			statusBarDelegate(100);
+			return authorized;
 		}
 
 		public void startSync(String address, int port, String username, String password, String directory)
 		{
 			// Check if the directory is valid
+			statusBarDelegate(0);
 			if (!Directory.Exists(directory))
 			{
 				throw new Exception("ERROR: Directory not exists");
@@ -101,6 +108,7 @@ namespace sync_clientWPF
 		{
 			IPAddress ipAddress;
 			// Generate the remote endpoint
+			statusBarDelegate(5);
 			if (Regex.IsMatch(address, "^\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}$"))
 			{
 				String[] parts = address.Split('.');
@@ -112,7 +120,7 @@ namespace sync_clientWPF
 				IPHostEntry ipHostInfo = Dns.GetHostEntry(address);
 				ipAddress = ipHostInfo.AddressList[0];
 			}
-
+			statusBarDelegate(8);
 			IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 			// Create a TCP/IP socket
 			tcpClient = new Socket(remoteEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -120,57 +128,29 @@ namespace sync_clientWPF
 			statusDelegate("Starting connection...");
 			tcpClient.Connect(remoteEP);
 			statusDelegate("Connected to: " + tcpClient.RemoteEndPoint.ToString());
+			statusBarDelegate(10);
 		}
 
 		private void doSync()
 		{
 			try
 			{
-				connectionMutex.WaitOne();
-				if (!tcpClient.Connected)
-				{
-					serverConnect();
-					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
-					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
-					{
-						statusDelegate("Login fail", true);
-						return;
-					}
-				}
-				// Do the first connection
-				statusDelegate("Send START");
-				sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
-				if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
-				{
-					statusDelegate("Wrong directory", true);
-					return;
-				};
-				statusDelegate("Waiting for CHECK list...");
-				serverFileChecksum = getServerCheckList();
-				statusDelegate("Scan client changes...");
-				someChanges = false;
-				scanForClientChanges(directory);
-				scanForDeletedFiles();
-				commitChangesToServer(someChanges);
-				tcpClient.Close();
-				statusDelegate("First sinc completed");
 				// Do syncking
 				while (!thread_stopped)
 				{
-					statusDelegate("Idle");
-					connectionMutex.ReleaseMutex();
-					Thread.Sleep(SYNC_SLEEPING_TIME);
 					connectionMutex.WaitOne();
 					// connect
+					statusBarDelegate(0);
 					serverConnect();
 					statusDelegate("Syncing...");
 					// login
 					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
 					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
 					{
-						statusDelegate("Wrong directory", true);
+						statusDelegate("Login fail", true);
 						return;
 					}
+					statusBarDelegate(15);
 					// start
 					sendCommand(new SyncCommand(SyncCommand.CommandSet.START, directory));
 					if (receiveCommand().Type != SyncCommand.CommandSet.AUTHORIZED)
@@ -178,12 +158,25 @@ namespace sync_clientWPF
 						statusDelegate("Wrong directory", true);
 						return;
 					}
+					// get check list
+					statusBarDelegate(20);
 					serverFileChecksum = getServerCheckList();
+					// scan client files
+					statusBarDelegate(25);
 					someChanges = false;
 					scanForClientChanges(directory);
+					// send delete files
+					statusBarDelegate(80);
 					scanForDeletedFiles();
+					// commit changes
+					statusBarDelegate(90);
 					commitChangesToServer(someChanges);
+					statusBarDelegate(100);
+					// close connection
 					tcpClient.Close();
+					statusDelegate("Idle");
+					connectionMutex.ReleaseMutex();
+					Thread.Sleep(SYNC_SLEEPING_TIME);
 				}
 			}
 			catch (Exception ex)
@@ -310,27 +303,6 @@ namespace sync_clientWPF
 
 			return serverCheckList;
 		}
-		private void getFile(String fileName, Int64 fileLength)
-		{
-			byte[] buffer = new byte[1024];
-			int rec = 0;
-
-			if (!Directory.Exists(Path.GetDirectoryName(fileName)))
-			{
-				Directory.CreateDirectory(Path.GetDirectoryName(fileName));
-			}
-			BinaryWriter bFile = new BinaryWriter(File.Open(fileName, FileMode.Create));
-
-			// Receive data from the server
-			while (fileLength > 0)
-			{
-				rec = tcpClient.Receive(buffer);
-				fileLength -= rec;
-				bFile.Write(buffer, 0, rec);
-			}
-			bFile.Close();
-			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ACK));
-		}
 
 		private void commitChangesToServer(bool changes)
 		{
@@ -387,8 +359,15 @@ namespace sync_clientWPF
 			}
 			return versions;
 		}
-
-		public void restoreVersion(Int64 versionNum)
+		
+		public void restoreVersionStart(Int64 versionNum)
+		{
+			versionToRestore = versionNum;
+			Thread restoreThread = new Thread(new ThreadStart(restoreVersion));
+			restoreThread.IsBackground = true;
+			restoreThread.Start();
+		}
+		private void restoreVersion()
 		{
 			SyncCommand sc;
 			try
@@ -400,35 +379,46 @@ namespace sync_clientWPF
 				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
 				{
 					statusDelegate("Start restore...");
-					//sendCommand(new SyncCommand(SyncCommand.CommandSet.GETVERSIONS));
-					//while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
-					//{
-					//	switch (sc.Type)
-					//	{
-					//		case SyncCommand.CommandSet.VERSION:
-					//			version = new Version(sc.Version);
-					//			versions.Add(version);
-					//			break;
-					//		case SyncCommand.CommandSet.CHECKVERSION:
-					//			version.append(new VersionFile(sc.FileName, sc.Operation));
-					//			break;
-					//		default:
-					//			throw new Exception("Version receive error");
-					//	}
-					//}
+					sendCommand(new SyncCommand(SyncCommand.CommandSet.RESTORE, versionToRestore.ToString()));
+					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+					{
+						if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("Protocol error");
+						this.getFile(sc.FileName, sc.FileSize);
+					}
 					statusDelegate("Restore done");
 				}
 				else
 				{
 					statusDelegate("Login fail");
 				}
-
 			}
 			finally
 			{
 				tcpClient.Close();
 				connectionMutex.ReleaseMutex();
 			}
+		}
+
+		private void getFile(String fileName, Int64 fileLength)
+		{
+			byte[] buffer = new byte[1024];
+			int rec = 0;
+
+			if (!Directory.Exists(Path.GetDirectoryName(fileName)))
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(fileName));
+			}
+			BinaryWriter bFile = new BinaryWriter(File.Open(fileName, FileMode.Create));
+
+			// Receive data from the server
+			while (fileLength > 0)
+			{
+				rec = tcpClient.Receive(buffer);
+				fileLength -= rec;
+				bFile.Write(buffer, 0, rec);
+			}
+			bFile.Close();
+			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ACK));
 		}
 	}
 }

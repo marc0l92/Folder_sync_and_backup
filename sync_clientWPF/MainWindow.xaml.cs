@@ -39,7 +39,7 @@ namespace sync_clientWPF
 
 			// initialize my data structure
 			syncManager = new SyncManager(tAddress.Text, Convert.ToInt32(tPort.Text));
-			syncManager.setStatusDelegate(updateStatus);
+			syncManager.setStatusDelegate(updateStatus, updateStatusBar);
 
 			// initialize tray icon
 			//notifyIconMenu = new System.Windows.Forms.ContextMenu();
@@ -109,6 +109,13 @@ namespace sync_clientWPF
 				{
 					forceStop();
 				}
+			}));
+		}
+		private void updateStatusBar(int percentage)
+		{
+			this.Dispatcher.BeginInvoke((Action)(() =>
+			{
+				lStatusBar.Value = percentage;
 			}));
 		}
 
@@ -249,7 +256,7 @@ namespace sync_clientWPF
 			{
 				try
 				{
-					syncManager.restoreVersion(selVersion);
+					syncManager.restoreVersionStart(selVersion);
 					System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
 				}
 				catch (Exception ex)

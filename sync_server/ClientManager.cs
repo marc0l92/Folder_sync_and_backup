@@ -347,7 +347,6 @@ namespace sync_server
 
 		public Boolean EndSync()
 		{
-
 			client.vers++;
 			mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
 			statusDelegate("DB Updated Correctly (EndSync)", fSyncServer.LOG_INFO);

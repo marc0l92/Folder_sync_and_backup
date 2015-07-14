@@ -45,7 +45,10 @@
 			</TabItem>
 		</TabControl>
 		<StatusBar Height="25" VerticalAlignment="Bottom">
-			<StatusBarItem Name="lStatus" Content="Status" Height="25" VerticalAlignment="Top" Margin="0,0,0,0"/>
+			<StatusBarItem Name="lStatus" Content="Status" Height="25" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,0" Width="300"/>
+			<StatusBarItem HorizontalAlignment="Right">
+				<ProgressBar Name="lStatusBar" Value="0" Width="100" Height="12" VerticalAlignment="Center"/>
+			</StatusBarItem>
 		</StatusBar>
 	</Grid>
 </Window>
