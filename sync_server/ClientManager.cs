@@ -400,7 +400,7 @@ namespace sync_server
 					SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, check.FileNameClient));
 					statusDelegate("Send File Command (Restore Version)", fSyncServer.LOG_INFO);
 					// Send file fileName to remote device
-					stateClient.workSocket.SendFileClient(check.FileNameServer);
+					RestoreFileClient(check.FileNameServer, check.FileNameClient);
 					statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient + "(Restore Version)", fSyncServer.LOG_INFO);
 				}
 				else
@@ -448,19 +448,18 @@ namespace sync_server
 
 		}
 
-        public Boolean SendFileClient(String fileName)
+        public Boolean RestoreFileClient(String serverName, String clientName)
         {
            
 
-            if (File.Exists(fileName))
+            if (File.Exists(serverName))
             {
-                FileInfo fi = new FileInfo(fileName);
-                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, fileName, fi.Length));
+                FileInfo fi = new FileInfo(serverName);
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, clientName, fi.Length.ToString()));
                 statusDelegate("Send File Command with Name and Size", fSyncServer.LOG_INFO);
                 // Send file fileName to remote device
-                stateClient.workSocket.SendFile(fileName);
-                statusDelegate("File Sended Succesfully", fSyncServer.LOG_INFO);
-                // TODO wait for ack
+                stateClient.workSocket.SendFile(serverName);
+                statusDelegate("File"+ serverName +" Sended Succesfully", fSyncServer.LOG_INFO);
                 receiveDone.Reset();
                 // Receive the response from the remote device.
                 this.ReceiveCommand(stateClient.workSocket);
@@ -471,8 +470,7 @@ namespace sync_server
             }
             else
             {
-                // todo FILE DOESN'T EXISTS MESSAGGE
-                statusDelegate("File doesn't exists  " + fileName, fSyncServer.LOG_INFO);
+                statusDelegate("File doesn't exists  " + serverName, fSyncServer.LOG_INFO);
                 return true;
             }
 
