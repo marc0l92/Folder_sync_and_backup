@@ -419,8 +419,9 @@ namespace sync_server
                     SendCommand(stateClient.workSocket, file.convertToString());
                     statusDelegate("Send File Command (Restore Version)", fSyncServer.LOG_INFO);
                     // Send file fileName to remote device
-                    stateClient.workSocket.SendFile(check.FileNameServer);
+                    stateClient.workSocket.SendFileClient();
                     statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient + "(Restore Version)", fSyncServer.LOG_INFO);
+
                 }
                 else
                 {
