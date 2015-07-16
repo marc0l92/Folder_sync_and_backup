@@ -379,14 +379,15 @@ namespace sync_clientWPF
 				{
 					statusDelegate("Start restore...");
 					sendCommand(new SyncCommand(SyncCommand.CommandSet.RESTORE, versionToRestore.ToString()));
-					string tempDir = System.IO.Path.GetTempPath() + "\\syncClient";
+					string tempDir = System.IO.Path.GetTempPath() + "syncClient";
 					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDRESTORE)
 					{
 						if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("Protocol error");
 						this.getFile(tempDir + sc.FileName, sc.FileSize);
 					}
-
+					// commit changes
 					this.moveFiles(tempDir, directory);
+					Directory.Delete(tempDir, true);
 
 					statusDelegate("Restore done");
 				}
@@ -424,17 +425,26 @@ namespace sync_clientWPF
 			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ACK));
 		}
 
-		private void moveFiles(string tempDir, string directory){
-			//string[] fileList = Directory.GetFiles(tempDir);
+		private void moveFiles(string source, string destination){
+			if (!Directory.Exists(destination))
+			{
+				Directory.CreateDirectory(destination);
+			}
+			string[] fileList = Directory.GetFiles(source);
 
-			//// Copy the files and overwrite destination files if they already exist.
-			//foreach (string s in fileList)
-			//{
-			//	// Use static Path methods to extract only the file name from the path.
-			//	fileName = System.IO.Path.GetFileName(s);
-			//	destFile = System.IO.Path.Combine(targetPath, fileName);
-			//	System.IO.File.Copy(s, destFile, true);
-			//}
+			// Scan for changes
+			foreach (string sourceFile in fileList)
+			{
+				File.Copy(sourceFile, destination + "\\" + Path.GetFileName(sourceFile), true);
+
+			}
+
+			// Recurse into subdirectories of this directory.
+			string[] subdirectoryList = Directory.GetDirectories(source);
+			foreach (string subdirectoryPath in subdirectoryList)
+			{
+				this.moveFiles(subdirectoryPath, destination+subdirectoryPath.Substring(source.Length));
+			}
 		}
 	}
 }

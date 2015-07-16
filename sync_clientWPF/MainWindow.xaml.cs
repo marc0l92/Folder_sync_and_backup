@@ -257,7 +257,7 @@ namespace sync_clientWPF
 				try
 				{
 					syncManager.restoreVersionStart(selVersion);
-					System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
+					//System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
 				}
 				catch (Exception ex)
 				{
