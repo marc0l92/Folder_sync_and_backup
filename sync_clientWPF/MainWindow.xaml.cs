@@ -28,7 +28,6 @@ namespace sync_clientWPF
 	{
 		private SyncManager syncManager;
 		List<Version> versions=null;
-		private string username, password;
 		private bool loggedin = false;
 		//private NotifyIcon notifyIcon;
 		//private System.Windows.Forms.ContextMenu notifyIconMenu;
@@ -38,7 +37,7 @@ namespace sync_clientWPF
 			InitializeComponent();
 
 			// initialize my data structure
-			syncManager = new SyncManager(tAddress.Text, Convert.ToInt32(tPort.Text));
+			syncManager = new SyncManager();
 			syncManager.setStatusDelegate(updateStatus, updateStatusBar);
 
 			// initialize tray icon
@@ -57,7 +56,7 @@ namespace sync_clientWPF
 			try
 			{
 				bStart.IsEnabled = false;
-				syncManager.startSync(tAddress.Text, Convert.ToInt32(tPort.Text), username, password, tDirectory.Text);
+				syncManager.startSync(tAddress.Text, Convert.ToInt32(tPort.Text), tDirectory.Text);
 				bStop.IsEnabled = true;
 				bGetVersions.IsEnabled = true;
 				tDirectory.IsEnabled = false;
@@ -149,14 +148,14 @@ namespace sync_clientWPF
 							lw.Close();
 							return;
 						case LoginWindow.LoginResponse.LOGIN:
-							loginAuthorized = syncManager.login(lw.Username, lw.Password);
+							loginAuthorized = syncManager.login(tAddress.Text, Convert.ToInt32(tPort.Text), lw.Username, lw.Password);
 							if (!loginAuthorized)
 							{
 								lw.ErrorMessage = "Login faild";
 							}
 							break;
 						case LoginWindow.LoginResponse.REGISTER:
-							loginAuthorized = syncManager.login(lw.Username, lw.Password, tDirectory.Text, true);
+							loginAuthorized = syncManager.login(tAddress.Text, Convert.ToInt32(tPort.Text), lw.Username, lw.Password, tDirectory.Text, true);
 							if (!loginAuthorized)
 							{
 								lw.ErrorMessage = "Registration faild";
@@ -170,8 +169,6 @@ namespace sync_clientWPF
 						lUsername.Content = lw.Username;
 						bLogInOut.Content = "Logout";
 						lw.Close();
-						username = lw.Username;
-						password = lw.Password;
 						bStart.IsEnabled = true;
 						loggedin = true;
 						updateStatus("Logged in");
@@ -220,6 +217,7 @@ namespace sync_clientWPF
 
 		private void GetVersions_Click(object sender, RoutedEventArgs e)
 		{
+			bGetVersions.IsEnabled = false;
 			versions = syncManager.getVersions();
 			lVersions.Items.Clear();
 			foreach (Version version in versions)
@@ -228,6 +226,7 @@ namespace sync_clientWPF
 			}
 			lVersions.SelectedIndex = 0;
 
+			bGetVersions.IsEnabled = true;
 			bRestore.IsEnabled = true;
 		}
 
@@ -250,6 +249,7 @@ namespace sync_clientWPF
 
 		private void Restore_Click(object sender, EventArgs e)
 		{
+			bRestore.IsEnabled = false;
 			Int64 selVersion = versions[lVersions.SelectedIndex].VersionNum;
 			MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore version number "+selVersion+" ?", "Restore system", System.Windows.MessageBoxButton.YesNo);
 			if (res == MessageBoxResult.Yes)
@@ -264,6 +264,7 @@ namespace sync_clientWPF
 					System.Windows.MessageBox.Show("Restore failed\n" + ex.Message, "Restoring system", MessageBoxButton.OK, MessageBoxImage.Error);
 				}
 			}
+			bRestore.IsEnabled = true;
 		}
 
 	}
