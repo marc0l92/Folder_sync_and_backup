@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -12,7 +13,7 @@ namespace sync_server
 {
 	class ClientManager
 	{
-		private Thread clientThread;
+        private BackgroundWorker clientThread;
 		private StateObject stateClient;
 		private SyncClient client = new SyncClient();
 		private AsyncManagerServer.StatusDelegate statusDelegate;
@@ -23,6 +24,7 @@ namespace sync_server
 		private SyncCommand cmd;
 		private SyncSQLite mySQLite;
 		private String serverDir;
+        private Boolean stopped = false;
 
 		public ClientManager(Socket sock, String workDir, AsyncManagerServer.StatusDelegate sd)
 		{
@@ -31,57 +33,94 @@ namespace sync_server
 			stateClient.workSocket = sock;
 			serverDir = workDir;
 			mySQLite = new SyncSQLite();
-			clientThread = new Thread(new ThreadStart(doClient));
-			clientThread.IsBackground = true;
-			clientThread.Start();
-			
+			clientThread = new BackgroundWorker();
+            clientThread.DoWork += new DoWorkEventHandler(doClient);
+            clientThread.RunWorkerCompleted += new RunWorkerCompletedEventHandler(stop);
+            clientThread.RunWorkerAsync();
 		}
 
-		public void stop()
+        public void stop(object sender, RunWorkerCompletedEventArgs e)
+        {
+            // todo Cosa succede se sto sincronizzando? devo fare un restore?
+            stateClient.workSocket.Close();
+            AsyncManagerServer.DecreaseClient();
+            AsyncManagerServer.PrintClient(); 
+            statusDelegate("Server Stopped ", fSyncServer.LOG_INFO);
+            mySQLite.closeConnection();
+        }
+        public void StopService()
+        {
+            syncEnd = true;
+            stopped = true;
+            wellEnd = false;
+        }
+		public void WellStop()
 		{
 			// todo Cosa succede se sto sincronizzando? devo fare un restore?
 			syncEnd = true;
-			stateClient.workSocket.Close();
+            stopped = true;
+            wellEnd = true;
 		}
+
+       
 
 		public void setStatusDelegate(AsyncManagerServer.StatusDelegate sd)
 		{
 			statusDelegate = sd;
 		}
 
-		private void doClient()
+		private void doClient(object sender, DoWorkEventArgs e)
 		{
 			while (!syncEnd)
 			{
+                if (!SocketConnected(stateClient.workSocket))
+                {
+                    StopService();
+                     break;
+                }
 				receiveDone.Reset();
 				// Receive the response from the remote device.
 				this.ReceiveCommand(stateClient.workSocket);
-				receiveDone.WaitOne();
-
-				if (doCommand())
-					statusDelegate("Slave Thread Done Command Successfully ", fSyncServer.LOG_INFO);
-				else
-					statusDelegate("Slave Thread Done Command with no Success", fSyncServer.LOG_INFO);
-
+                if (!stopped)
+                {
+                    receiveDone.WaitOne();
+                    if (doCommand())
+                        statusDelegate("Slave Thread Done Command Successfully ", fSyncServer.LOG_INFO);
+                    else
+                        statusDelegate("Slave Thread Done Command with no Success", fSyncServer.LOG_INFO);
+                }
+                else break;
 			}
 			if (!wellEnd)
-			{
-				// todo IMPLEMENTARE RESTORE A VERSIONE PRECEDENTE
-			}
-			// todo See if necessary close connection
+                statusDelegate("All NOT Well End Terminated", fSyncServer.LOG_INFO);
+            else
+                statusDelegate("All Well End Terminated", fSyncServer.LOG_INFO);
+     
 		}
 
 		public void ReceiveCommand(Socket client)
 		{
 			try
 			{
-				// Begin receiving the data from the remote device.
-				client.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
+                if (!SocketConnected(stateClient.workSocket))
+                    StopService();
+                // Begin receiving the data from the remote device.
+				IAsyncResult iAR = client.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
 					new AsyncCallback(ReceiveCallback), null);
+                bool success = iAR.AsyncWaitHandle.WaitOne(10000, true);
+
+                if(!success)
+                {
+                    statusDelegate("Timeout Expired", fSyncServer.LOG_INFO);
+                    StopService();
+                    receiveDone.Set();
+                }      
 			}
 			catch (Exception e)
 			{
 				statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
+                if (!stopped)
+                    StopService();
 			}
 		}
 
@@ -95,35 +134,45 @@ namespace sync_server
 				// Socket client = state.workSocket;
 
 				// Read data from the remote device.
-				int bytesRead = stateClient.workSocket.EndReceive(ar);
+                if (!syncEnd)
+                {
+                    int bytesRead = stateClient.workSocket.EndReceive(ar);
 
-				if ((bytesRead > 0))
-				{
-					// There might be more data, so store the data received so far.
-					stateClient.sb.Append(Encoding.ASCII.GetString(stateClient.buffer, 0, bytesRead));
-				}
-				if (SyncCommand.searchJsonEnd(stateClient.sb.ToString()) == -1)
-				{
-					// Get the rest of the data.
-					stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
-						new AsyncCallback(ReceiveCallback), null);
-				}
-				else
-				{
-					// All the data has arrived; put it in response.
-					if (stateClient.sb.Length > 1)
-					{
-						cmd = SyncCommand.convertFromString(stateClient.sb.ToString());
-						stateClient.sb.Clear();
-						SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ACK));
-					}
-					// Signal that all bytes have been received.
-					receiveDone.Set();
-				}
+                    if ((bytesRead > 0))
+                    {
+                        // There might be more data, so store the data received so far.
+                        stateClient.sb.Append(Encoding.ASCII.GetString(stateClient.buffer, 0, bytesRead));
+                    }
+                    if (SyncCommand.searchJsonEnd(stateClient.sb.ToString()) == -1)
+                    {
+                        // Get the rest of the data.
+                        stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
+                            new AsyncCallback(ReceiveCallback), null);
+                    }
+                    if (!SocketConnected(stateClient.workSocket))
+                    {
+                        receiveDone.Set();
+                    }
+                    else
+                    {
+                        // All the data has arrived; put it in response.
+                        if (stateClient.sb.Length > 1)
+                        {
+                            cmd = SyncCommand.convertFromString(stateClient.sb.ToString());
+                            stateClient.sb.Clear();
+                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ACK));
+                        }
+                        // Signal that all bytes have been received.
+                        receiveDone.Set();
+                    }
+                }
+                else receiveDone.Set();
 			}
 			catch (Exception e)
 			{
 				statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
+                if (!stopped)
+                    StopService();
 			}
 		}
 
@@ -168,6 +217,7 @@ namespace sync_server
 						return GetVersions();
 					default:
 						statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
+                        StopService();
 						return true;
 				}
 			}
@@ -198,21 +248,20 @@ namespace sync_server
 				statusDelegate("User Credential NOT Confirmed (LoginUser)", fSyncServer.LOG_INFO);
 				SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED));
 				statusDelegate("Send Back Unauthorized Message (LoginUser)", fSyncServer.LOG_INFO);
-				return true;
+              return true;
 			}
 		}
 
 		public Boolean NewUser()
 		{
 			Int64 userID = mySQLite.newUser(cmd.Username, cmd.Password, cmd.Directory);
-
-			if (userID == -1) //Call DB New User
+            if (userID == -1) //Call DB New User
 			{
 
 				statusDelegate("Username in CONFLICT choose another one (NewUser)", fSyncServer.LOG_INFO);
 				SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED));
 				statusDelegate("Send Back Unauthorized Message (NewUser)", fSyncServer.LOG_INFO);
-				return true;
+            	return true;
 			}
 			else
 			{
@@ -225,15 +274,14 @@ namespace sync_server
 				client.vers = 0;
 				SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.AUTHORIZED));
 				statusDelegate("Send Back Authorized Message (NewUser)", fSyncServer.LOG_INFO);
-				return true;
+         		return true;
 			}
 		}
 
 		public Boolean StartSession()
 		{
 			Int64 userID = mySQLite.checkUserDirectory(client.usrNam, cmd.Directory); //Call DB Check Directory User
-
-			if (userID == -1)
+          if (userID == -1)
 			{
 				statusDelegate("User Directory Change NOT Authorized (StartSession)", fSyncServer.LOG_INFO);
 				SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED));
@@ -264,7 +312,8 @@ namespace sync_server
 		public Boolean GetVersions()
 		{
 			Int64 lastVers = mySQLite.getUserLastVersion(client.usrID);
-			int currentVersion = 1;
+
+         	int currentVersion = 1;
 			List<FileChecksum> userChecksumA = mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
 			while (currentVersion <= lastVers)
 			{
@@ -333,7 +382,8 @@ namespace sync_server
 			}
 			SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDCHECK));
 			statusDelegate("Send End check Message (Version Command)", fSyncServer.LOG_INFO);
-			return true;
+            //WellStop();
+           return true;
 		}
 
 
@@ -351,21 +401,14 @@ namespace sync_server
 			client.vers++;
 			mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
 			statusDelegate("DB Updated Correctly (EndSync)", fSyncServer.LOG_INFO);
-			//Get List
-			syncEnd = true;
-			wellEnd = true;
-			mySQLite.closeConnection();
-			return true;
+            WellStop();
+      	return true;
 		}
 
 		public Boolean NoSync()
 		{
-			//Get List
-			syncEnd = true;
-			wellEnd = true;
-
-			mySQLite.closeConnection();
-			return true;
+            WellStop();
+      	return true;
 		}
 
 		public Boolean NewFile()
@@ -413,9 +456,10 @@ namespace sync_server
             statusDelegate("Update DB (Restore Command)", fSyncServer.LOG_INFO); 
 
             SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
-            statusDelegate("Send End Restore Message (Restore Command)", fSyncServer.LOG_INFO); 
+            statusDelegate("Send End Restore Message (Restore Command)", fSyncServer.LOG_INFO);
 
-			
+
+        
 			return true;
 		}
 
@@ -494,6 +538,10 @@ namespace sync_server
 
 		public void SendCommand(Socket handler, SyncCommand command)
 		{
+
+            try { 
+                if (!syncEnd)
+                {
 			// Convert the string data to byte data using ASCII encoding.
 			byte[] byteData = Encoding.ASCII.GetBytes(command.convertToString());
 
@@ -502,6 +550,14 @@ namespace sync_server
 			// Begin sending the data to the remote device.
 			handler.BeginSend(byteData, 0, byteData.Length, 0,
 				new AsyncCallback(SendCallback), handler);
+                }
+        }
+        catch (Exception e)
+			{
+				statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
+                if (!stopped)
+                    StopService();
+			}
 		}
 
 		public void SendCallback(IAsyncResult ar)
@@ -512,13 +568,28 @@ namespace sync_server
 				// Socket handler = (Socket)ar.AsyncState;
 
 				// Complete sending the data to the remote device.
-				int bytesSent = stateClient.workSocket.EndSend(ar);
+                if (!syncEnd)
+                {
+                    int bytesSent = stateClient.workSocket.EndSend(ar);
+                }
 			}
 			catch (Exception e)
 			{
 				statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
+                if (!stopped)
+                    StopService();
 			}
 		}
+
+        bool SocketConnected(Socket s)
+        {
+            bool part1 = s.Poll(1000, SelectMode.SelectRead);
+            bool part2 = (s.Available == 0);
+            if (part1 && part2)
+                return false;
+            else
+                return true;
+        }
 
 	}
 }

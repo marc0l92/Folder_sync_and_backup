@@ -24,7 +24,7 @@ namespace sync_server
 		{
 			InitializeComponent();
 			syncManager = new AsyncManagerServer();
-			syncManager.setStatusDelegate(appendStatus);
+            syncManager.setDelegate(appendStatus, numberClient);
 		}
 
 		private void bBrowse_Click(object sender, EventArgs e)
@@ -84,5 +84,11 @@ namespace sync_server
 			lbLog.BeginInvoke(new AppendItem((String str) => { lbLog.Items.Add(str); }), new object[] { s });
 			lbLog.BeginInvoke(new Action(() => { lbLog.SelectedIndex = lbLog.Items.Count - 1; }));
 		}
+
+        private void numberClient(int nclient)
+        {
+            lConnectedNum.BeginInvoke(new Action(() => { lConnectedNum.Text = nclient.ToString(); }));
+        }
+
 	}
 }
