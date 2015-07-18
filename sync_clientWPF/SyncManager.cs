@@ -7,6 +7,7 @@ using System.Threading;
 using System.Net.Sockets;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
 
 namespace sync_clientWPF
 {
@@ -29,13 +30,11 @@ namespace sync_clientWPF
 		private Int64 versionToRestore;
 
 
-		public SyncManager(String address, int port)
+		public SyncManager()
 		{
 			serverFileChecksum = new List<FileChecksum>();
 			clientFileChecksum = new List<FileChecksum>();
 			connectionMutex = new Mutex();
-			this.address = address;
-			this.port = port;
 		}
 
 		public void setStatusDelegate(StatusDelegate sd, StatusBarDelegate sbd)
@@ -44,8 +43,13 @@ namespace sync_clientWPF
 			this.statusBarDelegate = sbd;
 		}
 
-		public bool login(String username, String password, String directory = "", bool register = false)
+		public bool login(String address, int port, String username, String password, String directory = "", bool register = false)
 		{
+			SHA256Managed hashstring = new SHA256Managed();
+			this.address = address;
+			this.port = port;
+			this.username = username;
+			this.password = Encoding.ASCII.GetString(hashstring.ComputeHash(Encoding.ASCII.GetBytes(password+username)));
 			statusBarDelegate(0);
 			serverConnect(); // todo async connection
 			statusBarDelegate(50);
@@ -63,7 +67,7 @@ namespace sync_clientWPF
 			return authorized;
 		}
 
-		public void startSync(String address, int port, String username, String password, String directory)
+		public void startSync(String address, int port, String directory)
 		{
 			// Check if the directory is valid
 			statusBarDelegate(0);
@@ -76,8 +80,6 @@ namespace sync_clientWPF
 			{
 				directory = directory.Substring(0, directory.Length - 1);
 			}
-			this.username = username;
-			this.password = password;
 			this.address = address;
 			this.port = port;
 
@@ -297,7 +299,7 @@ namespace sync_clientWPF
 			while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
 			{
 				if (sc.Type != SyncCommand.CommandSet.CHECK) throw new Exception("Check list receive error");
-				serverCheckList.Add(new FileChecksum(sc.FileName, System.Text.Encoding.ASCII.GetBytes(sc.Checksum)));
+				serverCheckList.Add(new FileChecksum(sc.FileName, Encoding.ASCII.GetBytes(sc.Checksum)));
 			}
 
 			return serverCheckList;
@@ -386,6 +388,7 @@ namespace sync_clientWPF
 						this.getFile(tempDir + sc.FileName, sc.FileSize);
 					}
 					// commit changes
+					Directory.Delete(directory, true);
 					this.moveFiles(tempDir, directory);
 					Directory.Delete(tempDir, true);
 
@@ -403,7 +406,7 @@ namespace sync_clientWPF
 			}
 		}
 
-		private void getFile(String fileName, Int64 fileLength)
+		private void getFile(String fileName, int fileLength)
 		{
 			byte[] buffer = new byte[1024];
 			int rec = 0;
@@ -413,6 +416,24 @@ namespace sync_clientWPF
 				Directory.CreateDirectory(Path.GetDirectoryName(fileName));
 			}
 			BinaryWriter bFile = new BinaryWriter(File.Open(fileName, FileMode.Create));
+
+			// Check input buffer of commands
+			if (receivedBuffer.Length > 0)
+			{
+				// there are some data
+				if (receivedBuffer.Length <= fileLength)
+				{
+					bFile.Write(Encoding.ASCII.GetBytes(receivedBuffer), 0, receivedBuffer.Length);
+					fileLength -= receivedBuffer.Length;
+					receivedBuffer = "";
+				}
+				else
+				{
+					bFile.Write(Encoding.ASCII.GetBytes(receivedBuffer.Substring(0, fileLength)), 0, fileLength);
+					receivedBuffer = receivedBuffer.Substring(0, fileLength);
+					fileLength = 0;
+				}
+			}
 
 			// Receive data from the server
 			while (fileLength > 0)

@@ -53,7 +53,7 @@ namespace sync_clientWPF
 		}
 
 		[JsonConstructor]
-		public SyncCommand(CommandSet Type, string Directory, string FileName, Int64 Version, string Checksum, string Username, string Password, Int64 FileSize, string Operation, Int64 NumFiles, string Timestamp)
+		public SyncCommand(CommandSet Type, string Directory, string FileName, Int64 Version, string Checksum, string Username, string Password, Int32 FileSize, string Operation, Int64 NumFiles, string Timestamp)
 		{
 			type = Type;
 			switch (Type)
@@ -239,18 +239,18 @@ namespace sync_clientWPF
 			}
 		}
 
-		public Int64 FileSize
+		public Int32 FileSize
 		{
 			get
 			{
 				switch (this.type)
 				{
 					case CommandSet.EDIT:
-						return Int64.Parse(data[1]);
+						return Int32.Parse(data[1]);
 					case CommandSet.NEW:
-						return Int64.Parse(data[1]);
+						return Int32.Parse(data[1]);
 					case CommandSet.FILE:
-						return Int64.Parse(data[1]);
+						return Int32.Parse(data[1]);
 					default:
 						return -1;
 				}
