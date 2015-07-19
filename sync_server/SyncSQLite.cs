@@ -173,7 +173,7 @@ namespace sync_server
 			SQLiteDataReader reader = command.ExecuteReader();
 			while (reader.Read())
 			{
-				userFiles.Add(new FileChecksum(serverBaseDir + (string)reader["server_file"], (string)reader["server_file"], (string)reader["client_file"], (byte[])reader["checksum"], (string)reader["timestamp"]));
+				userFiles.Add(new FileChecksum(serverBaseDir + (string)reader["server_file"], (string)reader["server_file"], (string)reader["client_file"], (byte[])reader["checksum"], version, (string)reader["timestamp"]));
 			}
 			reader.Close();
 			return userFiles;
@@ -227,7 +227,7 @@ namespace sync_server
 			SQLiteDataReader reader = command.ExecuteReader();
 			while (reader.Read())
 			{
-				userFiles.Add(new FileChecksum(serverBaseDir + (string)reader["server_file"], (string)reader["server_file"], (string)reader["client_file"], (byte[])reader["checksum"], (string)reader["timestamp"]));
+				userFiles.Add(new FileChecksum(serverBaseDir + (string)reader["server_file"], (string)reader["server_file"], (string)reader["client_file"], (byte[])reader["checksum"], (Int64)reader["version"], (string)reader["timestamp"]));
 			}
 			reader.Close();
 			return userFiles;
@@ -238,6 +238,19 @@ namespace sync_server
 			SQLiteCommand command = new SQLiteCommand("DELETE FROM user_" + userId + " WHERE version = @version;", connection);
 			command.Parameters.AddWithValue("version", version);
 			command.ExecuteNonQuery();
+		}
+
+		public FileChecksum getFileChecksum(Int64 userId, string filename, Int64 version, string serverBaseDir)
+		{
+			FileChecksum fileChecksum = null;
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE client_file = " + filename, connection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			if (reader.Read())
+			{
+				fileChecksum = new FileChecksum(serverBaseDir + (string)reader["server_file"], (string)reader["server_file"], (string)reader["client_file"], (byte[])reader["checksum"], (Int64)reader["version"], (string)reader["timestamp"]);
+				reader.Close();
+			}
+			return fileChecksum;
 		}
 	}
 }
