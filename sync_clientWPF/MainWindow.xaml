@@ -1,7 +1,7 @@
 ﻿<Window x:Class="sync_clientWPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SyncClient" Height="350" Width="450" Loaded="Window_Loaded" Icon="Synchronize.ico">
+        Title="SyncClient" Height="350" Width="450" Loaded="Window_Loaded" Icon="Synchronize.ico" StateChanged="Window_StateChanged">
 	<Grid>
 		<TabControl Margin="0,0,0,19">
 			<TabItem Header="Home" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="55">

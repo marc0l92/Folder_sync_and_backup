@@ -36,7 +36,7 @@ namespace sync_clientWPF
 			}
 		}
 
-		private void lDetails_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		private async void lDetails_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			DependencyObject obj = (DependencyObject)e.OriginalSource;
 			while (obj != null && obj != lDetails)
@@ -44,7 +44,8 @@ namespace sync_clientWPF
 				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
 				{
 					selectedFileName = ((VersionListViewItem)lDetails.SelectedItem).sFilename;
-					List<VersionFile> versions = syncManager.getFileVersions(selectedFileName);
+					List<VersionFile> versions = await syncManager.getFileVersions(selectedFileName);
+					lFileVersions.Items.Clear();
 					foreach (VersionFile vf in versions)
 					{
 						lFileVersions.Items.Add(new FileVersionListViewItem(vf.VersionNum.ToString(), vf.FileOperation, vf.Timestamp));
@@ -55,7 +56,7 @@ namespace sync_clientWPF
 			}
 		}
 
-		private void lFileVersions_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		private async void lFileVersions_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			DependencyObject obj = (DependencyObject)e.OriginalSource;
 			while (obj != null && obj != lDetails)
@@ -68,7 +69,7 @@ namespace sync_clientWPF
 					{
 						try
 						{
-							syncManager.restoreFileVersion(selectedFileName, selectedVersion);
+							await syncManager.restoreFileVersion(selectedFileName, selectedVersion);
 							//System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
 						}
 						catch (Exception ex)

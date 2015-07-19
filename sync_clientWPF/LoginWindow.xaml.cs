@@ -67,6 +67,11 @@ namespace sync_clientWPF
 		{
 			username = tUsername.Text;
 			password = tPassword.Password;
+			if (username == "" || password == "")
+			{
+				this.ErrorMessage = "Username and passwrod cannot be empty";
+				return;
+			}
 			lastResponse = LoginResponse.LOGIN;
 			this.Hide();
 		}
@@ -75,6 +80,11 @@ namespace sync_clientWPF
 		{
 			username = tUsername.Text;
 			password = tPassword.Password;
+			if (username == "" || password == "")
+			{
+				this.ErrorMessage = "Username and passwrod cannot be empty";
+				return;
+			}
 			lastResponse = LoginResponse.REGISTER;
 			this.Hide();
 		}

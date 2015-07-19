@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace sync_clientWPF
 {
@@ -26,7 +27,6 @@ namespace sync_clientWPF
 		private Socket tcpClient;
 		private String receivedBuffer = "";
 		private Mutex connectionMutex;
-		private Int64 versionToRestore;
 		private int sync_sleeping_time = 5000;
 		private System.Timers.Timer syncSleepTimer;
 		private AutoResetEvent doSyncEvent;
@@ -45,27 +45,40 @@ namespace sync_clientWPF
 			this.statusBarDelegate = sbd;
 		}
 
-		public bool login(String address, int port, String username, String password, String directory = "", bool register = false)
+		public async Task<bool> login(String address, int port, String username, String password, String directory = "", bool register = false)
 		{
-			SHA256Managed hashstring = new SHA256Managed();
-			this.address = address;
-			this.port = port;
-			this.username = username;
-			this.password = Encoding.ASCII.GetString(hashstring.ComputeHash(Encoding.ASCII.GetBytes(password+username)));
-			statusBarDelegate(0);
-			serverConnect(); // todo async connection
-			statusBarDelegate(50);
-			if (register)
+			bool authorized = false;
+			Exception ex = null;
+			await Task.Run(() =>
 			{
-				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEWUSER, this.username, this.password, directory));
-			}
-			else
-			{
-				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, this.username, this.password));
-			}
-			bool authorized = (this.receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED);
-			tcpClient.Close();
-			statusBarDelegate(100);
+				try
+				{
+					SHA256Managed hashstring = new SHA256Managed();
+					this.address = address;
+					this.port = port;
+					this.username = username;
+					this.password = Encoding.ASCII.GetString(hashstring.ComputeHash(Encoding.ASCII.GetBytes(password + username)));
+					statusBarDelegate(0);
+					serverConnect();
+					statusBarDelegate(50);
+					if (register)
+					{
+						this.sendCommand(new SyncCommand(SyncCommand.CommandSet.NEWUSER, this.username, this.password, directory));
+					}
+					else
+					{
+						this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, this.username, this.password));
+					}
+					authorized = (this.receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED);
+					tcpClient.Close();
+					statusBarDelegate(100);
+				}
+				catch (Exception exx)
+				{
+					ex = exx;
+				}
+			});
+			if (ex != null) throw ex;
 			return authorized;
 		}
 
@@ -82,6 +95,7 @@ namespace sync_clientWPF
 			{
 				directory = directory.Substring(0, directory.Length - 1);
 			}
+			this.receivedBuffer = "";
 			this.address = address;
 			this.port = port;
 			this.sync_sleeping_time = sleeping_time;
@@ -144,7 +158,7 @@ namespace sync_clientWPF
 				tcpClient.Close();
 				throw new ApplicationException("Connection timeout.");
 			}
-			
+
 			statusDelegate("Connected to: " + tcpClient.RemoteEndPoint.ToString());
 			statusBarDelegate(10);
 		}
@@ -211,7 +225,9 @@ namespace sync_clientWPF
 				try
 				{
 					connectionMutex.ReleaseMutex(); // TODO
-				}catch(Exception e){
+				}
+				catch (Exception e)
+				{
 					statusDelegate(e.Message, true);
 				}
 			}
@@ -305,11 +321,35 @@ namespace sync_clientWPF
 
 		private void sendFile(String path)
 		{
-			tcpClient.SendFile(path);
+			FileInfo fi = new FileInfo(path);
+			byte[] buffer;
+			Int64 fileLength = fi.Length, byteSent = 0;
+			statusBarDelegate(0);
+			BinaryReader bFile = new BinaryReader(File.Open(path, FileMode.Open));
+			while (byteSent < fileLength)
+			{
+				if (fileLength - byteSent < 100)
+				{
+					buffer = bFile.ReadBytes((Int32)(fileLength - byteSent));
+					byteSent = fileLength;
+				}
+				else
+				{
+					buffer = bFile.ReadBytes(100);
+					byteSent += 100;
+				}
+				tcpClient.Send(buffer);
+				statusBarDelegate((Int32)(byteSent * 90 / fileLength));
+			}
+
+			bFile.Close();
+			//tcpClient.SendFile(path);
+			statusBarDelegate(90);
 			if (receiveCommand().Type != SyncCommand.CommandSet.ACK)
 			{
 				statusDelegate("Error during file trasmission", true);
 			}
+			statusBarDelegate(100);
 		}
 
 		private List<FileChecksum> getServerCheckList()
@@ -336,104 +376,122 @@ namespace sync_clientWPF
 			clientFileChecksum.Clear();
 		}
 
-		public List<Version> getVersions()
+		public async Task<List<Version>> getVersions()
 		{
 			List<Version> versions = new List<Version>();
-			Version version = null;
-			Int64 versionNum=0;
-			SyncCommand sc;
-			try
+			Exception ex = null;
+			await Task.Run(() =>
 			{
-				connectionMutex.WaitOne();
-				serverConnect();
-				// login
-				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
-				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
+				Version version = null;
+				Int64 versionNum = 0;
+				SyncCommand sc;
+				try
 				{
-					statusDelegate("Retrieve version list...");
-					sendCommand(new SyncCommand(SyncCommand.CommandSet.GETVERSIONS));
-					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+					connectionMutex.WaitOne();
+					serverConnect();
+					// login
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+					if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
 					{
-						switch (sc.Type)
+						statusDelegate("Retrieve version list...");
+						sendCommand(new SyncCommand(SyncCommand.CommandSet.GETVERSIONS));
+						while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
 						{
-							case SyncCommand.CommandSet.VERSION:
-								version = new Version(sc.Version, sc.Timestamp);
-								versions.Add(version);
-								versionNum = sc.Version;
-								break;
-							case SyncCommand.CommandSet.CHECKVERSION:
-								version.append(new VersionFile(sc.FileName, sc.Operation, versionNum));
-								break;
-							default:
-								throw new Exception("Version receive error");
+							switch (sc.Type)
+							{
+								case SyncCommand.CommandSet.VERSION:
+									version = new Version(sc.Version, sc.Timestamp);
+									versions.Add(version);
+									versionNum = sc.Version;
+									break;
+								case SyncCommand.CommandSet.CHECKVERSION:
+									version.append(new VersionFile(sc.FileName, sc.Operation, versionNum));
+									break;
+								default:
+									throw new Exception("Version receive error");
+							}
 						}
+						statusBarDelegate(100);
+						statusDelegate("Versions retrieved");
 					}
-					statusDelegate("Versions retrieved");
-				}
-				else
-				{
-					statusDelegate("Login fail");
-				}
+					else
+					{
+						statusDelegate("Login fail");
+					}
 
-			}
-			finally
-			{
-				tcpClient.Close();
-				connectionMutex.ReleaseMutex();
-			}
+				}
+				catch (Exception exx)
+				{
+					ex = exx;
+				}
+				finally
+				{
+					tcpClient.Close();
+					connectionMutex.ReleaseMutex();
+				}
+			});
+			if (ex != null) throw ex;
 			return versions;
 		}
-		
-		public void restoreVersionStart(Int64 versionNum)
-		{
-			versionToRestore = versionNum;
-			Thread restoreThread = new Thread(new ThreadStart(restoreVersion));
-			restoreThread.IsBackground = true;
-			restoreThread.Start();
-		}
-		private void restoreVersion()
-		{
-			SyncCommand sc;
-			try
-			{
-				connectionMutex.WaitOne();
-				serverConnect();
-				// login
-				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
-				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
-				{
-					statusDelegate("Start restore...");
-					sendCommand(new SyncCommand(SyncCommand.CommandSet.RESTORE, versionToRestore.ToString()));
-					string tempDir = System.IO.Path.GetTempPath() + "syncClient";
-					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDRESTORE)
-					{
-						if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("Protocol error");
-						this.getFile(tempDir + sc.FileName, sc.FileSize);
-					}
-					// commit changes
-					Directory.Delete(syncDirectory, true);
-					this.moveFiles(tempDir, syncDirectory);
-					Directory.Delete(tempDir, true);
 
-					statusDelegate("Restore done");
-				}
-				else
-				{
-					statusDelegate("Login fail");
-				}
-			}
-			finally
+		public async Task restoreVersion(Int64 versionNum)
+		{
+			Exception ex = null;
+			await Task.Run(() =>
 			{
-				tcpClient.Close();
-				connectionMutex.ReleaseMutex();
-			}
+				SyncCommand sc;
+				try
+				{
+					connectionMutex.WaitOne();
+					serverConnect();
+					// login
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+					if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
+					{
+						statusDelegate("Start restore...");
+						sendCommand(new SyncCommand(SyncCommand.CommandSet.RESTORE, versionNum.ToString()));
+						string tempDir = System.IO.Path.GetTempPath() + "syncClient";
+						while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDRESTORE)
+						{
+							if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("Protocol error");
+							this.getFile(tempDir + sc.FileName, sc.FileSize);
+						}
+						// commit changes
+						if (Directory.Exists(tempDir) && Directory.EnumerateFileSystemEntries(tempDir).Any()) // if tempDir is not empty
+						{
+							Directory.Delete(syncDirectory, true);
+							this.moveFiles(tempDir, syncDirectory);
+							Directory.Delete(tempDir, true);
+						}
+						else
+						{
+							throw new Exception("You cannot restore the current version");
+						}
+						statusDelegate("Restore done");
+					}
+					else
+					{
+						statusDelegate("Login fail");
+					}
+				}
+				catch (Exception exx)
+				{
+					ex = exx;
+				}
+				finally
+				{
+					tcpClient.Close();
+					connectionMutex.ReleaseMutex();
+				}
+			});
+			if (ex != null) throw ex;
 		}
 
 		private void getFile(String fileName, int fileLength)
 		{
 			byte[] buffer = new byte[1024];
-			int rec = 0;
-
+			int rec = 0, byteSent = 0;
+			statusBarDelegate(0);
 			if (!Directory.Exists(Path.GetDirectoryName(fileName)))
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(fileName));
@@ -447,29 +505,34 @@ namespace sync_clientWPF
 				if (receivedBuffer.Length <= fileLength)
 				{
 					bFile.Write(Encoding.ASCII.GetBytes(receivedBuffer), 0, receivedBuffer.Length);
-					fileLength -= receivedBuffer.Length;
+					byteSent = receivedBuffer.Length;
 					receivedBuffer = "";
 				}
 				else
 				{
 					bFile.Write(Encoding.ASCII.GetBytes(receivedBuffer.Substring(0, fileLength)), 0, fileLength);
 					receivedBuffer = receivedBuffer.Substring(0, fileLength);
-					fileLength = 0;
+					byteSent = fileLength;
 				}
 			}
 
 			// Receive data from the server
-			while (fileLength > 0)
+			statusBarDelegate((Int32)(byteSent * 90 / fileLength));
+			while (byteSent < fileLength)
 			{
 				rec = tcpClient.Receive(buffer);
-				fileLength -= rec;
 				bFile.Write(buffer, 0, rec);
+				byteSent += rec;
+				statusBarDelegate((Int32)(byteSent * 90 / fileLength));
 			}
 			bFile.Close();
+			statusBarDelegate(90);
 			this.sendCommand(new SyncCommand(SyncCommand.CommandSet.ACK));
+			statusBarDelegate(100);
 		}
 
-		private void moveFiles(string source, string destination){
+		private void moveFiles(string source, string destination)
+		{
 			if (!Directory.Exists(destination))
 			{
 				Directory.CreateDirectory(destination);
@@ -487,57 +550,68 @@ namespace sync_clientWPF
 			string[] subdirectoryList = Directory.GetDirectories(source);
 			foreach (string subdirectoryPath in subdirectoryList)
 			{
-				this.moveFiles(subdirectoryPath, destination+subdirectoryPath.Substring(source.Length));
+				this.moveFiles(subdirectoryPath, destination + subdirectoryPath.Substring(source.Length));
 			}
 		}
 
-		public void forceSync(){
+		public void forceSync()
+		{
 			doSyncEvent.Set();
 		}
 
-		public List<VersionFile> getFileVersions(string filename)
+		public async Task<List<VersionFile>> getFileVersions(string filename)
 		{
 			List<VersionFile> versions = new List<VersionFile>();
-			SyncCommand sc;
-			try
+			Exception ex = null;
+			await Task.Run(() =>
 			{
-				connectionMutex.WaitOne();
-				serverConnect();
-				// login
-				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
-				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
+				SyncCommand sc;
+				try
 				{
-					statusDelegate("Retrieve file version list...");
-					sendCommand(new SyncCommand(SyncCommand.CommandSet.FILEVERSIONS, filename));
-					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+					connectionMutex.WaitOne();
+					serverConnect();
+					// login
+					this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+					if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
 					{
-						switch (sc.Type)
+						statusDelegate("Retrieve file version list...");
+						sendCommand(new SyncCommand(SyncCommand.CommandSet.FILEVERSIONS, filename));
+						while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
 						{
-							case SyncCommand.CommandSet.CHECKVERSION:
-								versions.Add(new VersionFile(sc.FileName, sc.Operation, sc.Version, sc.Timestamp));
-								break;
-							default:
-								throw new Exception("Version receive error");
+							switch (sc.Type)
+							{
+								case SyncCommand.CommandSet.CHECKVERSION:
+									versions.Add(new VersionFile(sc.FileName, sc.Operation, sc.Version, sc.Timestamp));
+									break;
+								default:
+									throw new Exception("Version receive error");
+							}
 						}
+						statusDelegate("Versions retrieved");
 					}
-					statusDelegate("Versions retrieved");
-				}
-				else
-				{
-					statusDelegate("Login fail");
-				}
+					else
+					{
+						statusDelegate("Login fail");
+					}
 
-			}
-			finally
-			{
-				tcpClient.Close();
-				connectionMutex.ReleaseMutex();
-			}
+				}catch(Exception exx){
+					ex = exx;
+				}
+				finally
+				{
+					tcpClient.Close();
+					connectionMutex.ReleaseMutex();
+				}
+			});
+			if (ex != null) throw ex;
 			return versions;
 		}
 
 
-		public void restoreFileVersion(string selectedFileName, Int64 selectedVersion){
+		public async Task restoreFileVersion(string selectedFileName, Int64 selectedVersion)
+		{
+			Exception ex = null;
+			await Task.Run(() => { 
 			SyncCommand sc;
 			try
 			{
@@ -551,25 +625,37 @@ namespace sync_clientWPF
 					sendCommand(new SyncCommand(SyncCommand.CommandSet.GET, selectedFileName, selectedVersion.ToString()));
 					string tempDir = System.IO.Path.GetTempPath() + "syncClient";
 					sc = this.receiveCommand();
-					if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("Protocol error");
-					this.getFile(tempDir + sc.FileName, sc.FileSize);
-					
-					// commit changes
-					this.moveFiles(tempDir, syncDirectory);
-					Directory.Delete(tempDir, true);
+					switch (sc.Type)
+					{
+						case SyncCommand.CommandSet.FILE:
+							this.getFile(tempDir + sc.FileName, sc.FileSize);
+							// commit changes
+							this.moveFiles(tempDir, syncDirectory);
+							Directory.Delete(tempDir, true);
 
-					statusDelegate("Restore done");
+							statusDelegate("Restore done");
+							break;
+						case SyncCommand.CommandSet.ENDRESTORE:
+							throw new Exception("You cannot restore the current file version");
+						default:
+							throw new Exception("Protocol error");
+					}
+
 				}
 				else
 				{
 					statusDelegate("Login fail");
 				}
+			}catch(Exception exx){
+				ex = exx;
 			}
 			finally
 			{
 				tcpClient.Close();
 				connectionMutex.ReleaseMutex();
 			}
+			});
+			if (ex != null) throw ex;
 		}
 	}
 }

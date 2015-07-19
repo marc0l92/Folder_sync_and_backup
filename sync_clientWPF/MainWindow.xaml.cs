@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,10 +30,11 @@ namespace sync_clientWPF
 	public partial class MainWindow : Window
 	{
 		private SyncManager syncManager;
-		List<Version> versions=null;
+		List<Version> versions = null;
 		private bool loggedin = false;
-		//private NotifyIcon notifyIcon;
-		//private System.Windows.Forms.ContextMenu notifyIconMenu;
+		private NotifyIcon notifyIcon;
+		private System.Windows.Forms.ContextMenu notifyIconMenu;
+
 
 		public MainWindow()
 		{
@@ -40,14 +44,16 @@ namespace sync_clientWPF
 			syncManager = new SyncManager();
 			syncManager.setStatusDelegate(updateStatus, updateStatusBar);
 
-			// initialize tray icon
-			//notifyIconMenu = new System.Windows.Forms.ContextMenu();
-			////notifyIconMenu.MenuItems.Add("Exit", );
-			//notifyIcon = new NotifyIcon();
-			//notifyIcon.Text = "SyncClient";
-			//notifyIcon.ContextMenu = notifyIconMenu;
-			//notifyIcon.Icon = new Icon(SystemIcons.Application, 40, 40);
-			//notifyIcon.Visible = true;
+			////initialize tray icon
+			notifyIcon = new NotifyIcon();
+			Stream iconStream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/sync_clientWPF;component/Synchronize.ico")).Stream;
+			notifyIcon.Icon = new System.Drawing.Icon(iconStream);
+
+			notifyIconMenu = new System.Windows.Forms.ContextMenu();
+			//notifyIconMenu.MenuItems.Add("Exit", );
+			notifyIcon.Text = "SyncClient";
+			notifyIcon.ContextMenu = notifyIconMenu;
+			notifyIcon.Visible = true;
 		}
 
 		private void StartSync_Click(object sender, EventArgs e)
@@ -56,7 +62,8 @@ namespace sync_clientWPF
 			try
 			{
 				bStart.IsEnabled = false;
-				syncManager.startSync(tAddress.Text, Int32.Parse(tPort.Text), tDirectory.Text, Int32.Parse(tTimeout.Text)*1000);
+				lVersions.Items.Clear();
+				syncManager.startSync(tAddress.Text, Int32.Parse(tPort.Text), tDirectory.Text, Int32.Parse(tTimeout.Text) * 1000);
 				bStop.IsEnabled = true;
 				bSyncNow.IsEnabled = true;
 				bGetVersions.IsEnabled = true;
@@ -79,6 +86,7 @@ namespace sync_clientWPF
 			// stop the sync manager
 			try
 			{
+				lVersions.Items.Clear();
 				updateStatus("Stop");
 				forceStop();
 			}
@@ -136,10 +144,11 @@ namespace sync_clientWPF
 			tPort.IsEnabled = true;
 		}
 
-		private void openLogin()
+		private async void openLogin()
 		{
 			LoginWindow lw = new LoginWindow();
 			bool loginAuthorized = false;
+			bLogInOut.IsEnabled = false;
 			while (!loginAuthorized)
 			{
 				lw.showLogin();
@@ -150,16 +159,17 @@ namespace sync_clientWPF
 						case LoginWindow.LoginResponse.CANCEL:
 							//System.Windows.Application.Current.Shutdown();
 							lw.Close();
+							bLogInOut.IsEnabled = true;
 							return;
 						case LoginWindow.LoginResponse.LOGIN:
-							loginAuthorized = syncManager.login(tAddress.Text, Convert.ToInt32(tPort.Text), lw.Username, lw.Password);
+							loginAuthorized = await syncManager.login(tAddress.Text, Convert.ToInt32(tPort.Text), lw.Username, lw.Password);
 							if (!loginAuthorized)
 							{
 								lw.ErrorMessage = "Login faild";
 							}
 							break;
 						case LoginWindow.LoginResponse.REGISTER:
-							loginAuthorized = syncManager.login(tAddress.Text, Convert.ToInt32(tPort.Text), lw.Username, lw.Password, tDirectory.Text, true);
+							loginAuthorized = await syncManager.login(tAddress.Text, Convert.ToInt32(tPort.Text), lw.Username, lw.Password, tDirectory.Text, true);
 							if (!loginAuthorized)
 							{
 								lw.ErrorMessage = "Registration faild";
@@ -177,7 +187,6 @@ namespace sync_clientWPF
 						loggedin = true;
 						updateStatus("Logged in");
 					}
-
 				}
 				catch (Exception ex)
 				{
@@ -185,6 +194,7 @@ namespace sync_clientWPF
 					loginAuthorized = false;
 				}
 			}
+			bLogInOut.IsEnabled = true;
 		}
 
 		private void LogInOut_Click(object sender, RoutedEventArgs e)
@@ -197,6 +207,7 @@ namespace sync_clientWPF
 				bStart.IsEnabled = false;
 				loggedin = false;
 			}
+			lVersions.Items.Clear();
 			this.openLogin();
 		}
 
@@ -219,13 +230,13 @@ namespace sync_clientWPF
 			lbStatus.Items.Add(lbi);
 		}
 
-		private void GetVersions_Click(object sender, RoutedEventArgs e)
+		private async void GetVersions_Click(object sender, RoutedEventArgs e)
 		{
 			try
 			{
 				bGetVersions.IsEnabled = false;
-				versions = syncManager.getVersions();
 				lVersions.Items.Clear();
+				versions = await syncManager.getVersions();
 				foreach (Version version in versions)
 				{
 					lVersions.Items.Add(new VersionsListViewItem(version.VersionNum, version.NewFiles, version.EditFiles, version.DelFiles, version.Timestamp));
@@ -234,7 +245,9 @@ namespace sync_clientWPF
 
 				bGetVersions.IsEnabled = true;
 				bRestore.IsEnabled = true;
-			}catch(Exception ex){
+			}
+			catch (Exception ex)
+			{
 				bGetVersions.IsEnabled = true;
 				updateStatus(ex.Message);
 			}
@@ -255,21 +268,21 @@ namespace sync_clientWPF
 			}
 		}
 
-		private void Restore_Click(object sender, EventArgs e)
+		private async void Restore_Click(object sender, EventArgs e)
 		{
 			bRestore.IsEnabled = false;
 			Int64 selVersion = versions[lVersions.SelectedIndex].VersionNum;
-			MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore version number "+selVersion+" ?", "Restore system", System.Windows.MessageBoxButton.YesNo);
+			MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore version number " + selVersion + " ?", "Restore system", System.Windows.MessageBoxButton.YesNo);
 			if (res == MessageBoxResult.Yes)
 			{
 				try
 				{
-					syncManager.restoreVersionStart(selVersion);
-					//System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
+					await syncManager.restoreVersion(selVersion);
+					System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
 				}
 				catch (Exception ex)
 				{
-					System.Windows.MessageBox.Show("Restore failed\n" + ex.Message, "Restoring system", MessageBoxButton.OK, MessageBoxImage.Error);
+					System.Windows.MessageBox.Show("Restore failed:\n" + ex.Message, "Restoring system", MessageBoxButton.OK, MessageBoxImage.Error);
 				}
 			}
 			bRestore.IsEnabled = true;
@@ -278,6 +291,24 @@ namespace sync_clientWPF
 		private void bSyncNow_Click(object sender, RoutedEventArgs e)
 		{
 			syncManager.forceSync();
+		}
+
+		private void Window_StateChanged(object sender, EventArgs e)
+		{
+			switch (this.WindowState)
+			{
+				case WindowState.Maximized:
+					break;
+				case WindowState.Minimized:
+					// Do your stuff
+					System.Windows.MessageBox.Show("Minimized", "Restoring system", MessageBoxButton.OK);
+					notifyIcon.BalloonTipTitle = "Minimize to Tray App";
+					notifyIcon.BalloonTipText = "You have successfully minimized your form.";
+					break;
+				case WindowState.Normal:
+
+					break;
+			}
 		}
 
 	}
