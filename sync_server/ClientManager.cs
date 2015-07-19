@@ -394,7 +394,7 @@ namespace sync_server
                 {
                     foreach (FileChecksum check in userChecksumA)
                     {
-                        SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW", check.Timestamp));
+                        SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW", check.Timestamp, check.Version.ToString()));
                         statusDelegate("Send check Version Message(Version Command)", fSyncServer.LOG_INFO);
                     }
                     first = false;
@@ -414,7 +414,7 @@ namespace sync_server
                             if (checkA.FileNameClient == checkB.FileNameClient)
                                 if (checkA.FileNameServer == checkB.FileNameServer)
                                 {
-                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "NONE", checkA.Timestamp));
+                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "NONE", checkA.Timestamp, checkA.Version.ToString()));
                                     statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                                     found = true;
                                     userChecksumA.Remove(checkA);
@@ -422,7 +422,7 @@ namespace sync_server
                                 }
                                 else
                                 {
-                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "EDIT", checkA.Timestamp));
+                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "EDIT", checkA.Timestamp, checkA.Version.ToString()));
                                     statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                                     found = true;
                                     userChecksumA.Remove(checkA);
@@ -433,7 +433,7 @@ namespace sync_server
 
                         if (!found)
                         {
-                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkB.FileNameClient, "NEW", checkB.Timestamp));
+                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkB.FileNameClient, "NEW", checkB.Timestamp, checkB.Version.ToString()));
                             statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
@@ -442,7 +442,7 @@ namespace sync_server
                     {
                         foreach (FileChecksum checkA in userChecksumA)
                         {
-                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "DEL", checkA.Timestamp));
+                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "DEL", checkA.Timestamp, checkA.Version.ToString()));
                             statusDelegate("Send check Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
@@ -720,14 +720,14 @@ namespace sync_server
             TEMP = mySQLite.getUserFiles(client.usrID, cmd.Version, serverDir); //Call DB Retrieve Version to Restore
 
             int index = TEMP.FindIndex(x => (x.FileNameClient == cmd.FileName) && (x.Version == cmd.Version));
-            FileChecksum newFile = new FileChecksum(); //Call DB Retrieve Version to Restore
+            FileChecksum newFile = null; //Call DB Retrieve Version to Restore
             if (index != -1)
             {
                 TEMP.RemoveAt(index);
                 statusDelegate("Deleted Old Version File Correctly:(Get File )", fSyncServer.LOG_INFO);
             }
 
-            if (File.Exists(newFile.FileNameServer))
+            if (newFile!=null && File.Exists(newFile.FileNameServer))
             {
                 if (RestoreFileClient(newFile.FileNameServer, newFile.FileNameClient))
                 {
@@ -761,21 +761,21 @@ namespace sync_server
         {
             userChecksum = mySQLite.getFileVersions(client.usrID, cmd.FileName, serverDir); //Call DB Get User Files Version;
             bool first = true;
-            FileChecksum temp = new FileChecksum();
+            FileChecksum temp = null;
             foreach (FileChecksum check in userChecksum)
             {
                 if (first)
                 {
-                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW", check.Timestamp));
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW", check.Timestamp, check.Version.ToString()));
                     first = false;
                 }
-                else if ((check.ChecksumBytes == temp.ChecksumBytes) && temp != null)
+                else if (temp != null &&(check.ChecksumBytes == temp.ChecksumBytes))
                 {
-                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NONE", check.Timestamp));
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NONE", check.Timestamp, check.Version.ToString()));
                 }
-                else if ((check.ChecksumBytes != temp.ChecksumBytes) && temp != null)
+                else if (temp != null && (check.ChecksumBytes != temp.ChecksumBytes))
                 {
-                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "EDIT", check.Timestamp));
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "EDIT", check.Timestamp, check.Version.ToString()));
                 }
                 statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                 temp = check;
