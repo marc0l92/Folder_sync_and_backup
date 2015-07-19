@@ -150,20 +150,19 @@ namespace sync_server
 			return false;
 		}
 
-		public bool getUserMinMaxVersion(Int64 userId, ref Int64 minVersion, ref Int64 maxVersion)
+		public Int64 getUserMinMaxVersion(Int64 userId, ref Int64 maxVersion)
 		{
 			SQLiteCommand command = new SQLiteCommand("SELECT IFNULL(MAX(version), 0) AS max_version, IFNULL(MIN(version), 0) AS min_version FROM user_" + userId, connection);
 			SQLiteDataReader reader = command.ExecuteReader();
 			if (reader.Read())
 			{
 				maxVersion = (Int64)reader["max_version"];
-				minVersion = (Int64)reader["min_version"];
-				return true;
+				return (Int64)reader["min_version"];
 			}
 			else
 			{
-				maxVersion = minVersion = -1;
-				return false;
+				maxVersion = -1;
+				return -1;
 			}
 		}
 
