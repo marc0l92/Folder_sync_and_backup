@@ -8,180 +8,237 @@ using System.Threading.Tasks;
 
 namespace sync_server
 {
-    public class SyncSQLite
-    {
-        private const String DEFAULT_DATABASE_FILE = "MyDatabase.sqlite";
-        private String databaseFile;
-        private SQLiteConnection connection;
+	public class SyncSQLite
+	{
+		public struct UserVersions
+		{
+			public Int64 userId;
+			public string username;
+			public Int64 versionCount;
+		}
 
-        public SyncSQLite() : this(DEFAULT_DATABASE_FILE) { }
-        public SyncSQLite(String databaseFile)
-        {
-            bool newDatabase = false;
-            this.databaseFile = databaseFile;
-            if (!File.Exists(this.databaseFile))
-            {
-                SQLiteConnection.CreateFile(this.databaseFile);
-                newDatabase = true;
-            }
-            connection = new SQLiteConnection("Data Source=" + this.databaseFile + ";Version=3;");
-            connection.Open();
+		private const string DEFAULT_DATABASE_FILE = "MyDatabase.sqlite";
+		private string databaseFile;
+		private SQLiteConnection connection;
 
-            if (newDatabase)
-            {
-                this.initDatabaseStructure();
-            }
-        }
+		public SyncSQLite() : this(DEFAULT_DATABASE_FILE) { }
+		public SyncSQLite(string databaseFile)
+		{
+			bool newDatabase = false;
+			this.databaseFile = databaseFile;
+			if (!File.Exists(this.databaseFile))
+			{
+				SQLiteConnection.CreateFile(this.databaseFile);
+				newDatabase = true;
+			}
+			connection = new SQLiteConnection("Data Source=" + this.databaseFile + ";Version=3;");
+			connection.Open();
 
-        public void closeConnection()
-        {
-            connection.Close();
-            connection.Dispose();
-        }
-        public void destroyDatabase()
-        {
-            if (File.Exists(this.databaseFile))
-            {
-                connection.Close();
-                try
-                {
-                    File.Delete(this.databaseFile);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine(ex.Message);
-                }
-            }
-        }
+			if (newDatabase)
+			{
+				this.initDatabaseStructure();
+			}
+		}
 
-        private int executeQuery(String query)
-        {
-            SQLiteCommand command = new SQLiteCommand(query, connection);
-            return command.ExecuteNonQuery();
-        }
+		public void closeConnection()
+		{
+			connection.Close();
+			connection.Dispose();
+		}
+		public void destroyDatabase()
+		{
+			if (File.Exists(this.databaseFile))
+			{
+				connection.Close();
+				try
+				{
+					File.Delete(this.databaseFile);
+				}
+				catch (Exception ex)
+				{
+					Console.Error.WriteLine(ex.Message);
+				}
+			}
+		}
 
-        private int executeQuery(String query, Object param1)
-        {
-            // Example: "SELECT something FROM tabletop WHERE color = @param1"
-            SQLiteCommand command = new SQLiteCommand(query, connection);
-            command.Parameters.AddWithValue("param1", param1);
-            return command.ExecuteNonQuery();
-        }
+		private int executeQuery(string query)
+		{
+			SQLiteCommand command = new SQLiteCommand(query, connection);
+			return command.ExecuteNonQuery();
+		}
 
-        private void initDatabaseStructure()
-        {
-            this.executeQuery("CREATE TABLE users (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, user_dir TEXT NOT NULL);");
-        }
+		private int executeQuery(string query, Object param1)
+		{
+			// Example: "SELECT something FROM tabletop WHERE color = @param1"
+			SQLiteCommand command = new SQLiteCommand(query, connection);
+			command.Parameters.AddWithValue("param1", param1);
+			return command.ExecuteNonQuery();
+		}
 
-        public Int64 authenticateUser(String username, String password)
-        {
-            Int64 userId = -1;
-            SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username AND password = @password", connection);
-            command.Parameters.AddWithValue("username", username);
-            command.Parameters.AddWithValue("password", password);
-            SQLiteDataReader reader = command.ExecuteReader();
-            if (reader.Read())
-            {
-                // there at least a row
+		private void initDatabaseStructure()
+		{
+			this.executeQuery("CREATE TABLE users (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, user_dir TEXT NOT NULL);");
+		}
+
+		public Int64 authenticateUser(string username, string password)
+		{
+			Int64 userId = -1;
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username AND password = @password", connection);
+			command.Parameters.AddWithValue("username", username);
+			command.Parameters.AddWithValue("password", password);
+			SQLiteDataReader reader = command.ExecuteReader();
+			if (reader.Read())
+			{
+				// there at least a row
 				userId = (Int64)reader["id"];
-            }
-            reader.Close();
+			}
+			reader.Close();
 			return userId;
-        }
+		}
 
-        public Int64 checkUserDirectory(String username, String directory)
-        {
-            SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username", connection);
-            command.Parameters.AddWithValue("username", username);
-            SQLiteDataReader reader = command.ExecuteReader();
-            if (reader.Read())
-            {
-                String db_dir = (String)reader["user_dir"];
-                if (directory == db_dir)
-                {
-                    return (Int64)reader["id"];
-                }
+		public Int64 checkUserDirectory(string username, string directory)
+		{
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username", connection);
+			command.Parameters.AddWithValue("username", username);
+			SQLiteDataReader reader = command.ExecuteReader();
+			if (reader.Read())
+			{
+				string db_dir = (string)reader["user_dir"];
+				if (directory == db_dir)
+				{
+					return (Int64)reader["id"];
+				}
 
-            }
-            return -1;
-        }
+			}
+			return -1;
+		}
 
-        public Int64 newUser(String username, String password, String directory)
-        {
-            // test if there is an user with the same username
-            bool usernameAlereadyUsed;
-            SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username", connection);
-            command.Parameters.AddWithValue("username", username);
-            SQLiteDataReader reader = command.ExecuteReader();
-            usernameAlereadyUsed = reader.Read();
-            reader.Close();
-            if (usernameAlereadyUsed)
-            {
-                return -1;
-            }
-            // create a new user
-            command = new SQLiteCommand("INSERT INTO users (username, password, user_dir) VALUES (@username, @password, @directory)", connection);
-            command.Parameters.AddWithValue("username", username);
-            command.Parameters.AddWithValue("password", password);
-            command.Parameters.AddWithValue("directory", directory);
-            command.ExecuteNonQuery();
-            command = new SQLiteCommand("select last_insert_rowid()", connection);
-            Int64 lastId = (Int64)command.ExecuteScalar();
+		public Int64 newUser(string username, string password, string directory)
+		{
+			// test if there is an user with the same username
+			bool usernameAlereadyUsed;
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM users WHERE username = @username", connection);
+			command.Parameters.AddWithValue("username", username);
+			SQLiteDataReader reader = command.ExecuteReader();
+			usernameAlereadyUsed = reader.Read();
+			reader.Close();
+			if (usernameAlereadyUsed)
+			{
+				return -1;
+			}
+			// create a new user
+			command = new SQLiteCommand("INSERT INTO users (username, password, user_dir) VALUES (@username, @password, @directory)", connection);
+			command.Parameters.AddWithValue("username", username);
+			command.Parameters.AddWithValue("password", password);
+			command.Parameters.AddWithValue("directory", directory);
+			command.ExecuteNonQuery();
+			command = new SQLiteCommand("select last_insert_rowid()", connection);
+			Int64 lastId = (Int64)command.ExecuteScalar();
 
-            // todo create a table with the right name
-			this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL, client_file TEXT NOT NULL, checksum BLOB NOT NULL);");
-            return lastId;
-        }
+			// todo create a table with the right name
+			this.executeQuery("CREATE TABLE user_" + lastId + " (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, version INTEGER NOT NULL, server_file TEXT NOT NULL, client_file TEXT NOT NULL, checksum BLOB NOT NULL, timestamp TEXT NOT NULL);");
+			return lastId;
+		}
 
-        public bool deleteUser(int userId)
-        {
-            if (this.executeQuery("DELETE FROM users WHERE id = @param1;", userId) == 1)
-            {
-                this.executeQuery("DROP TABLE user_" + userId);
-                return true;
-            }
-            return false;
-        }
+		public bool deleteUser(int userId)
+		{
+			if (this.executeQuery("DELETE FROM users WHERE id = @param1;", userId) == 1)
+			{
+				this.executeQuery("DROP TABLE user_" + userId);
+				return true;
+			}
+			return false;
+		}
 
-        public Int64 getUserLastVersion(Int64 userId)
-        {
-            SQLiteCommand command = new SQLiteCommand("SELECT IFNULL(MAX(version), 0) AS max_version FROM user_" + userId, connection);
-            SQLiteDataReader reader = command.ExecuteReader();
-            if (reader.Read())
-            {
-                return (Int64)reader["max_version"];
-            }
-            else
-            {
-                return -1;
-            }
-        }
+		public bool getUserMinMaxVersion(Int64 userId, ref Int64 minVersion, ref Int64 maxVersion)
+		{
+			SQLiteCommand command = new SQLiteCommand("SELECT IFNULL(MAX(version), 0) AS max_version, IFNULL(MIN(version), 0) AS min_version FROM user_" + userId, connection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			if (reader.Read())
+			{
+				maxVersion = (Int64)reader["max_version"];
+				minVersion = (Int64)reader["min_version"];
+				return true;
+			}
+			else
+			{
+				maxVersion = minVersion = -1;
+				return false;
+			}
+		}
 
-        public List<FileChecksum> getUserFiles(Int64 userId, Int64 version, String serverBaseDir)
-        {
-            List<FileChecksum> userFiles = new List<FileChecksum>();
-            SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE version = " + version, connection);
-            SQLiteDataReader reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                userFiles.Add(new FileChecksum(serverBaseDir + (String)reader["server_file"], (String)reader["server_file"], (String)reader["client_file"], (byte[])reader["checksum"]));
-            }
-            return userFiles;
-        }
+		public List<FileChecksum> getUserFiles(Int64 userId, Int64 version, string serverBaseDir)
+		{
+			List<FileChecksum> userFiles = new List<FileChecksum>();
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE version = " + version, connection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			while (reader.Read())
+			{
+				userFiles.Add(new FileChecksum(serverBaseDir + (string)reader["server_file"], (string)reader["server_file"], (string)reader["client_file"], (byte[])reader["checksum"], (string)reader["timestamp"]));
+			}
+			reader.Close();
+			return userFiles;
+		}
 
-        public void setUserFiles(Int64 userId, Int64 version, List<FileChecksum> fileList)
-        {
-            SQLiteCommand command;
-            foreach (FileChecksum file in fileList)
-            {
-                command = new SQLiteCommand("INSERT INTO user_" + userId + " (version, server_file, client_file, checksum) VALUES (@version, @server_file, @client_file, @checksum);", connection);
-                command.Parameters.AddWithValue("version", version);
-                command.Parameters.AddWithValue("server_file", file.FileNameServerDB);
-                command.Parameters.AddWithValue("client_file", file.FileNameClient);
-                command.Parameters.AddWithValue("checksum", file.ChecksumBytes);
-                command.ExecuteNonQuery();
-            }
+		public void setUserFiles(Int64 userId, Int64 version, List<FileChecksum> fileList)
+		{
+			SQLiteCommand command;
+			string current_timestamp = string.Format("{0:dd-MM-yyyy h-mm-ss-tt}", DateTime.Now);
+			foreach (FileChecksum file in fileList)
+			{
+				command = new SQLiteCommand("INSERT INTO user_" + userId + " (version, server_file, client_file, checksum, timestamp) VALUES (@version, @server_file, @client_file, @checksum, @timestamp);", connection);
+				command.Parameters.AddWithValue("version", version);
+				command.Parameters.AddWithValue("server_file", file.FileNameServerDB);
+				command.Parameters.AddWithValue("client_file", file.FileNameClient);
+				command.Parameters.AddWithValue("checksum", file.ChecksumBytes);
+				command.Parameters.AddWithValue("timestamp", current_timestamp);
+				command.ExecuteNonQuery();
+			}
 
-        }
-    }
+		}
+
+		public List<UserVersions> getUsersList()
+		{
+			UserVersions item;
+			List<UserVersions> userList = new List<UserVersions>();
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM users", connection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			while (reader.Read())
+			{
+				item = new UserVersions();
+				item.username = (string)reader["username"];
+				item.userId = (Int64)reader["id"];
+				SQLiteCommand command2 = new SQLiteCommand("SELECT COUNT(*) AS count FROM users_" + (Int64)reader["id"] + " GROUP BY version", connection);
+				SQLiteDataReader reader2 = command2.ExecuteReader();
+				if (reader2.Read())
+				{
+					item.versionCount = (Int64)reader2["count"];
+					reader2.Close();
+					userList.Add(item);
+				}
+			}
+			reader.Close();
+			return userList;
+		}
+
+		public List<FileChecksum> getFileVersions(Int64 userId, string filename, string serverBaseDir)
+		{
+			List<FileChecksum> userFiles = new List<FileChecksum>();
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE client_file = " + filename, connection);
+			SQLiteDataReader reader = command.ExecuteReader();
+			while (reader.Read())
+			{
+				userFiles.Add(new FileChecksum(serverBaseDir + (string)reader["server_file"], (string)reader["server_file"], (string)reader["client_file"], (byte[])reader["checksum"], (string)reader["timestamp"]));
+			}
+			reader.Close();
+			return userFiles;
+		}
+
+		public void deleteVersion(Int64 userId, Int64 version)
+		{
+			SQLiteCommand command = new SQLiteCommand("DELETE FROM user_" + userId + " WHERE version = @version;", connection);
+			command.Parameters.AddWithValue("version", version);
+			command.ExecuteNonQuery();
+		}
+	}
 }
