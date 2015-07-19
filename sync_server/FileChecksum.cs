@@ -14,6 +14,7 @@ namespace sync_server
 		private string fileNameServer;
 		private string fileNameServerDB;
 		private byte[] checksum;
+		private Int64 version;
 		private string timestamp="";
 
 		public FileChecksum(string fileClient, string fileServer, string fileServerDB)
@@ -46,18 +47,14 @@ namespace sync_server
             this.checksum = md5.ComputeHash(fs);
         }
 
-        public FileChecksum()
-        {
-        
-        }
-
-        public FileChecksum(string fileServer, string fileServerDB, string fileClient, byte[] checksum, string timestamp ="")
+        public FileChecksum(string fileServer, string fileServerDB, string fileClient, byte[] checksum, Int64 version, string timestamp)
 		{
 			this.fileNameServer = fileServer;
             this.fileNameClient = fileClient;
             this.fileNameServerDB = fileServerDB;
             //this.checksum = System.Text.Encoding.ASCII.GetBytes(checksum);
 			this.checksum = checksum;
+			this.version = version;
 			this.timestamp = timestamp;
 		}
 
@@ -86,10 +83,16 @@ namespace sync_server
             get { return this.fileNameClient; }
             set { this.fileNameClient = value; }
         }
+		public Int64 Version
+		{
+			get { return version; }
+			set { version = value; }
+		}
 		public string Timestamp
 		{
 			get { return timestamp; }
 			set { timestamp = value; }
 		}
+		
 	}
 }
