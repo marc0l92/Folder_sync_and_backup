@@ -28,7 +28,7 @@ namespace sync_server
 		private Socket listener;
         private static int clientNumber = 0;
         private int defaultMaxVers;
-        private Thread listeningThread;
+        private Thread listeningThread= null;
         private List<ClientManager> clients;
 
         public ManualResetEvent allDone = new ManualResetEvent(false);
@@ -174,6 +174,7 @@ namespace sync_server
             }
 			serverStopped = true;
 			listener.Close();
+            listeningThread.Join();
             statusDelegate("Server stopped", fSyncServer.LOG_INFO);
         }
     }
