@@ -33,7 +33,7 @@ namespace sync_clientWPF
 		List<Version> versions = null;
 		private bool loggedin = false;
 		private NotifyIcon notifyIcon;
-		private System.Windows.Forms.ContextMenu notifyIconMenu;
+		//private System.Windows.Forms.ContextMenu notifyIconMenu;
 
 
 		public MainWindow()
@@ -44,15 +44,18 @@ namespace sync_clientWPF
 			syncManager = new SyncManager();
 			syncManager.setStatusDelegate(updateStatus, updateStatusBar);
 
-			////initialize tray icon
+			//initialize tray icon
 			notifyIcon = new NotifyIcon();
 			Stream iconStream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/sync_clientWPF;component/Synchronize.ico")).Stream;
 			notifyIcon.Icon = new System.Drawing.Icon(iconStream);
-
-			notifyIconMenu = new System.Windows.Forms.ContextMenu();
+			//notifyIconMenu = new System.Windows.Forms.ContextMenu();
 			//notifyIconMenu.MenuItems.Add("Exit", );
 			notifyIcon.Text = "SyncClient";
-			notifyIcon.ContextMenu = notifyIconMenu;
+			//notifyIcon.ContextMenu = notifyIconMenu;
+			notifyIcon.BalloonTipTitle = "App minimized to tray";
+			notifyIcon.BalloonTipText = "Sync sill running.";
+			notifyIcon.Click += new EventHandler(notifyIcon_Click);
+
 			//notifyIcon.Visible = true;
 		}
 
@@ -301,8 +304,6 @@ namespace sync_clientWPF
 					break;
 				case WindowState.Minimized:
 					// Do your stuff
-					notifyIcon.BalloonTipTitle = "Minimize to Tray App";
-					notifyIcon.BalloonTipText = "You have successfully minimized your form.";
 					notifyIcon.Visible = true;
 					notifyIcon.ShowBalloonTip(1000);
 					this.Hide();    
@@ -311,6 +312,13 @@ namespace sync_clientWPF
 
 					break;
 			}
+		}
+
+		private void notifyIcon_Click(object o, EventArgs ea)
+		{
+			this.Show();
+			//this.Focus(); // todo focus
+			notifyIcon.Visible = false;
 		}
 
 	}
