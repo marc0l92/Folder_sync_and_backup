@@ -207,14 +207,14 @@ namespace sync_server
                     case SyncCommand.CommandSet.START:
                         statusDelegate(" Command Start ", fSyncServer.LOG_INFO);
                         return StartSession();
-                    case SyncCommand.CommandSet.GET:
-                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
-                        {
-                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A GET ", fSyncServer.LOG_INFO);
-                            return true;
-                        }
-                        statusDelegate(" Command Get ", fSyncServer.LOG_INFO);
-                        return SendFileClient();
+                    //case SyncCommand.CommandSet.GET:
+                    //    if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                    //    {
+                    //        statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A GET ", fSyncServer.LOG_INFO);
+                    //        return true;
+                    //    }
+                    //    statusDelegate(" Command Get ", fSyncServer.LOG_INFO);
+                    //    return SendFileClient();
                     case SyncCommand.CommandSet.RESTORE:
                         if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
                         {
@@ -264,6 +264,22 @@ namespace sync_server
                         }
                         statusDelegate("Command Edit ", fSyncServer.LOG_INFO);
                         return GetVersions();
+                    case SyncCommand.CommandSet.FILEVERSIONS:
+                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                        {
+                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A GET VERSION FILE ", fSyncServer.LOG_INFO);
+                            return true;
+                        }
+                        statusDelegate("Command File Version ", fSyncServer.LOG_INFO);
+                        return GetFileVersions();
+                    case SyncCommand.CommandSet.GET:
+                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                        {
+                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A RESTORE FILE VERSION ", fSyncServer.LOG_INFO);
+                            return true;
+                        }
+                        statusDelegate("Command Restore Version ", fSyncServer.LOG_INFO);
+                        return GetFile();
                     default:
                         statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
                         StopService();
@@ -528,40 +544,40 @@ namespace sync_server
             statusDelegate("Send End Restore Message (Restore Command)", fSyncServer.LOG_INFO);
 
             WellStop();
-
+            TEMP.Clear();
             return true;
         }
 
 
-        public Boolean SendFileClient()
-        {
-            int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
-            String fileName = userChecksum[index].FileNameServer;
+        //public Boolean SendFileClient()
+        //{
+        //    int index = userChecksum.FindIndex(x => x.FileNameClient == cmd.FileName);
+        //    String fileName = userChecksum[index].FileNameServer;
 
-            if (File.Exists(fileName))
-            {
-                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, cmd.FileName));
-                statusDelegate("Send File Command  ", fSyncServer.LOG_INFO);
-                // Send file fileName to remote device
-                stateClient.workSocket.SendFile(fileName);
-                statusDelegate("File Sended Succesfully", fSyncServer.LOG_INFO);
-                // TODO wait for ack
-                receiveDone.Reset();
-                // Receive the response from the remote device.
-                this.ReceiveCommand(stateClient.workSocket);
-                receiveDone.WaitOne();
-                if (cmd.Type != SyncCommand.CommandSet.ACK)
-                    return false;
-                return true;
-            }
-            else
-            {
-                // todo FILE DOESN'T EXISTS MESSAGGE
-                statusDelegate("File doesn't exists  " + fileName, fSyncServer.LOG_INFO);
-                return true;
-            }
+        //    if (File.Exists(fileName))
+        //    {
+        //        SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.FILE, cmd.FileName));
+        //        statusDelegate("Send File Command  ", fSyncServer.LOG_INFO);
+        //        // Send file fileName to remote device
+        //        stateClient.workSocket.SendFile(fileName);
+        //        statusDelegate("File Sended Succesfully", fSyncServer.LOG_INFO);
+        //        // TODO wait for ack
+        //        receiveDone.Reset();
+        //        // Receive the response from the remote device.
+        //        this.ReceiveCommand(stateClient.workSocket);
+        //        receiveDone.WaitOne();
+        //        if (cmd.Type != SyncCommand.CommandSet.ACK)
+        //            return false;
+        //        return true;
+        //    }
+        //    else
+        //    {
+        //        // todo FILE DOESN'T EXISTS MESSAGGE
+        //        statusDelegate("File doesn't exists  " + fileName, fSyncServer.LOG_INFO);
+        //        return true;
+        //    }
 
-        }
+        //}
 
         public Boolean RestoreFileClient(String serverName, String clientName)
         {
@@ -704,40 +720,44 @@ namespace sync_server
             TEMP = mySQLite.getUserFiles(client.usrID, cmd.Version, serverDir); //Call DB Retrieve Version to Restore
 
             int index = TEMP.FindIndex(x => (x.FileNameClient == cmd.FileName) && (x.Version == cmd.Version));
-
+            FileChecksum newFile = new FileChecksum(); //Call DB Retrieve Version to Restore
             if (index != -1)
             {
                 TEMP.RemoveAt(index);
-                File.Delete(check.FileNameServer);
-                statusDelegate("Deleted File Correctly:" + check.FileNameServer, fSyncServer.LOG_INFO);
+                statusDelegate("Deleted Old Version File Correctly:(Get File )", fSyncServer.LOG_INFO);
             }
-            foreach (FileChecksum check in userChecksum)
+
+            if (File.Exists(newFile.FileNameServer))
             {
-                if (File.Exists(check.FileNameServer))
+                if (RestoreFileClient(newFile.FileNameServer, newFile.FileNameClient))
                 {
-                    if (RestoreFileClient(check.FileNameServer, check.FileNameClient))
-                        statusDelegate("File Sended Succesfully, Server Name:" + check.FileNameServer + "User Name: " + check.FileNameClient + "(Restore Version)", fSyncServer.LOG_INFO);
-                    else statusDelegate("Protocol Error Sending File (Restore Version)", fSyncServer.LOG_INFO);
+                    statusDelegate("File Sended Succesfully, Server Name:" + newFile.FileNameServer + "User Name: " + newFile.FileNameClient + "(Get File )", fSyncServer.LOG_INFO);
+                    TEMP.Add(newFile);
+                    client.vers++;
+                    mySQLite.setUserFiles(client.usrID, client.vers, TEMP); // Call DB Update to new Version all the Files
+                    statusDelegate("Update DB (Get File )", fSyncServer.LOG_INFO);
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
+                    statusDelegate("Send End Restore Message (Get File )", fSyncServer.LOG_INFO);
+                    WellStop();
                 }
                 else
                 {
-                    statusDelegate("File doesn't exists  " + check.FileNameServer + "(Restore Version)", fSyncServer.LOG_INFO);
+                    statusDelegate("Protocol Error Sending File (Get File)", fSyncServer.LOG_INFO);
+                    StopService();
                 }
             }
-
-            client.vers++;
-            mySQLite.setUserFiles(client.usrID, client.vers, userChecksum); // Call DB Update to new Version all the Files
-            statusDelegate("Update DB (Restore Command)", fSyncServer.LOG_INFO);
-
-            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
-            statusDelegate("Send End Restore Message (Restore Command)", fSyncServer.LOG_INFO);
-
-            WellStop();
-
+            else
+            {
+                statusDelegate("File doesn't exists  " + newFile.FileNameServer + "(Get File )", fSyncServer.LOG_INFO);
+                StopService();
+            }
+            TEMP.Clear();
             return true;
+
+
         }
 
-        public Boolean GetFileVersion()
+        public Boolean GetFileVersions()
         {
             userChecksum = mySQLite.getFileVersions(client.usrID, cmd.FileName, serverDir); //Call DB Get User Files Version;
             bool first = true;
@@ -749,7 +769,7 @@ namespace sync_server
                     SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW", check.Timestamp));
                     first = false;
                 }
-                else if ((check.ChecksumBytes == temp.ChecksumBytes)&& temp!=null)
+                else if ((check.ChecksumBytes == temp.ChecksumBytes) && temp != null)
                 {
                     SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NONE", check.Timestamp));
                 }
