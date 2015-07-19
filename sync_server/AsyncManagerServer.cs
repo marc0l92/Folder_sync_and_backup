@@ -22,19 +22,23 @@ namespace sync_server
         private String defaultDir;
 
         public delegate void StatusDelegate(String s, int type);
+        public delegate void NumberDelegate( int nclient);
         private delegate void EndClientDelegate();
         private EndClientDelegate endClientDelegate = null;
         private StatusDelegate statusDelegate;
+        private static NumberDelegate numberDelegate;
 		private Socket listener;
+        private static int clientNumber = 0;
+        private List<ClientManager> clients;
 
         public ManualResetEvent allDone = new ManualResetEvent(false);
         private bool serverStopped = false;
 
-        public void setStatusDelegate(StatusDelegate sd)
+        public void setDelegate(StatusDelegate sd, NumberDelegate nd)
         {
             statusDelegate = sd;
+            numberDelegate = nd;
         }
-
         public AsyncManagerServer()
         {
         }
@@ -54,6 +58,19 @@ namespace sync_server
             Thread listeningThread = new Thread(new ThreadStart(StartListening));
             listeningThread.IsBackground = true;
             listeningThread.Start();
+        }
+        static public void PrintClient()
+        {
+            numberDelegate(clientNumber);
+        }
+
+        static public void IncreaseClient()
+        {
+            clientNumber++;
+        }
+        static public void DecreaseClient()
+        {
+            clientNumber--;
         }
 
         public void StartListening()
@@ -121,20 +138,39 @@ namespace sync_server
                     defaultDir=defaultDir.Substring(0, defaultDir.Length - 1);
                 }
 				ClientManager client = new ClientManager(handler, defaultDir, statusDelegate);
-				if (endClientDelegate == null)
-					endClientDelegate = new EndClientDelegate(client.stop);
-				else
-					endClientDelegate += new EndClientDelegate(client.stop);
+
+                AsyncManagerServer.IncreaseClient();
+                AsyncManagerServer.PrintClient();
+                //if (endClientDelegate == null)
+                //    endClientDelegate = new EndClientDelegate(client.stop);
+                //else
+                //    endClientDelegate += new EndClientDelegate(client.stop);
+
+                if (clients == null)
+                {
+                    clients = new List<ClientManager>();
+                    clients.Add(client);
+                }
+                else
+                    clients.Add(client);
 
 				statusDelegate("Connected and Created New Thred to Serve Client", fSyncServer.LOG_INFO);
 			}
         }
 
+
         //Function Stop Sync Button
         public void stopSync()
         {
-			if (endClientDelegate != null)
-				endClientDelegate();
+            //if (endClientDelegate != null)
+            //    endClientDelegate();
+            //if (clients != null)
+            //{
+            //    foreach (ClientManager client in clients)
+            //    {
+
+            //    }
+            //}
 			serverStopped = true;
 			listener.Close();
             statusDelegate("Server stopped", fSyncServer.LOG_INFO);
