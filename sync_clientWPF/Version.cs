@@ -74,23 +74,31 @@ namespace sync_clientWPF
 
 	public class VersionFile
 	{
-		private String fileName;
-		private String fileOperation; /*EDIT, NEW, DEL*/
+		private string fileName;
+		private string fileOperation; /*EDIT, NEW, DEL, NONE*/
+		private string timestamp;
 
-		public VersionFile(String fileName, String operation)
+		public VersionFile(string fileName, string operation, string timestamp="")
 		{
 			this.fileOperation = operation;
 			this.fileName = fileName;
+			this.timestamp = timestamp;
 		}
 
-		public String FileOperation
+		public string FileOperation
 		{
 			get { return this.fileOperation; }
 		}
 
-		public String FileName
+		public string FileName
 		{
 			get { return this.fileName; }
 		}
+
+		public string Timestamp
+		{
+			get { return this.timestamp; }
+		}
+
 	}
 }

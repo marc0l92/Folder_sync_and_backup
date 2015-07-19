@@ -13,11 +13,12 @@
 		</ListView>
 
 		<Label Content="Files in this version:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-		<ListView x:Name="lFileVersions" Margin="350,36,10,10" MouseDoubleClick="lDetails_MouseDoubleClick">
+		<ListView Name="lFileVersions" Margin="350,36,10,10" MouseDoubleClick="lDetails_MouseDoubleClick">
 			<ListView.View>
 				<GridView>
-					<GridViewColumn Header="Version" Width="70" DisplayMemberBinding="{Binding sFilename}"/>
-					<GridViewColumn Header="Timestamp" Width="150" DisplayMemberBinding="{Binding sOperation}"/>
+					<GridViewColumn Header="Version" Width="50" DisplayMemberBinding="{Binding sVersion}"/>
+					<GridViewColumn Header="Operation" Width="70" DisplayMemberBinding="{Binding sOperation}"/>
+					<GridViewColumn Header="Timestamp" Width="100" DisplayMemberBinding="{Binding sTimestamp}"/>
 				</GridView>
 			</ListView.View>
 		</ListView>
