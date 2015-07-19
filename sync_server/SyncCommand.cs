@@ -9,7 +9,7 @@ namespace sync_server
 {
 	public class SyncCommand
 	{
-		public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC, VERSION, CHECKVERSION, GETVERSIONS, ENDRESTORE };
+		public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC, VERSION, CHECKVERSION, GETVERSIONS, ENDRESTORE, FILEVERSIONS };
 		/*
 			 		TYPE	|  data[0]  |  data[1]  |  data[2]  |  data[3]  |
 			----------------+-----------+-----------+-----------+-----------+
@@ -22,7 +22,7 @@ namespace sync_server
 			DEL				| filename  |			|			|			|
 			NEW				| filename  | filesize  |			|			|
 			FILE			| filename  | filesize  |			|			|
-			GET				| filename  |			|			|			|
+			GET				| filename  | version   |			|			|
 			RESTORE			| version   |			|			|			|
 			ENDSYNC			|			|			|			|			|
 			CHECK			| filename  | checksum  |			|			|
@@ -30,7 +30,10 @@ namespace sync_server
 			ACK				|			|			|			|			|
 			NOSYNC			|			|			|			|			|
 		    VERSION			| version   | numFiles  | timestamp |			|
-		   	CHECKVERSION	| filename  | operation |			|			|
+		   	CHECKVERSION	| filename  | operation | timestamp |			|
+		    GETVERSIONS     |			|			|			|			|
+		    ENDRESTORE      |			|			|			|			|
+		    FILEVERSIONS    | filename  |			|			|			|
 		 
 		 */
 
@@ -42,7 +45,6 @@ namespace sync_server
 		public SyncCommand(CommandSet type, string arg1, string arg2) : this(type, new string[] { arg1, arg2 }) { }
 		public SyncCommand(CommandSet type, string arg1, string arg2, string arg3) : this(type, new string[] { arg1, arg2, arg3 }) { }
 		public SyncCommand(CommandSet type, string arg1, string arg2, string arg3, string arg4) : this(type, new string[] { arg1, arg2, arg3, arg4 }) { }
-	
 		public SyncCommand(CommandSet type, string[] args)
 		{
 			this.type = type;
@@ -79,7 +81,7 @@ namespace sync_server
 					data[0] = FileName;
 					break;
 				case CommandSet.NEW:
-                    data[0] = FileName;
+					data[0] = FileName;
 					data[1] = FileSize.ToString();
 					break;
 				case CommandSet.FILE:
@@ -88,6 +90,7 @@ namespace sync_server
 					break;
 				case CommandSet.GET:
 					data[0] = FileName;
+					data[1] = Version.ToString();
 					break;
 				case CommandSet.RESTORE:
 					data[0] = Version.ToString();
@@ -104,6 +107,10 @@ namespace sync_server
 				case CommandSet.CHECKVERSION:
 					data[0] = FileName;
 					data[1] = Operation;
+					data[2] = Timestamp;
+					break;
+				case CommandSet.FILEVERSIONS:
+					data[0] = FileName;
 					break;
 			}
 		}
@@ -177,6 +184,8 @@ namespace sync_server
 						return data[0];
 					case CommandSet.CHECKVERSION:
 						return data[0];
+					case CommandSet.FILEVERSIONS:
+						return data[0];
 					default:
 						return null;
 				}
@@ -192,6 +201,8 @@ namespace sync_server
 						return Int64.Parse(data[0]);
 					case CommandSet.VERSION:
 						return Int64.Parse(data[0]);
+					case CommandSet.GET:
+						return Int64.Parse(data[1]);
 					default:
 						return -1;
 				}
@@ -203,7 +214,7 @@ namespace sync_server
 			{
 				switch (this.type)
 				{
-                    case CommandSet.CHECK:
+					case CommandSet.CHECK:
 						return data[1];
 					default:
 						return null;
@@ -248,18 +259,18 @@ namespace sync_server
 				switch (this.type)
 				{
 					case CommandSet.EDIT:
-                        return Int32.Parse(data[1]);
+						return Int32.Parse(data[1]);
 					case CommandSet.NEW:
-                        return Int32.Parse(data[1]);
+						return Int32.Parse(data[1]);
 					case CommandSet.FILE:
-                        return Int32.Parse(data[1]);
+						return Int32.Parse(data[1]);
 					default:
 						return -1;
 				}
 			}
 		}
 
-		public String Operation
+		public string Operation
 		{
 			get
 			{
@@ -292,6 +303,8 @@ namespace sync_server
 				switch (this.type)
 				{
 					case CommandSet.VERSION:
+						return data[2];
+					case CommandSet.CHECKVERSION:
 						return data[2];
 					default:
 						return null;

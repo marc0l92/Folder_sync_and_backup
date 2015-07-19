@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -345,7 +346,7 @@ namespace sync_clientWPF
 						switch (sc.Type)
 						{
 							case SyncCommand.CommandSet.VERSION:
-								version = new Version(sc.Version);
+								version = new Version(sc.Version, sc.Timestamp);
 								versions.Add(version);
 								break;
 							case SyncCommand.CommandSet.CHECKVERSION:
@@ -484,3 +485,4 @@ namespace sync_clientWPF
 		}
 	}
 }
+*/

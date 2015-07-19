@@ -1,19 +1,27 @@
 ﻿<Window x:Class="sync_clientWPF.VersionDetailsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Version details" Height="300" Width="317" Icon="Synchronize.ico" WindowStartupLocation="Manual">
-	<Grid>
-		<ListView Name="lDetails" Margin="10,36,10,10">
+        Title="Version details" Height="300" Width="600" Icon="Synchronize.ico" WindowStartupLocation="Manual">
+	<Grid Margin="0,0,2,0">
+		<ListView Name="lDetails" Margin="10,36,245,10" MouseDoubleClick="lDetails_MouseDoubleClick">
 			<ListView.View>
 				<GridView>
 					<GridViewColumn Header="Filename" Width="200" DisplayMemberBinding="{Binding sFilename}"/>
-					<GridViewColumn Header="Operation" Width="70" DisplayMemberBinding="{Binding sOperation}"/>
+					<GridViewColumn Header="Operation" Width="100" DisplayMemberBinding="{Binding sOperation}"/>
 				</GridView>
 			</ListView.View>
 		</ListView>
 
-		<Label Content="Version:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-		<Label Name="lVersion" Content="0" HorizontalAlignment="Left" Margin="62,10,0,0" VerticalAlignment="Top"/>
+		<Label Content="Files in this version:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+		<ListView x:Name="lFileVersions" Margin="350,36,10,10" MouseDoubleClick="lDetails_MouseDoubleClick">
+			<ListView.View>
+				<GridView>
+					<GridViewColumn Header="Version" Width="70" DisplayMemberBinding="{Binding sFilename}"/>
+					<GridViewColumn Header="Timestamp" Width="150" DisplayMemberBinding="{Binding sOperation}"/>
+				</GridView>
+			</ListView.View>
+		</ListView>
+		<Label Content="Versions of selected file:" HorizontalAlignment="Left" Margin="350,10,0,0" VerticalAlignment="Top"/>
 
 	</Grid>
 </Window>

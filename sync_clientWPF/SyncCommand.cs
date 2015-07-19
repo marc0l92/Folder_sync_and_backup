@@ -9,7 +9,7 @@ namespace sync_clientWPF
 {
 	class SyncCommand
 	{
-		public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC, VERSION, CHECKVERSION, GETVERSIONS, ENDRESTORE};
+		public enum CommandSet { START, LOGIN, AUTHORIZED, UNAUTHORIZED, NEWUSER, EDIT, DEL, NEW, FILE, GET, RESTORE, ENDSYNC, CHECK, ENDCHECK, ACK, NOSYNC, VERSION, CHECKVERSION, GETVERSIONS, ENDRESTORE, FILEVERSIONS };
 		/*
 			 		TYPE	|  data[0]  |  data[1]  |  data[2]  |  data[3]  |
 			----------------+-----------+-----------+-----------+-----------+
@@ -22,7 +22,7 @@ namespace sync_clientWPF
 			DEL				| filename  |			|			|			|
 			NEW				| filename  | filesize  |			|			|
 			FILE			| filename  | filesize  |			|			|
-			GET				| filename  |			|			|			|
+			GET				| filename  | version   |			|			|
 			RESTORE			| version   |			|			|			|
 			ENDSYNC			|			|			|			|			|
 			CHECK			| filename  | checksum  |			|			|
@@ -30,7 +30,10 @@ namespace sync_clientWPF
 			ACK				|			|			|			|			|
 			NOSYNC			|			|			|			|			|
 		    VERSION			| version   | numFiles  | timestamp |			|
-		   	CHECKVERSION	| filename  | operation |			|			|
+		   	CHECKVERSION	| filename  | operation | timestamp |			|
+		    GETVERSIONS     |			|			|			|			|
+		    ENDRESTORE      |			|			|			|			|
+		    FILEVERSIONS    | filename  |			|			|			|
 		 
 		 */
 
@@ -87,6 +90,7 @@ namespace sync_clientWPF
 					break;
 				case CommandSet.GET:
 					data[0] = FileName;
+					data[1] = Version.ToString();
 					break;
 				case CommandSet.RESTORE:
 					data[0] = Version.ToString();
@@ -103,6 +107,10 @@ namespace sync_clientWPF
 				case CommandSet.CHECKVERSION:
 					data[0] = FileName;
 					data[1] = Operation;
+					data[2] = Timestamp;
+					break;
+				case CommandSet.FILEVERSIONS:
+					data[0] = FileName;
 					break;
 			}
 		}
@@ -175,6 +183,8 @@ namespace sync_clientWPF
 						return data[0];
 					case CommandSet.CHECKVERSION:
 						return data[0];
+					case CommandSet.FILEVERSIONS:
+						return data[0];
 					default:
 						return null;
 				}
@@ -190,6 +200,8 @@ namespace sync_clientWPF
 						return Int64.Parse(data[0]);
 					case CommandSet.VERSION:
 						return Int64.Parse(data[0]);
+					case CommandSet.GET:
+						return Int64.Parse(data[1]);
 					default:
 						return -1;
 				}
@@ -288,6 +300,8 @@ namespace sync_clientWPF
 				switch (this.type)
 				{
 					case CommandSet.VERSION:
+						return data[2];
+					case CommandSet.CHECKVERSION:
 						return data[2];
 					default:
 						return null;

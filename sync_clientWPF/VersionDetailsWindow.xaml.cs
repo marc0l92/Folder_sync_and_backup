@@ -24,12 +24,27 @@ namespace sync_clientWPF
 		{
 			InitializeComponent();
 			this.version = v;
-			lVersion.Content = version.VersionNum;
+			this.Title = "Version details: " + version.VersionNum;
 
 			foreach (VersionFile vf in version.Items)
 			{
 
 				lDetails.Items.Add(new VersionListViewItem(vf.FileName, vf.FileOperation));
+			}
+		}
+
+		private void lDetails_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			DependencyObject obj = (DependencyObject)e.OriginalSource;
+			while (obj != null && obj != lDetails)
+			{
+				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
+				{
+					//lDetails.SelectedIndex;
+					
+					break;
+				}
+				obj = VisualTreeHelper.GetParent(obj);
 			}
 		}
 	}

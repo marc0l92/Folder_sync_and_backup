@@ -11,11 +11,13 @@ namespace sync_clientWPF
 		private List<VersionFile> vec;
 		private Int64 version = 0;
 		private int newFiles=0, editFiles=0, delFiles=0;
+		private string timestamp;
 
-		public Version(Int64 ver)
+		public Version(Int64 ver, string timestamp)
 		{
 			vec = new List<VersionFile>();
 			this.version = ver;
+			this.timestamp = timestamp;
 		}
 
 		public void append(VersionFile vf)
@@ -63,6 +65,10 @@ namespace sync_clientWPF
 		public int DelFiles
 		{
 			get { return this.delFiles; }
+		}
+		public string Timestamp
+		{
+			get { return this.timestamp; }
 		}
 	}
 
