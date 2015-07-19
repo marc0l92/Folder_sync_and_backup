@@ -46,6 +46,11 @@ namespace sync_server
             this.checksum = md5.ComputeHash(fs);
         }
 
+        public FileChecksum()
+        {
+        
+        }
+
         public FileChecksum(string fileServer, string fileServerDB, string fileClient, byte[] checksum, string timestamp ="")
 		{
 			this.fileNameServer = fileServer;
