@@ -10,12 +10,13 @@ namespace sync_server
 {
 	public class FileChecksum
 	{
-		private String fileNameClient;
-        private String fileNameServer;
-        private String fileNameServerDB;
+		private string fileNameClient;
+		private string fileNameServer;
+		private string fileNameServerDB;
 		private byte[] checksum;
+		private string timestamp="";
 
-		public FileChecksum(String fileClient , String fileServer, String fileServerDB)
+		public FileChecksum(string fileClient, string fileServer, string fileServerDB)
 		{
 			// Check if the file exists
 			if (!File.Exists(fileServer))
@@ -31,7 +32,7 @@ namespace sync_server
 			this.checksum = md5.ComputeHash(fs);
             fs.Close();
 		}
-        public FileChecksum(String fileServer)
+		public FileChecksum(string fileServer)
         {
             // Check if the file exists
             if (!File.Exists(fileServer))
@@ -45,16 +46,17 @@ namespace sync_server
             this.checksum = md5.ComputeHash(fs);
         }
 
-        public FileChecksum(String fileServer, String fileServerDB, String fileClient, byte[] checksum)
+        public FileChecksum(string fileServer, string fileServerDB, string fileClient, byte[] checksum, string timestamp ="")
 		{
 			this.fileNameServer = fileServer;
             this.fileNameClient = fileClient;
             this.fileNameServerDB = fileServerDB;
             //this.checksum = System.Text.Encoding.ASCII.GetBytes(checksum);
 			this.checksum = checksum;
+			this.timestamp = timestamp;
 		}
 
-		public String Checksum
+		public string Checksum
 		{
 			get { return System.Text.Encoding.ASCII.GetString(this.checksum); }
 			set { this.checksum = System.Text.Encoding.ASCII.GetBytes(value); }
@@ -64,20 +66,25 @@ namespace sync_server
 			get { return this.checksum; }
 			set { this.checksum = value; }
 		}
-		public String FileNameServer
+		public string FileNameServer
 		{
 			get { return this.fileNameServer; }
 			set { this.fileNameServer = value; }
 		}
-        public String FileNameServerDB
+        public string FileNameServerDB
         {
             get { return this.fileNameServerDB; }
             set { this.fileNameServerDB = value; }
         }
-        public String FileNameClient
+        public string FileNameClient
         {
             get { return this.fileNameClient; }
             set { this.fileNameClient = value; }
         }
+		public string Timestamp
+		{
+			get { return timestamp; }
+			set { timestamp = value; }
+		}
 	}
 }
