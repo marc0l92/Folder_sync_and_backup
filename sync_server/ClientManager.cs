@@ -321,6 +321,13 @@ namespace sync_server
 
         public Boolean NewUser()
         {
+            if(cmd.Username=="" || cmd.Password == "")
+            {
+                statusDelegate("CHOOSE AN APPROPRIATE USERNAME, POSSIBLY NOT NULL (NewUser)", fSyncServer.LOG_INFO);
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.UNAUTHORIZED));
+                statusDelegate("Send Back Unauthorized Message (NewUser)", fSyncServer.LOG_INFO);
+                return true;
+            }
             Int64 userID = mySQLite.newUser(cmd.Username, cmd.Password, cmd.Directory);
             if (userID == -1) //Call DB New User
             {
@@ -381,11 +388,17 @@ namespace sync_server
         public Boolean GetVersions()
         {
             Int64 lastVers = 0;
+            Int64 diff;
             Int64 currentVersion = mySQLite.getUserMinMaxVersion(client.usrID, ref lastVers);
+
+
+            diff =  lastVers - currentVersion +1;
+            if ((lastVers == 0) || (currentVersion == 0))
+                diff = 0;
             bool first = true;
 
             List<FileChecksum> userChecksumA = mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
-            while (currentVersion <= lastVers)
+            while (diff>0)
             {
                 SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.VERSION, currentVersion.ToString(), userChecksumA.Count.ToString(), userChecksumA[0].Timestamp));
                 statusDelegate("Send Version Message(Version Command)", fSyncServer.LOG_INFO);
@@ -448,6 +461,7 @@ namespace sync_server
                     }
                     userChecksumA = userChecksumB;
                 }
+                diff--;
                 currentVersion++;
 
             }
@@ -521,6 +535,18 @@ namespace sync_server
 
         public Boolean RestoreVersion()
         {
+            Int64 lastVers=0;
+            mySQLite.getUserMinMaxVersion(client.usrID, ref lastVers);
+
+            if(lastVers==cmd.Version)
+            {
+
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
+                statusDelegate("Send End Restore Message (LAST VERSION) (Restore Command)", fSyncServer.LOG_INFO);
+
+                WellStop();
+                return true;
+            }
             TEMP = mySQLite.getUserFiles(client.usrID, cmd.Version, serverDir); //Call DB Retrieve Version to Restore
             foreach (FileChecksum check in TEMP)
             {
@@ -687,7 +713,7 @@ namespace sync_server
             Int64 maxVers = 0;
             Int64 minVers = mySQLite.getUserMinMaxVersion(client.usrID, ref maxVers);
             Int64 diff = maxVers - minVers;
-            while (diff > maxVersionNumber)
+            while (diff >= maxVersionNumber)
             {
                 userChecksum = mySQLite.getUserFiles(client.usrID, minVers, serverDir); //Call DB Get Users Files;
                 minVers++;
@@ -716,11 +742,22 @@ namespace sync_server
 
         public Boolean GetFile()
         {
+            Int64 lastVers = 0;
+            mySQLite.getUserMinMaxVersion(client.usrID, ref lastVers);
+
+            if(lastVers== cmd.Version)
+            {
+
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
+                statusDelegate("Send End check Message (StartSession)", fSyncServer.LOG_INFO);
+                WellStop();
+                return true;
+            }
 
             TEMP = mySQLite.getUserFiles(client.usrID, cmd.Version, serverDir); //Call DB Retrieve Version to Restore
 
             int index = TEMP.FindIndex(x => (x.FileNameClient == cmd.FileName) && (x.Version == cmd.Version));
-            FileChecksum newFile = null; //Call DB Retrieve Version to Restore
+            FileChecksum newFile = mySQLite.getFileChecksum(client.usrID,cmd.FileName, cmd.Version, serverDir); //Call DB Retrieve Version to Restore
             if (index != -1)
             {
                 TEMP.RemoveAt(index);
@@ -736,8 +773,7 @@ namespace sync_server
                     client.vers++;
                     mySQLite.setUserFiles(client.usrID, client.vers, TEMP); // Call DB Update to new Version all the Files
                     statusDelegate("Update DB (Get File )", fSyncServer.LOG_INFO);
-                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
-                    statusDelegate("Send End Restore Message (Get File )", fSyncServer.LOG_INFO);
+                    TEMP.Clear();
                     WellStop();
                 }
                 else
@@ -751,6 +787,7 @@ namespace sync_server
                 statusDelegate("File doesn't exists  " + newFile.FileNameServer + "(Get File )", fSyncServer.LOG_INFO);
                 StopService();
             }
+
             TEMP.Clear();
             return true;
 
@@ -769,11 +806,11 @@ namespace sync_server
                     SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW", check.Timestamp, check.Version.ToString()));
                     first = false;
                 }
-                else if (temp != null &&(check.ChecksumBytes == temp.ChecksumBytes))
+                else if (temp != null && (Encoding.ASCII.GetString(check.ChecksumBytes) == Encoding.ASCII.GetString(temp.ChecksumBytes)))
                 {
                     SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NONE", check.Timestamp, check.Version.ToString()));
                 }
-                else if (temp != null && (check.ChecksumBytes != temp.ChecksumBytes))
+                else if (temp != null)
                 {
                     SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "EDIT", check.Timestamp, check.Version.ToString()));
                 }

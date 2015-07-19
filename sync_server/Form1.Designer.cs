@@ -30,6 +30,8 @@
         {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tSettings = new System.Windows.Forms.TabPage();
+            this.nUDVersion = new System.Windows.Forms.NumericUpDown();
+            this.label1 = new System.Windows.Forms.Label();
             this.lConnectedNum = new System.Windows.Forms.Label();
             this.lConnectedUser = new System.Windows.Forms.Label();
             this.bBrowse = new System.Windows.Forms.Button();
@@ -42,12 +44,21 @@
             this.bStop = new System.Windows.Forms.Button();
             this.bStart = new System.Windows.Forms.Button();
             this.tVersions = new System.Windows.Forms.TabPage();
+            this.bDel = new System.Windows.Forms.Button();
+            this.bUsers = new System.Windows.Forms.Button();
             this.lVersions = new System.Windows.Forms.Label();
             this.lUsers = new System.Windows.Forms.Label();
             this.lvUsers = new System.Windows.Forms.ListView();
-            this.listView1 = new System.Windows.Forms.ListView();
+            this.cId = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.cUsername = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.cVersion = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.lvVersions = new System.Windows.Forms.ListView();
+            this.cVers = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.cTotFile = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.cTStamp = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tabControl1.SuspendLayout();
             this.tSettings.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nUDVersion)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nPort)).BeginInit();
             this.tVersions.SuspendLayout();
             this.SuspendLayout();
@@ -68,6 +79,8 @@
             // 
             // tSettings
             // 
+            this.tSettings.Controls.Add(this.nUDVersion);
+            this.tSettings.Controls.Add(this.label1);
             this.tSettings.Controls.Add(this.lConnectedNum);
             this.tSettings.Controls.Add(this.lConnectedUser);
             this.tSettings.Controls.Add(this.bBrowse);
@@ -87,6 +100,33 @@
             this.tSettings.TabIndex = 0;
             this.tSettings.Text = "Settings";
             this.tSettings.UseVisualStyleBackColor = true;
+            // 
+            // nUDVersion
+            // 
+            this.nUDVersion.Location = new System.Drawing.Point(176, 89);
+            this.nUDVersion.Minimum = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.nUDVersion.Name = "nUDVersion";
+            this.nUDVersion.Size = new System.Drawing.Size(120, 26);
+            this.nUDVersion.TabIndex = 21;
+            this.nUDVersion.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(10, 91);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(160, 20);
+            this.label1.TabIndex = 11;
+            this.label1.Text = "Max Version Number:";
             // 
             // lConnectedNum
             // 
@@ -152,16 +192,16 @@
             this.lbLog.ItemHeight = 20;
             this.lbLog.Items.AddRange(new object[] {
             "Application started."});
-            this.lbLog.Location = new System.Drawing.Point(14, 125);
+            this.lbLog.Location = new System.Drawing.Point(14, 165);
             this.lbLog.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.lbLog.Name = "lbLog";
-            this.lbLog.Size = new System.Drawing.Size(931, 404);
+            this.lbLog.Size = new System.Drawing.Size(931, 364);
             this.lbLog.TabIndex = 5;
             // 
             // lLog
             // 
             this.lLog.AutoSize = true;
-            this.lLog.Location = new System.Drawing.Point(9, 100);
+            this.lLog.Location = new System.Drawing.Point(10, 130);
             this.lLog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lLog.Name = "lLog";
             this.lLog.Size = new System.Drawing.Size(111, 20);
@@ -223,10 +263,12 @@
             // 
             // tVersions
             // 
+            this.tVersions.Controls.Add(this.bDel);
+            this.tVersions.Controls.Add(this.bUsers);
             this.tVersions.Controls.Add(this.lVersions);
             this.tVersions.Controls.Add(this.lUsers);
             this.tVersions.Controls.Add(this.lvUsers);
-            this.tVersions.Controls.Add(this.listView1);
+            this.tVersions.Controls.Add(this.lvVersions);
             this.tVersions.Location = new System.Drawing.Point(4, 29);
             this.tVersions.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tVersions.Name = "tVersions";
@@ -235,6 +277,27 @@
             this.tVersions.TabIndex = 1;
             this.tVersions.Text = "Versions";
             this.tVersions.UseVisualStyleBackColor = true;
+            this.tVersions.Click += new System.EventHandler(this.bUsers_Click);
+            // 
+            // bDel
+            // 
+            this.bDel.Location = new System.Drawing.Point(628, 215);
+            this.bDel.Name = "bDel";
+            this.bDel.Size = new System.Drawing.Size(108, 30);
+            this.bDel.TabIndex = 5;
+            this.bDel.Text = "Delete User";
+            this.bDel.UseVisualStyleBackColor = true;
+            this.bDel.Click += new System.EventHandler(this.bDel_Click);
+            // 
+            // bUsers
+            // 
+            this.bUsers.Location = new System.Drawing.Point(520, 215);
+            this.bUsers.Name = "bUsers";
+            this.bUsers.Size = new System.Drawing.Size(81, 30);
+            this.bUsers.TabIndex = 4;
+            this.bUsers.Text = "Users";
+            this.bUsers.UseVisualStyleBackColor = true;
+            this.bUsers.Click += new System.EventHandler(this.bUsers_Click);
             // 
             // lVersions
             // 
@@ -260,24 +323,69 @@
             // 
             this.lvUsers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.lvUsers.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.cId,
+            this.cUsername,
+            this.cVersion});
+            this.lvUsers.FullRowSelect = true;
+            this.lvUsers.HideSelection = false;
             this.lvUsers.Location = new System.Drawing.Point(4, 43);
             this.lvUsers.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.lvUsers.MultiSelect = false;
             this.lvUsers.Name = "lvUsers";
             this.lvUsers.Size = new System.Drawing.Size(940, 164);
             this.lvUsers.TabIndex = 1;
             this.lvUsers.UseCompatibleStateImageBehavior = false;
+            this.lvUsers.View = System.Windows.Forms.View.Details;
+            this.lvUsers.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lvUsers_MouseDoubleClick);
             // 
-            // listView1
+            // cId
             // 
-            this.listView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.cId.Text = "ID";
+            // 
+            // cUsername
+            // 
+            this.cUsername.Tag = "";
+            this.cUsername.Text = "Username";
+            this.cUsername.Width = 100;
+            // 
+            // cVersion
+            // 
+            this.cVersion.Text = "Version";
+            this.cVersion.Width = 80;
+            // 
+            // lvVersions
+            // 
+            this.lvVersions.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.listView1.Location = new System.Drawing.Point(4, 254);
-            this.listView1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(940, 353);
-            this.listView1.TabIndex = 0;
-            this.listView1.UseCompatibleStateImageBehavior = false;
+            this.lvVersions.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.cVers,
+            this.cTotFile,
+            this.cTStamp});
+            this.lvVersions.FullRowSelect = true;
+            this.lvVersions.Location = new System.Drawing.Point(4, 254);
+            this.lvVersions.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.lvVersions.Name = "lvVersions";
+            this.lvVersions.Size = new System.Drawing.Size(940, 353);
+            this.lvVersions.TabIndex = 0;
+            this.lvVersions.UseCompatibleStateImageBehavior = false;
+            this.lvVersions.View = System.Windows.Forms.View.Details;
+            // 
+            // cVers
+            // 
+            this.cVers.Text = "Version";
+            this.cVers.Width = 100;
+            // 
+            // cTotFile
+            // 
+            this.cTotFile.Text = "Total Files";
+            this.cTotFile.Width = 100;
+            // 
+            // cTStamp
+            // 
+            this.cTStamp.Text = "TimeStamp";
+            this.cTStamp.Width = 100;
             // 
             // fSyncServer
             // 
@@ -291,6 +399,7 @@
             this.tabControl1.ResumeLayout(false);
             this.tSettings.ResumeLayout(false);
             this.tSettings.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nUDVersion)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nPort)).EndInit();
             this.tVersions.ResumeLayout(false);
             this.tVersions.PerformLayout();
@@ -315,9 +424,19 @@
 		private System.Windows.Forms.Label lVersions;
 		private System.Windows.Forms.Label lUsers;
 		private System.Windows.Forms.ListView lvUsers;
-		private System.Windows.Forms.ListView listView1;
+		private System.Windows.Forms.ListView lvVersions;
 		private System.Windows.Forms.Label lConnectedNum;
 		private System.Windows.Forms.Label lConnectedUser;
+        private System.Windows.Forms.Button bDel;
+        private System.Windows.Forms.Button bUsers;
+        private System.Windows.Forms.ColumnHeader cUsername;
+        private System.Windows.Forms.ColumnHeader cVersion;
+        private System.Windows.Forms.ColumnHeader cId;
+        private System.Windows.Forms.ColumnHeader cVers;
+        private System.Windows.Forms.ColumnHeader cTotFile;
+        private System.Windows.Forms.ColumnHeader cTStamp;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.NumericUpDown nUDVersion;
     }
 }
 

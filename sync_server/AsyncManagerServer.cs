@@ -23,12 +23,12 @@ namespace sync_server
 
         public delegate void StatusDelegate(String s, int type);
         public delegate void NumberDelegate( int nclient);
-        private delegate void EndClientDelegate();
-        private EndClientDelegate endClientDelegate = null;
         private StatusDelegate statusDelegate;
         private static NumberDelegate numberDelegate;
 		private Socket listener;
         private static int clientNumber = 0;
+        private int defaultMaxVers;
+        private Thread listeningThread;
         private List<ClientManager> clients;
 
         public ManualResetEvent allDone = new ManualResetEvent(false);
@@ -44,7 +44,7 @@ namespace sync_server
         }
 
         //Function Start Sync Button
-        public void startSync(int port, String workDir)
+        public void startSync(int port, String workDir, int maxVers)
         {
             //Assign the port value 
             localport = port;
@@ -55,7 +55,8 @@ namespace sync_server
             }
             // Server start
             defaultDir = workDir;
-            Thread listeningThread = new Thread(new ThreadStart(StartListening));
+            defaultMaxVers = maxVers;
+            listeningThread = new Thread(new ThreadStart(StartListening));
             listeningThread.IsBackground = true;
             listeningThread.Start();
         }
@@ -137,7 +138,7 @@ namespace sync_server
                 {
                     defaultDir=defaultDir.Substring(0, defaultDir.Length - 1);
                 }
-				ClientManager client = new ClientManager(handler, defaultDir, 5, statusDelegate); //TODO
+				ClientManager client = new ClientManager(handler, defaultDir, defaultMaxVers, statusDelegate); //TODO
 
                 AsyncManagerServer.IncreaseClient();
                 AsyncManagerServer.PrintClient();
@@ -164,13 +165,13 @@ namespace sync_server
         {
             //if (endClientDelegate != null)
             //    endClientDelegate();
-            //if (clients != null)
-            //{
-            //    foreach (ClientManager client in clients)
-            //    {
-
-            //    }
-            //}
+            if (clients != null)
+            {
+                foreach (ClientManager client in clients)
+                {
+                    client.WellStop();
+                }
+            }
 			serverStopped = true;
 			listener.Close();
             statusDelegate("Server stopped", fSyncServer.LOG_INFO);
