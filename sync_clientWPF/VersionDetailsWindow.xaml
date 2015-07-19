@@ -13,7 +13,7 @@
 		</ListView>
 
 		<Label Content="Files in this version:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-		<ListView Name="lFileVersions" Margin="350,36,10,10" MouseDoubleClick="lDetails_MouseDoubleClick">
+		<ListView Name="lFileVersions" Margin="350,36,10,10" MouseDoubleClick="lFileVersions_MouseDoubleClick">
 			<ListView.View>
 				<GridView>
 					<GridViewColumn Header="Version" Width="50" DisplayMemberBinding="{Binding sVersion}"/>

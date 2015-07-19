@@ -169,7 +169,8 @@ namespace sync_server
 		public List<FileChecksum> getUserFiles(Int64 userId, Int64 version, string serverBaseDir)
 		{
 			List<FileChecksum> userFiles = new List<FileChecksum>();
-			SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE version = " + version, connection);
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE version = @version;", connection);
+			command.Parameters.AddWithValue("version", version);
 			SQLiteDataReader reader = command.ExecuteReader();
 			while (reader.Read())
 			{
@@ -223,7 +224,8 @@ namespace sync_server
 		public List<FileChecksum> getFileVersions(Int64 userId, string filename, string serverBaseDir)
 		{
 			List<FileChecksum> userFiles = new List<FileChecksum>();
-			SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE client_file = " + filename, connection);
+			SQLiteCommand command = new SQLiteCommand("SELECT * FROM user_" + userId + " WHERE client_file = @filename;", connection);
+			command.Parameters.AddWithValue("filename", filename);
 			SQLiteDataReader reader = command.ExecuteReader();
 			while (reader.Read())
 			{
