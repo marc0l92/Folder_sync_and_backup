@@ -26,12 +26,14 @@ namespace sync_server
         private SyncSQLite mySQLite;
         private String serverDir;
         private Boolean stopped = false;
+        private int maxVersionNumber;
 
-        public ClientManager(Socket sock, String workDir, AsyncManagerServer.StatusDelegate sd)
+        public ClientManager(Socket sock, String workDir, int maxVers, AsyncManagerServer.StatusDelegate sd)
         {
             statusDelegate = sd;
             stateClient = new StateObject();
             stateClient.workSocket = sock;
+            maxVersionNumber = maxVers;
             serverDir = workDir;
             client.usrNam = "NOACTVIVE";
             client.usrID = -1;
@@ -50,7 +52,7 @@ namespace sync_server
             AsyncManagerServer.PrintClient();
             statusDelegate("Server Stopped ", fSyncServer.LOG_INFO);
             mySQLite.closeConnection();
-            if (TEMP.Count > 0)
+            if (TEMP != null && (TEMP.Count > 0))
             {
                 foreach (FileChecksum check in TEMP)
                 {
@@ -132,7 +134,9 @@ namespace sync_server
             catch (Exception e)
             {
                 statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
-                if (!stopped)
+                if (stopped)
+                    statusDelegate("DON'T WORRY SERVER IT'S BEEN STOPPED BY CONNECTION CLOSE, IT'S ALL FINE (Receive Command)", fSyncServer.LOG_INFO);
+                else
                     StopService();
             }
         }
@@ -147,7 +151,7 @@ namespace sync_server
                 // Socket client = state.workSocket;
 
                 // Read data from the remote device.
-                if (!syncEnd)
+                if ((!syncEnd)&&stateClient.workSocket.Connected==true)
                 {
                     int bytesRead = stateClient.workSocket.EndReceive(ar);
 
@@ -162,7 +166,7 @@ namespace sync_server
                         stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
                             new AsyncCallback(ReceiveCallback), null);
                     }
-                    if (!SocketConnected(stateClient.workSocket))
+                    if (!SocketConnected(stateClient.workSocket) || stateClient.workSocket.Connected==false)
                     {
                         receiveDone.Set();
                     }
@@ -184,7 +188,9 @@ namespace sync_server
             catch (Exception e)
             {
                 statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
-                if (!stopped)
+                if(stopped)
+                    statusDelegate("DON'T WORRY SERVER IT'S BEEN STOPPED BY CONNECTION CLOSE, IT'S ALL FINE (Receive Callback)", fSyncServer.LOG_INFO);
+                else
                     StopService();
             }
         }
@@ -349,7 +355,7 @@ namespace sync_server
                     SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECK, check.FileNameClient, check.Checksum.ToString()));
                     statusDelegate("Send check Message(StartSession)", fSyncServer.LOG_INFO);
                 }
-
+                TEMP = new List<FileChecksum>();
                 SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDCHECK));
                 statusDelegate("Send End check Message (StartSession)", fSyncServer.LOG_INFO);
                 return true;
@@ -358,22 +364,24 @@ namespace sync_server
 
         public Boolean GetVersions()
         {
-            Int64 lastVers =0;
+           Int64 lastVers = 0;
            Int64 currentVersion = mySQLite.getUserMinMaxVersion(client.usrID, ref lastVers);
+           bool first = true;
 
             List<FileChecksum> userChecksumA = mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
             while (currentVersion <= lastVers)
             {
-                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.VERSION, currentVersion.ToString(), userChecksumA.Count.ToString(), "Timestamp"));
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.VERSION, currentVersion.ToString(), userChecksumA.Count.ToString(),userChecksumA[0].Timestamp ));
                 statusDelegate("Send Version Message(Version Command)", fSyncServer.LOG_INFO);
 
-                if (currentVersion == 1)
+                if (first)
                 {
                     foreach (FileChecksum check in userChecksumA)
                     {
                         SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW"));
                         statusDelegate("Send check Version Message(Version Command)", fSyncServer.LOG_INFO);
                     }
+                    first = false;
                 }
                 else
                 {
@@ -429,7 +437,7 @@ namespace sync_server
             }
             SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDCHECK));
             statusDelegate("Send End check Message (Version Command)", fSyncServer.LOG_INFO);
-            //WellStop();
+            WellStop();
             return true;
         }
 
@@ -458,6 +466,7 @@ namespace sync_server
             mySQLite.setUserFiles(client.usrID, client.vers, TEMP); // Call DB Update to new Version all the Files
             TEMP.Clear();
             statusDelegate("DB Updated Correctly (EndSync)", fSyncServer.LOG_INFO);
+            CancelVersion();
             WellStop();
             return true;
         }
@@ -467,6 +476,7 @@ namespace sync_server
             WellStop();
             userChecksum.Clear();
             TEMP.Clear();
+            CancelVersion();
             return true;
         }
 
@@ -517,7 +527,7 @@ namespace sync_server
             SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDRESTORE));
             statusDelegate("Send End Restore Message (Restore Command)", fSyncServer.LOG_INFO);
 
-
+            WellStop();
 
             return true;
         }
@@ -615,7 +625,9 @@ namespace sync_server
             catch (Exception e)
             {
                 statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
-                if (!stopped)
+                if (stopped)
+                    statusDelegate("DON'T WORRY SERVER IT'S BEEN STOPPED BY CONNECTION CLOSE, IT'S ALL FINE (Send Command)", fSyncServer.LOG_INFO);
+                else
                     StopService();
             }
         }
@@ -636,7 +648,9 @@ namespace sync_server
             catch (Exception e)
             {
                 statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
-                if (!stopped)
+                if (stopped)
+                    statusDelegate("DON'T WORRY SERVER IT'S BEEN STOPPED BY CONNECTION CLOSE, IT'S ALL FINE (Send Callback)", fSyncServer.LOG_INFO);
+                else
                     StopService();
             }
         }
@@ -651,9 +665,35 @@ namespace sync_server
                 return true;
         }
 
-        public Boolean CancelVersion(int min, int max)
+        public Boolean CancelVersion()
         {
 
+            Int64 maxVers = 0;
+            Int64 minVers = mySQLite.getUserMinMaxVersion(client.usrID, ref maxVers);
+            Int64 diff = maxVers - minVers;
+            while (diff > maxVersionNumber)
+            {
+                userChecksum = mySQLite.getUserFiles(client.usrID, minVers, serverDir); //Call DB Get Users Files;
+                minVers++;
+                TEMP = mySQLite.getUserFiles(client.usrID, minVers, serverDir); //Call DB Get Users Files;
+                foreach (FileChecksum check in userChecksum)
+                {
+
+                    int index = TEMP.FindIndex(x => x.FileNameServer == check.FileNameServer);
+
+                    if (index == -1)
+                    {
+                        File.Delete(check.FileNameServer);
+                        statusDelegate("Deleted File Correctly:" + check.FileNameServer, fSyncServer.LOG_INFO);
+                    }
+
+                }
+                mySQLite.deleteVersion(client.usrID, minVers - 1);
+                diff--;
+
+            }
+            userChecksum.Clear();
+            TEMP.Clear();
             return true;
         }
 
