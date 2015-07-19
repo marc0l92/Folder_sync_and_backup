@@ -68,7 +68,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="SyncManagerWatcher.cs" />
     <Compile Include="Version.cs" />
     <Compile Include="VersionDetailsWindow.xaml.cs">
       <DependentUpon>VersionDetailsWindow.xaml</DependentUpon>

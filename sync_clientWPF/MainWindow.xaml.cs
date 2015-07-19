@@ -53,7 +53,7 @@ namespace sync_clientWPF
 			//notifyIconMenu.MenuItems.Add("Exit", );
 			notifyIcon.Text = "SyncClient";
 			notifyIcon.ContextMenu = notifyIconMenu;
-			notifyIcon.Visible = true;
+			//notifyIcon.Visible = true;
 		}
 
 		private void StartSync_Click(object sender, EventArgs e)
@@ -301,9 +301,11 @@ namespace sync_clientWPF
 					break;
 				case WindowState.Minimized:
 					// Do your stuff
-					System.Windows.MessageBox.Show("Minimized", "Restoring system", MessageBoxButton.OK);
 					notifyIcon.BalloonTipTitle = "Minimize to Tray App";
 					notifyIcon.BalloonTipText = "You have successfully minimized your form.";
+					notifyIcon.Visible = true;
+					notifyIcon.ShowBalloonTip(1000);
+					this.Hide();    
 					break;
 				case WindowState.Normal:
 
