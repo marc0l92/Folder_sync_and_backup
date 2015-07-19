@@ -56,10 +56,12 @@ namespace sync_clientWPF
 			try
 			{
 				bStart.IsEnabled = false;
-				syncManager.startSync(tAddress.Text, Convert.ToInt32(tPort.Text), tDirectory.Text);
+				syncManager.startSync(tAddress.Text, Int32.Parse(tPort.Text), tDirectory.Text, Int32.Parse(tTimeout.Text)*1000);
 				bStop.IsEnabled = true;
+				bSyncNow.IsEnabled = true;
 				bGetVersions.IsEnabled = true;
 				tDirectory.IsEnabled = false;
+				tTimeout.IsEnabled = false;
 				bBrowse.IsEnabled = false;
 				tAddress.IsEnabled = false;
 				tPort.IsEnabled = false;
@@ -83,6 +85,7 @@ namespace sync_clientWPF
 			catch (Exception ex)
 			{
 				bStop.IsEnabled = true;
+				bSyncNow.IsEnabled = true;
 				updateStatus(ex.Message);
 			}
 		}
@@ -121,12 +124,13 @@ namespace sync_clientWPF
 		private void forceStop()
 		{
 			bStop.IsEnabled = false;
-			syncManager.stopSync();
-			bStart.IsEnabled = true;
-			bStop.IsEnabled = false;
+			bSyncNow.IsEnabled = false;
 			bRestore.IsEnabled = false;
 			bGetVersions.IsEnabled = false;
+			syncManager.stopSync();
+			bStart.IsEnabled = true;
 			tDirectory.IsEnabled = true;
+			tTimeout.IsEnabled = true;
 			bBrowse.IsEnabled = true;
 			tAddress.IsEnabled = true;
 			tPort.IsEnabled = true;
@@ -217,17 +221,23 @@ namespace sync_clientWPF
 
 		private void GetVersions_Click(object sender, RoutedEventArgs e)
 		{
-			bGetVersions.IsEnabled = false;
-			versions = syncManager.getVersions();
-			lVersions.Items.Clear();
-			foreach (Version version in versions)
+			try
 			{
-				lVersions.Items.Add(new VersionsListViewItem(version.VersionNum, version.NewFiles, version.EditFiles, version.DelFiles));
-			}
-			lVersions.SelectedIndex = 0;
+				bGetVersions.IsEnabled = false;
+				versions = syncManager.getVersions();
+				lVersions.Items.Clear();
+				foreach (Version version in versions)
+				{
+					lVersions.Items.Add(new VersionsListViewItem(version.VersionNum, version.NewFiles, version.EditFiles, version.DelFiles));
+				}
+				lVersions.SelectedIndex = 0;
 
-			bGetVersions.IsEnabled = true;
-			bRestore.IsEnabled = true;
+				bGetVersions.IsEnabled = true;
+				bRestore.IsEnabled = true;
+			}catch(Exception ex){
+				bGetVersions.IsEnabled = true;
+				updateStatus(ex.Message);
+			}
 		}
 
 		private void lVersions_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -265,6 +275,11 @@ namespace sync_clientWPF
 				}
 			}
 			bRestore.IsEnabled = true;
+		}
+
+		private void bSyncNow_Click(object sender, RoutedEventArgs e)
+		{
+			syncManager.forceSync();
 		}
 
 	}

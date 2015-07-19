@@ -41,11 +41,14 @@
 					<TextBox Name="tPort" HorizontalAlignment="Right" Height="23" Margin="0,90,10,0" TextWrapping="Wrap" Text="55555" VerticalAlignment="Top" Width="85"/>
 					<Button Name="bStart" Content="Start sync" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="10,0,0,10" Click="StartSync_Click" IsEnabled="False"/>
 					<Button Name="bStop" Content="Stop sync" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="90,0,0,10" IsEnabled="False" Click="StopSync_Click"/>
+					<Label Content="Sync time[s]:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="1.605,6.115" Margin="10,118,0,0"/>
+					<TextBox Name="tTimeout" TextWrapping="Wrap" Text="10" Margin="10,144,0,0" ToolTip="Time between two sync" Height="23" VerticalAlignment="Top" HorizontalAlignment="Left" Width="100"/>
+					<Button Name="bSyncNow" Content="Sync now" Margin="0,0,14,10" HorizontalAlignment="Right" Width="75" Height="20" VerticalAlignment="Bottom" IsEnabled="False" Click="bSyncNow_Click"/>
 				</Grid>
 			</TabItem>
 		</TabControl>
 		<StatusBar Height="25" VerticalAlignment="Bottom">
-			<StatusBarItem Name="lStatus" Content="Status" Height="25" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,0" Width="300"/>
+			<StatusBarItem Name="lStatus" Content="Status" Height="25" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,0"/>
 			<StatusBarItem HorizontalAlignment="Right">
 				<ProgressBar Name="lStatusBar" Value="0" Width="100" Height="12" VerticalAlignment="Center"/>
 			</StatusBarItem>

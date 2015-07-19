@@ -11,7 +11,7 @@ using System.Security.Cryptography;
 
 namespace sync_clientWPF
 {
-	class SyncManager
+	class SyncManagerWatcher
 	{
 		public delegate void StatusDelegate(String s, bool fatalError = false);
 		public delegate void StatusBarDelegate(int percentage);
@@ -28,15 +28,12 @@ namespace sync_clientWPF
 		private Mutex connectionMutex;
 		private Int64 versionToRestore;
 		private int sync_sleeping_time = 5000;
-		private System.Timers.Timer syncSleepTimer;
-		private AutoResetEvent doSyncEvent;
 
-		public SyncManager()
+		public SyncManagerWatcher()
 		{
 			serverFileChecksum = new List<FileChecksum>();
 			clientFileChecksum = new List<FileChecksum>();
 			connectionMutex = new Mutex();
-			doSyncEvent = new AutoResetEvent(false);
 		}
 
 		public void setStatusDelegate(StatusDelegate sd, StatusBarDelegate sbd)
@@ -85,9 +82,6 @@ namespace sync_clientWPF
 			this.address = address;
 			this.port = port;
 			this.sync_sleeping_time = sleeping_time;
-			syncSleepTimer = new System.Timers.Timer(this.sync_sleeping_time);
-			syncSleepTimer.Elapsed += new System.Timers.ElapsedEventHandler((object o, System.Timers.ElapsedEventArgs e) => { doSyncEvent.Set(); });
-			syncSleepTimer.AutoReset = false;
 
 			// Start the sync thread
 			this.thread_stopped = false;
@@ -194,12 +188,7 @@ namespace sync_clientWPF
 					tcpClient.Close();
 					statusDelegate("Idle");
 					connectionMutex.ReleaseMutex();
-
-					// Setup timer
-					syncSleepTimer.Start();
-					doSyncEvent.Reset();
-					doSyncEvent.WaitOne();
-					//Thread.Sleep(sync_sleeping_time);
+					Thread.Sleep(sync_sleeping_time);
 				}
 			}
 			catch (Exception ex)
@@ -490,7 +479,8 @@ namespace sync_clientWPF
 		}
 
 		public void forceSync(){
-			doSyncEvent.Set();
+			if(syncThread.ThreadState == ThreadState.WaitSleepJoin)
+				syncThread.Interrupt();
 		}
 	}
 }
