@@ -508,7 +508,7 @@ namespace sync_clientWPF
 				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
 				{
 					statusDelegate("Retrieve file version list...");
-					sendCommand(new SyncCommand(SyncCommand.CommandSet.FILEVERSIONS));
+					sendCommand(new SyncCommand(SyncCommand.CommandSet.FILEVERSIONS, filename));
 					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
 					{
 						switch (sc.Type)
@@ -534,6 +534,42 @@ namespace sync_clientWPF
 				connectionMutex.ReleaseMutex();
 			}
 			return versions;
+		}
+
+
+		public void restoreFileVersion(string selectedFileName, Int64 selectedVersion){
+			SyncCommand sc;
+			try
+			{
+				connectionMutex.WaitOne();
+				serverConnect();
+				// login
+				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
+				{
+					statusDelegate("Start file restore...");
+					sendCommand(new SyncCommand(SyncCommand.CommandSet.GET, selectedFileName, selectedVersion.ToString()));
+					string tempDir = System.IO.Path.GetTempPath() + "syncClient";
+					sc = this.receiveCommand();
+					if (sc.Type != SyncCommand.CommandSet.FILE) throw new Exception("Protocol error");
+					this.getFile(tempDir + sc.FileName, sc.FileSize);
+					
+					// commit changes
+					this.moveFiles(tempDir, syncDirectory);
+					Directory.Delete(tempDir, true);
+
+					statusDelegate("Restore done");
+				}
+				else
+				{
+					statusDelegate("Login fail");
+				}
+			}
+			finally
+			{
+				tcpClient.Close();
+				connectionMutex.ReleaseMutex();
+			}
 		}
 	}
 }

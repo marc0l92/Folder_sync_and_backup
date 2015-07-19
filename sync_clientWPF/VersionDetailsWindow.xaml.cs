@@ -21,6 +21,7 @@ namespace sync_clientWPF
 	{
 		private SyncManager syncManager;
 		private Version version;
+		private string selectedFileName;
 		public VersionDetailsWindow(Version v, SyncManager sm)
 		{
 			InitializeComponent();
@@ -42,10 +43,38 @@ namespace sync_clientWPF
 			{
 				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
 				{
-					List<VersionFile> versions = syncManager.getFileVersions(((VersionListViewItem)lDetails.SelectedItem).sFilename);
+					selectedFileName = ((VersionListViewItem)lDetails.SelectedItem).sFilename;
+					List<VersionFile> versions = syncManager.getFileVersions(selectedFileName);
 					foreach (VersionFile vf in versions)
 					{
 						lFileVersions.Items.Add(new FileVersionListViewItem(vf.VersionNum.ToString(), vf.FileOperation, vf.Timestamp));
+					}
+					break;
+				}
+				obj = VisualTreeHelper.GetParent(obj);
+			}
+		}
+
+		private void lFileVersions_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			DependencyObject obj = (DependencyObject)e.OriginalSource;
+			while (obj != null && obj != lDetails)
+			{
+				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
+				{
+					Int64 selectedVersion = Int64.Parse(((FileVersionListViewItem)lFileVersions.SelectedItem).sVersion);
+					MessageBoxResult res = System.Windows.MessageBox.Show("Do you want to restore file \"" + selectedFileName + "\" with version number " + selectedVersion + " ?", "Restore system", System.Windows.MessageBoxButton.YesNo);
+					if (res == MessageBoxResult.Yes)
+					{
+						try
+						{
+							syncManager.restoreFileVersion(selectedFileName, selectedVersion);
+							//System.Windows.MessageBox.Show("Restore Done!", "Restoring system");
+						}
+						catch (Exception ex)
+						{
+							System.Windows.MessageBox.Show("Restore failed\n" + ex.Message, "Restoring system", MessageBoxButton.OK, MessageBoxImage.Error);
+						}
 					}
 					break;
 				}
