@@ -30,7 +30,7 @@ namespace sync_server
 			ACK				|			|			|			|			|
 			NOSYNC			|			|			|			|			|
 		    VERSION			| version   | numFiles  | timestamp |			|
-		   	CHECKVERSION	| filename  | operation | timestamp |			|
+		   	CHECKVERSION	| filename  | operation | timestamp | version   |
 		    GETVERSIONS     |			|			|			|			|
 		    ENDRESTORE      |			|			|			|			|
 		    FILEVERSIONS    | filename  |			|			|			|
@@ -108,6 +108,7 @@ namespace sync_server
 					data[0] = FileName;
 					data[1] = Operation;
 					data[2] = Timestamp;
+					data[3] = Version.ToString();
 					break;
 				case CommandSet.FILEVERSIONS:
 					data[0] = FileName;
@@ -203,6 +204,8 @@ namespace sync_server
 						return Int64.Parse(data[0]);
 					case CommandSet.GET:
 						return Int64.Parse(data[1]);
+					case CommandSet.CHECKVERSION:
+						return Int64.Parse(data[3]);
 					default:
 						return -1;
 				}
