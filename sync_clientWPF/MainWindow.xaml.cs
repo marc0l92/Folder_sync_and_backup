@@ -228,7 +228,7 @@ namespace sync_clientWPF
 				lVersions.Items.Clear();
 				foreach (Version version in versions)
 				{
-					lVersions.Items.Add(new VersionsListViewItem(version.VersionNum, version.NewFiles, version.EditFiles, version.DelFiles));
+					lVersions.Items.Add(new VersionsListViewItem(version.VersionNum, version.NewFiles, version.EditFiles, version.DelFiles, version.Timestamp));
 				}
 				lVersions.SelectedIndex = 0;
 
@@ -243,12 +243,10 @@ namespace sync_clientWPF
 		private void lVersions_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			DependencyObject obj = (DependencyObject)e.OriginalSource;
-
 			while (obj != null && obj != lVersions)
 			{
 				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
 				{
-					// Do something here
 					VersionDetailsWindow vdw = new VersionDetailsWindow(versions[lVersions.SelectedIndex]);
 					vdw.Show();
 					break;
@@ -291,14 +289,6 @@ namespace sync_clientWPF
 		public String sEditFiles { get; set; }
 		public String sDelFiles { get; set; }
 		public String sDateTime { get; set; }
-		public VersionsListViewItem(Int64 version, int newFiles, int editFiles, int delFiles)
-		{
-			sVersion = version.ToString();
-			sNewFiles = newFiles.ToString();
-			sEditFiles = editFiles.ToString();
-			sDelFiles = delFiles.ToString();
-			sDateTime = DateTime.Now.ToString();
-		}
 		public VersionsListViewItem(Int64 version, int newFiles, int editFiles, int delFiles, String dateTime)
 		{
 			sVersion = version.ToString();

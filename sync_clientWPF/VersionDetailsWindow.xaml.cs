@@ -19,12 +19,14 @@ namespace sync_clientWPF
 	/// </summary>
 	partial class VersionDetailsWindow : Window
 	{
+		private SyncManager syncManager;
 		private Version version;
-		public VersionDetailsWindow(Version v)
+		public VersionDetailsWindow(Version v, SyncManager sm)
 		{
 			InitializeComponent();
 			this.version = v;
-			lVersion.Content = version.VersionNum;
+			syncManager = sm;
+			this.Title = "Version details: " + version.VersionNum;
 
 			foreach (VersionFile vf in version.Items)
 			{
@@ -32,16 +34,46 @@ namespace sync_clientWPF
 				lDetails.Items.Add(new VersionListViewItem(vf.FileName, vf.FileOperation));
 			}
 		}
+
+		private void lDetails_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			DependencyObject obj = (DependencyObject)e.OriginalSource;
+			while (obj != null && obj != lDetails)
+			{
+				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
+				{
+					List<VersionFile> versions = syncManager.getFileVersions(((VersionListViewItem)lDetails.SelectedItem).sFilename);
+					foreach (VersionFile vf in versions)
+					{
+						lFileVersions.Items.Add(new FileVersionListViewItem("1", vf.FileOperation, vf.Timestamp));
+					}
+					break;
+				}
+				obj = VisualTreeHelper.GetParent(obj);
+			}
+		}
 	}
 
 	class VersionListViewItem
 	{
-		public String sFilename { get; set; }
-		public String sOperation { get; set; }
-		public VersionListViewItem(String filename, String operation)
+		public string sFilename { get; set; }
+		public string sOperation { get; set; }
+		public VersionListViewItem(string filename, string operation)
 		{
 			sFilename = filename;
 			sOperation = operation;
+		}
+	}
+	class FileVersionListViewItem
+	{
+		public string sVersion { get; set; }
+		public string sOperation { get; set; }
+		public string sTimestamp { get; set; }
+		public FileVersionListViewItem(string version, string operation, string timestamp)
+		{
+			sVersion = version;
+			sOperation = operation;
+			sTimestamp = timestamp;
 		}
 	}
 }

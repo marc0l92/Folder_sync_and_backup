@@ -356,7 +356,7 @@ namespace sync_clientWPF
 						switch (sc.Type)
 						{
 							case SyncCommand.CommandSet.VERSION:
-								version = new Version(sc.Version);
+								version = new Version(sc.Version, sc.Timestamp);
 								versions.Add(version);
 								break;
 							case SyncCommand.CommandSet.CHECKVERSION:
@@ -491,6 +491,47 @@ namespace sync_clientWPF
 
 		public void forceSync(){
 			doSyncEvent.Set();
+		}
+
+		public List<VersionFile> getFileVersions(string filename)
+		{
+			List<VersionFile> versions = new List<VersionFile>();
+			SyncCommand sc;
+			try
+			{
+				connectionMutex.WaitOne();
+				serverConnect();
+				// login
+				this.sendCommand(new SyncCommand(SyncCommand.CommandSet.LOGIN, username, password));
+				if (receiveCommand().Type == SyncCommand.CommandSet.AUTHORIZED)
+				{
+					statusDelegate("Retrieve file version list...");
+					sendCommand(new SyncCommand(SyncCommand.CommandSet.FILEVERSIONS));
+					while ((sc = this.receiveCommand()).Type != SyncCommand.CommandSet.ENDCHECK)
+					{
+						switch (sc.Type)
+						{
+							case SyncCommand.CommandSet.CHECKVERSION:
+								versions.Add(new VersionFile(sc.FileName, sc.Operation, sc.Timestamp));
+								break;
+							default:
+								throw new Exception("Version receive error");
+						}
+					}
+					statusDelegate("Versions retrieved");
+				}
+				else
+				{
+					statusDelegate("Login fail");
+				}
+
+			}
+			finally
+			{
+				tcpClient.Close();
+				connectionMutex.ReleaseMutex();
+			}
+			return versions;
 		}
 	}
 }
