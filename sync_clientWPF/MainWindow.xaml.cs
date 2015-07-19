@@ -247,7 +247,7 @@ namespace sync_clientWPF
 			{
 				if (obj.GetType() == typeof(System.Windows.Controls.ListViewItem))
 				{
-					VersionDetailsWindow vdw = new VersionDetailsWindow(versions[lVersions.SelectedIndex]);
+					VersionDetailsWindow vdw = new VersionDetailsWindow(versions[lVersions.SelectedIndex], syncManager);
 					vdw.Show();
 					break;
 				}

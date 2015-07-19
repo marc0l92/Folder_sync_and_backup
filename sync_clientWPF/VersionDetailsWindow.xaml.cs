@@ -45,7 +45,7 @@ namespace sync_clientWPF
 					List<VersionFile> versions = syncManager.getFileVersions(((VersionListViewItem)lDetails.SelectedItem).sFilename);
 					foreach (VersionFile vf in versions)
 					{
-						lFileVersions.Items.Add(new FileVersionListViewItem("1", vf.FileOperation, vf.Timestamp));
+						lFileVersions.Items.Add(new FileVersionListViewItem(vf.VersionNum.ToString(), vf.FileOperation, vf.Timestamp));
 					}
 					break;
 				}

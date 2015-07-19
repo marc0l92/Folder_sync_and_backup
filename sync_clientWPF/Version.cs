@@ -77,11 +77,13 @@ namespace sync_clientWPF
 		private string fileName;
 		private string fileOperation; /*EDIT, NEW, DEL, NONE*/
 		private string timestamp;
+		private Int64 versionNum;
 
-		public VersionFile(string fileName, string operation, string timestamp="")
+		public VersionFile(string fileName, string operation, Int64 version, string timestamp="")
 		{
 			this.fileOperation = operation;
 			this.fileName = fileName;
+			this.versionNum = version;
 			this.timestamp = timestamp;
 		}
 
@@ -93,6 +95,11 @@ namespace sync_clientWPF
 		public string FileName
 		{
 			get { return this.fileName; }
+		}
+		
+		public Int64 VersionNum
+		{
+			get { return this.versionNum; }
 		}
 
 		public string Timestamp

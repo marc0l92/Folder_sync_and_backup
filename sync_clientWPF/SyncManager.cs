@@ -11,7 +11,7 @@ using System.Security.Cryptography;
 
 namespace sync_clientWPF
 {
-	class SyncManager
+	public class SyncManager
 	{
 		public delegate void StatusDelegate(String s, bool fatalError = false);
 		public delegate void StatusBarDelegate(int percentage);
@@ -340,6 +340,7 @@ namespace sync_clientWPF
 		{
 			List<Version> versions = new List<Version>();
 			Version version = null;
+			Int64 versionNum=0;
 			SyncCommand sc;
 			try
 			{
@@ -358,9 +359,10 @@ namespace sync_clientWPF
 							case SyncCommand.CommandSet.VERSION:
 								version = new Version(sc.Version, sc.Timestamp);
 								versions.Add(version);
+								versionNum = sc.Version;
 								break;
 							case SyncCommand.CommandSet.CHECKVERSION:
-								version.append(new VersionFile(sc.FileName, sc.Operation));
+								version.append(new VersionFile(sc.FileName, sc.Operation, versionNum));
 								break;
 							default:
 								throw new Exception("Version receive error");
@@ -512,7 +514,7 @@ namespace sync_clientWPF
 						switch (sc.Type)
 						{
 							case SyncCommand.CommandSet.CHECKVERSION:
-								versions.Add(new VersionFile(sc.FileName, sc.Operation, sc.Timestamp));
+								versions.Add(new VersionFile(sc.FileName, sc.Operation, sc.Version, sc.Timestamp));
 								break;
 							default:
 								throw new Exception("Version receive error");
