@@ -337,7 +337,9 @@ namespace sync_server
             {
                 client.usrID = userID;
                 client.usrDir = cmd.Directory;
-                client.vers = mySQLite.getUserLastVersion(client.usrID); //Call DB Get Last Version
+                Int64 lastVers = 0;
+                mySQLite.getUserMinMaxVersion(client.usrID, ref lastVers);
+                client.vers = lastVers; //Call DB Get Last Version
                 statusDelegate("User Directory Authorized, Start Send Check(StartSession)", fSyncServer.LOG_INFO);
                 SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.AUTHORIZED));
                 userChecksum = mySQLite.getUserFiles(client.usrID, client.vers, serverDir); //Call DB Get Users Files
@@ -356,9 +358,9 @@ namespace sync_server
 
         public Boolean GetVersions()
         {
-            Int64 lastVers = mySQLite.getUserLastVersion(client.usrID);
+            Int64 lastVers =0;
+           Int64 currentVersion = mySQLite.getUserMinMaxVersion(client.usrID, ref lastVers);
 
-            int currentVersion = 1;
             List<FileChecksum> userChecksumA = mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
             while (currentVersion <= lastVers)
             {
