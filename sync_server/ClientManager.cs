@@ -151,7 +151,7 @@ namespace sync_server
                 // Socket client = state.workSocket;
 
                 // Read data from the remote device.
-                if ((!syncEnd)&&stateClient.workSocket.Connected==true)
+                if ((!syncEnd) && stateClient.workSocket.Connected == true)
                 {
                     int bytesRead = stateClient.workSocket.EndReceive(ar);
 
@@ -166,7 +166,7 @@ namespace sync_server
                         stateClient.workSocket.BeginReceive(stateClient.buffer, 0, StateObject.BufferSize, 0,
                             new AsyncCallback(ReceiveCallback), null);
                     }
-                    if (!SocketConnected(stateClient.workSocket) || stateClient.workSocket.Connected==false)
+                    if (!SocketConnected(stateClient.workSocket) || stateClient.workSocket.Connected == false)
                     {
                         receiveDone.Set();
                     }
@@ -188,7 +188,7 @@ namespace sync_server
             catch (Exception e)
             {
                 statusDelegate("Exception: " + e.Message, fSyncServer.LOG_INFO);
-                if(stopped)
+                if (stopped)
                     statusDelegate("DON'T WORRY SERVER IT'S BEEN STOPPED BY CONNECTION CLOSE, IT'S ALL FINE (Receive Callback)", fSyncServer.LOG_INFO);
                 else
                     StopService();
@@ -199,80 +199,80 @@ namespace sync_server
         {
             if (cmd != null)
             {
-                    switch (cmd.Type)
-                    {
-                        case SyncCommand.CommandSet.LOGIN:
-                            statusDelegate(" Command Login ", fSyncServer.LOG_INFO);
-                            return LoginUser();
-                        case SyncCommand.CommandSet.START:
-                            statusDelegate(" Command Start ", fSyncServer.LOG_INFO);
-                            return StartSession();
-                        case SyncCommand.CommandSet.GET:
-                              if ((client.usrNam == "NOACTIVE")&&(client.usrID==-1))
-                              {
-                                  statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A GET ", fSyncServer.LOG_INFO);
-                                  return true;
-                              }
-                            statusDelegate(" Command Get ", fSyncServer.LOG_INFO);
-                            return SendFileClient();
-                        case SyncCommand.CommandSet.RESTORE:
-                            if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
-                            {
-                                statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A RESTORE ", fSyncServer.LOG_INFO);
-                                return true;
-                            }
-                            statusDelegate(" Command Restore ", fSyncServer.LOG_INFO);
-                            return RestoreVersion();
-                        case SyncCommand.CommandSet.ENDSYNC:
-                            statusDelegate("Command EndSync ", fSyncServer.LOG_INFO);
-                            return EndSync();
-                        case SyncCommand.CommandSet.NOSYNC:
-                            statusDelegate("Command NoSync ", fSyncServer.LOG_INFO);
-                            return NoSync();
-                        case SyncCommand.CommandSet.DEL:
-                            if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
-                            {
-                                statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A DELETE ", fSyncServer.LOG_INFO);
-                                return true;
-                            }
-                            statusDelegate("Command Delete ", fSyncServer.LOG_INFO);
-                            return DeleteFile();
-                        case SyncCommand.CommandSet.NEW:
-                            if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
-                            {
-                                statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A NEW ", fSyncServer.LOG_INFO);
-                                return true;
-                            }
-                            statusDelegate(" Command New ", fSyncServer.LOG_INFO);
-                            return NewFile();
-                        case SyncCommand.CommandSet.EDIT:
-                            if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
-                            {
-                                statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A EDIT ", fSyncServer.LOG_INFO);
-                                return true;
-                            }
-                            statusDelegate("Command Edit ", fSyncServer.LOG_INFO);
-                            return EditFile();
-                        case SyncCommand.CommandSet.NEWUSER:
-                            statusDelegate(" Command NewUser ", fSyncServer.LOG_INFO);
-                            return NewUser();
-                        case SyncCommand.CommandSet.GETVERSIONS:
-                            if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
-                            {
-                                statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A GET VERSION ", fSyncServer.LOG_INFO);
-                                return true;
-                            }
-                            statusDelegate("Command Edit ", fSyncServer.LOG_INFO);
-                            return GetVersions();
-                        default:
-                            statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
-                            StopService();
+                switch (cmd.Type)
+                {
+                    case SyncCommand.CommandSet.LOGIN:
+                        statusDelegate(" Command Login ", fSyncServer.LOG_INFO);
+                        return LoginUser();
+                    case SyncCommand.CommandSet.START:
+                        statusDelegate(" Command Start ", fSyncServer.LOG_INFO);
+                        return StartSession();
+                    case SyncCommand.CommandSet.GET:
+                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                        {
+                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A GET ", fSyncServer.LOG_INFO);
                             return true;
-                    }
-                
+                        }
+                        statusDelegate(" Command Get ", fSyncServer.LOG_INFO);
+                        return SendFileClient();
+                    case SyncCommand.CommandSet.RESTORE:
+                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                        {
+                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A RESTORE ", fSyncServer.LOG_INFO);
+                            return true;
+                        }
+                        statusDelegate(" Command Restore ", fSyncServer.LOG_INFO);
+                        return RestoreVersion();
+                    case SyncCommand.CommandSet.ENDSYNC:
+                        statusDelegate("Command EndSync ", fSyncServer.LOG_INFO);
+                        return EndSync();
+                    case SyncCommand.CommandSet.NOSYNC:
+                        statusDelegate("Command NoSync ", fSyncServer.LOG_INFO);
+                        return NoSync();
+                    case SyncCommand.CommandSet.DEL:
+                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                        {
+                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A DELETE ", fSyncServer.LOG_INFO);
+                            return true;
+                        }
+                        statusDelegate("Command Delete ", fSyncServer.LOG_INFO);
+                        return DeleteFile();
+                    case SyncCommand.CommandSet.NEW:
+                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                        {
+                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A NEW ", fSyncServer.LOG_INFO);
+                            return true;
+                        }
+                        statusDelegate(" Command New ", fSyncServer.LOG_INFO);
+                        return NewFile();
+                    case SyncCommand.CommandSet.EDIT:
+                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                        {
+                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A EDIT ", fSyncServer.LOG_INFO);
+                            return true;
+                        }
+                        statusDelegate("Command Edit ", fSyncServer.LOG_INFO);
+                        return EditFile();
+                    case SyncCommand.CommandSet.NEWUSER:
+                        statusDelegate(" Command NewUser ", fSyncServer.LOG_INFO);
+                        return NewUser();
+                    case SyncCommand.CommandSet.GETVERSIONS:
+                        if ((client.usrNam == "NOACTIVE") && (client.usrID == -1))
+                        {
+                            statusDelegate(" USER IS NOT LOGGED IN TO PERFORM A GET VERSION ", fSyncServer.LOG_INFO);
+                            return true;
+                        }
+                        statusDelegate("Command Edit ", fSyncServer.LOG_INFO);
+                        return GetVersions();
+                    default:
+                        statusDelegate("Recieved Wrong Command", fSyncServer.LOG_INFO); //TODO return false and manage difference
+                        StopService();
+                        return true;
+                }
+
             }
             else
-            { 
+            {
                 statusDelegate("Null Command Received", fSyncServer.LOG_INFO);
                 return true;
             }
@@ -364,21 +364,21 @@ namespace sync_server
 
         public Boolean GetVersions()
         {
-           Int64 lastVers = 0;
-           Int64 currentVersion = mySQLite.getUserMinMaxVersion(client.usrID, ref lastVers);
-           bool first = true;
+            Int64 lastVers = 0;
+            Int64 currentVersion = mySQLite.getUserMinMaxVersion(client.usrID, ref lastVers);
+            bool first = true;
 
             List<FileChecksum> userChecksumA = mySQLite.getUserFiles(client.usrID, currentVersion, serverDir); //Call DB Get Users Files;
             while (currentVersion <= lastVers)
             {
-                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.VERSION, currentVersion.ToString(), userChecksumA.Count.ToString(),userChecksumA[0].Timestamp ));
+                SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.VERSION, currentVersion.ToString(), userChecksumA.Count.ToString(), userChecksumA[0].Timestamp));
                 statusDelegate("Send Version Message(Version Command)", fSyncServer.LOG_INFO);
 
                 if (first)
                 {
                     foreach (FileChecksum check in userChecksumA)
                     {
-                        SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW"));
+                        SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW", check.Timestamp));
                         statusDelegate("Send check Version Message(Version Command)", fSyncServer.LOG_INFO);
                     }
                     first = false;
@@ -398,7 +398,7 @@ namespace sync_server
                             if (checkA.FileNameClient == checkB.FileNameClient)
                                 if (checkA.FileNameServer == checkB.FileNameServer)
                                 {
-                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "NONE"));
+                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "NONE", checkA.Timestamp));
                                     statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                                     found = true;
                                     userChecksumA.Remove(checkA);
@@ -406,7 +406,7 @@ namespace sync_server
                                 }
                                 else
                                 {
-                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "EDIT"));
+                                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "EDIT", checkA.Timestamp));
                                     statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                                     found = true;
                                     userChecksumA.Remove(checkA);
@@ -417,7 +417,7 @@ namespace sync_server
 
                         if (!found)
                         {
-                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkB.FileNameClient, "NEW"));
+                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkB.FileNameClient, "NEW", checkB.Timestamp));
                             statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
@@ -426,7 +426,7 @@ namespace sync_server
                     {
                         foreach (FileChecksum checkA in userChecksumA)
                         {
-                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "DEL"));
+                            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, checkA.FileNameClient, "DEL", checkA.Timestamp));
                             statusDelegate("Send check Message(Version Command)", fSyncServer.LOG_INFO);
                         }
                     }
@@ -698,6 +698,42 @@ namespace sync_server
         }
 
 
+        public Boolean GetFile()
+        {
 
+            return true;
+        }
+
+        public Boolean GetFileVersion()
+        {
+            userChecksum = mySQLite.getFileVersions(client.usrID, cmd.FileName, serverDir); //Call DB Get Users Files;
+            bool first = true;
+            FileChecksum temp;
+            foreach (FileChecksum check in userChecksum)
+            {
+                if (first)
+                {
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NEW", check.Timestamp));
+                    first = false;
+                }
+                else if (check.ChecksumBytes == temp.ChecksumBytes)
+                {
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "NONE", check.Timestamp));
+                }
+                else if (check.ChecksumBytes != temp.ChecksumBytes)
+                {
+                    SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.CHECKVERSION, check.FileNameClient, "EDIT", check.Timestamp));
+                }
+                statusDelegate("Send checkVers Message(Version Command)", fSyncServer.LOG_INFO);
+                temp = check;
+
+            }
+
+            userChecksum.Clear();
+            SendCommand(stateClient.workSocket, new SyncCommand(SyncCommand.CommandSet.ENDCHECK));
+            statusDelegate("Send End check Message (Version Command)", fSyncServer.LOG_INFO);
+            WellStop();
+            return true;
+        }
     }
 }
