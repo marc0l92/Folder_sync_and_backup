@@ -9,15 +9,17 @@ namespace sync_server
 {
     public class StateObject
     {
-
-        // Client  socket.
+        // Connection info
         public Socket workSocket = null;
-        // Size of receive buffer.
-        public const int BufferSize = 1024;
-        // Receive buffer.
-        public byte[] buffer = new byte[BufferSize];
-        // Received data string.
+        public const int BUFFER_SIZE = 1024;
+		public byte[] buffer = new byte[BUFFER_SIZE];
         public StringBuilder sb = new StringBuilder();
 
+		// Client info
+		public String directory = "";
+		public String username = "NOACTVIVE";
+		public String password = "";
+		public Int64 userID = -1;
+		public Int64 version = -1;
     }
 }

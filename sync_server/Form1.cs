@@ -23,8 +23,7 @@ namespace sync_server
         public fSyncServer()
         {
             InitializeComponent();
-            syncManager = new AsyncManagerServer();
-            syncManager.setDelegate(appendStatus, numberClient);
+			syncManager = new AsyncManagerServer(appendStatus, numberClient);
         }
 
         private void bBrowse_Click(object sender, EventArgs e)

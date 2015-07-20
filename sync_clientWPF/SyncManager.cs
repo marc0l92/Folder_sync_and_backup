@@ -151,7 +151,7 @@ namespace sync_clientWPF
 
 			// connect with timeout
 			IAsyncResult result = tcpClient.BeginConnect(remoteEP, null, null);
-			bool success = result.AsyncWaitHandle.WaitOne(2000, true);
+			bool success = result.AsyncWaitHandle.WaitOne(5000, true);
 
 			if (!success)
 			{
