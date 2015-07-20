@@ -33,7 +33,7 @@ namespace sync_clientWPF
 		List<Version> versions = null;
 		private bool loggedin = false;
 		private NotifyIcon notifyIcon;
-		//private System.Windows.Forms.ContextMenu notifyIconMenu;
+		private System.Windows.Forms.ContextMenu notifyIconMenu;
 
 
 		public MainWindow()
@@ -48,17 +48,27 @@ namespace sync_clientWPF
 			notifyIcon = new NotifyIcon();
 			Stream iconStream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/sync_clientWPF;component/Synchronize.ico")).Stream;
 			notifyIcon.Icon = new System.Drawing.Icon(iconStream);
-			//notifyIconMenu = new System.Windows.Forms.ContextMenu();
-			//notifyIconMenu.MenuItems.Add("Exit", );
+			notifyIconMenu = new System.Windows.Forms.ContextMenu();
+            System.Windows.Forms.MenuItem mnuItemSyncNow = new System.Windows.Forms.MenuItem();
+            System.Windows.Forms.MenuItem mnuItemShow = new System.Windows.Forms.MenuItem();
+            mnuItemShow.Text = "Show";
+            mnuItemShow.Click += new System.EventHandler(notifyIcon_Click);
+            notifyIconMenu.MenuItems.Add(mnuItemShow);
+            mnuItemSyncNow.Text = "SyncNow";
+            mnuItemSyncNow.Click += new System.EventHandler(syncMenuItem);
+            notifyIconMenu.MenuItems.Add(mnuItemSyncNow);
 			notifyIcon.Text = "SyncClient";
-			//notifyIcon.ContextMenu = notifyIconMenu;
+			notifyIcon.ContextMenu = notifyIconMenu;
 			notifyIcon.BalloonTipTitle = "App minimized to tray";
 			notifyIcon.BalloonTipText = "Sync sill running.";
-			notifyIcon.Click += new EventHandler(notifyIcon_Click);
 
 			//notifyIcon.Visible = true;
 		}
-
+        private void syncMenuItem(object sender, System.EventArgs e)
+        {
+            syncManager.forceSync();
+            //this.Hide();
+        }
 		private void StartSync_Click(object sender, EventArgs e)
 		{
 			// start the sync manager
@@ -317,7 +327,12 @@ namespace sync_clientWPF
 		private void notifyIcon_Click(object o, EventArgs ea)
 		{
 			this.Show();
+           
+           // this.Activate();
 			//this.Focus(); // todo focus
+            
+                 this.WindowState = WindowState.Normal;
+            this.Activate();
 			notifyIcon.Visible = false;
 		}
 

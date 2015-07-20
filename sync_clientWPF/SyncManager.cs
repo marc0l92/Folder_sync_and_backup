@@ -465,7 +465,7 @@ namespace sync_clientWPF
 						}
 						else
 						{
-							throw new Exception("You cannot restore the current version");
+							throw new Exception("You cannot restore an empty version");
 						}
 						statusDelegate("Restore done");
 					}
