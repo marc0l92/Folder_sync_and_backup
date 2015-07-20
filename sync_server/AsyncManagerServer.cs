@@ -147,13 +147,13 @@ namespace sync_server
                 //else
                 //    endClientDelegate += new EndClientDelegate(client.stop);
 
-                if (clients == null)
-                {
-                    clients = new List<ClientManager>();
-                    clients.Add(client);
-                }
-                else
-                    clients.Add(client);
+                //if (clients == null)
+                //{
+                //    clients = new List<ClientManager>();
+                //    clients.Add(client);
+                //}
+                //else
+                //    clients.Add(client);
 
 				statusDelegate("Connected and Created New Thred to Serve Client", fSyncServer.LOG_INFO);
 			}
@@ -165,16 +165,16 @@ namespace sync_server
         {
             //if (endClientDelegate != null)
             //    endClientDelegate();
-            if (clients != null)
-            {
-                foreach (ClientManager client in clients)
-                {
-                    client.WellStop();
-                }
-            }
+            //if (clients != null)
+            //{
+            //    foreach (ClientManager client in clients)
+            //    {
+            //        client.WellStop();
+            //    }
+            //}
 			serverStopped = true;
 			listener.Close();
-            listeningThread.Join();
+           // listeningThread.Join();
             statusDelegate("Server stopped", fSyncServer.LOG_INFO);
         }
     }
