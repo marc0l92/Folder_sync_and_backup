@@ -117,6 +117,7 @@
             0,
             0,
             0});
+            this.nUDVersion.ValueChanged += new System.EventHandler(this.nUDVersion_ValueChanged);
             // 
             // label1
             // 
@@ -235,6 +236,7 @@
             0,
             0,
             0});
+            this.nPort.ValueChanged += new System.EventHandler(this.nPort_ValueChanged);
             // 
             // bStop
             // 
@@ -396,6 +398,8 @@
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "fSyncServer";
             this.Text = "Sync server";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.fSyncServer_FormClosing);
+            this.Load += new System.EventHandler(this.fSyncServer_Load);
             this.tabControl1.ResumeLayout(false);
             this.tSettings.ResumeLayout(false);
             this.tSettings.PerformLayout();

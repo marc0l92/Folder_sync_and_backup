@@ -17,6 +17,9 @@ namespace sync_server
         public const int LOG_WARNING = 2;
         public const int LOG_ERROR = 3;
 
+
+        private String[] setting = new String[3]; 
+
         private delegate void AppendItem(String s);
         private AsyncManagerServer syncManager;
 
@@ -36,13 +39,14 @@ namespace sync_server
             {
                 tDirectory.Text = folderBrowserDialog.SelectedPath;
             }
+            setting[1] = tDirectory.Text;
         }
 
         private void bStart_Click(object sender, EventArgs e)
         {
             try
             {
-                syncManager.startSync(Decimal.ToInt32(nPort.Value), tDirectory.Text, Decimal.ToInt32(nUDVersion.Value));
+                syncManager.startSync(Decimal.ToInt32(Int32.Parse(setting[0])),setting[1], Decimal.ToInt32(Int32.Parse(setting[2])));
                 tDirectory.Enabled = false;
                 nPort.Enabled = false;
                 bStart.Enabled = false;
@@ -159,6 +163,31 @@ namespace sync_server
                 }
             }
             mySQLite.closeConnection();
+        }
+
+        private void fSyncServer_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            SettingsManager.CreateSetting(nPort.Value.ToString(), tDirectory.Text, nUDVersion.Value.ToString());
+            Application.Exit();
+        }
+
+        private void fSyncServer_Load(object sender, EventArgs e)
+        {
+            setting = SettingsManager.GetSetting();
+            nPort.Value = Int32.Parse(setting[0]);
+            tDirectory.Text = setting[1];
+            nUDVersion.Value = Int32.Parse(setting[2]);
+        }
+
+        private void nPort_ValueChanged(object sender, EventArgs e)
+        {
+            setting[0] = nPort.Value.ToString();
+        }
+
+        private void nUDVersion_ValueChanged(object sender, EventArgs e)
+        {
+
+            setting[2] = nUDVersion.Value.ToString();
         }
 
     }
