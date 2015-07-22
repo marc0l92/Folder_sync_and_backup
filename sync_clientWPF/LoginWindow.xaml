@@ -1,7 +1,7 @@
 ﻿<Window x:Class="sync_clientWPF.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Login" Height="250" Width="300" Closed="Window_Closed" Topmost="True" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Icon="Synchronize.ico">
+        Title="Login" Height="250" MinHeight="250" MaxHeight="250" Width="300" MinWidth="300" Closed="Window_Closed" Topmost="True" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Icon="Synchronize.ico">
 	<Grid>
 		<Label Content="Username:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
 		<TextBox Name="tUsername" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10,36,10,0"/>
