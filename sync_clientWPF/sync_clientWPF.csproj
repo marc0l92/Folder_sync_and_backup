@@ -64,6 +64,7 @@
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SettingsManager.cs" />
     <Compile Include="SyncCommand.cs" />
     <Compile Include="SyncManager.cs" />
     <ApplicationDefinition Include="App.xaml">

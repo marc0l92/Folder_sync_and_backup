@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,7 +53,8 @@ namespace sync_clientWPF
 			private set {password = value;}
 			get
 			{
-				return password;
+				SHA256Managed hashstring = new SHA256Managed();
+				return Encoding.ASCII.GetString(hashstring.ComputeHash(Encoding.ASCII.GetBytes(password + username)));
 			}
 		}
 		public String ErrorMessage
@@ -61,6 +63,10 @@ namespace sync_clientWPF
 			{
 				lError.Content = value;
 			}
+		}
+		public bool KeepLoggedIn
+		{
+			get { return cbKeep.IsChecked.Value; }
 		}
 
 		private void LogIn_Click(object sender, RoutedEventArgs e)

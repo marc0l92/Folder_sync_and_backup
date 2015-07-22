@@ -53,11 +53,10 @@ namespace sync_clientWPF
 			{
 				try
 				{
-					SHA256Managed hashstring = new SHA256Managed();
 					this.address = address;
 					this.port = port;
 					this.username = username;
-					this.password = Encoding.ASCII.GetString(hashstring.ComputeHash(Encoding.ASCII.GetBytes(password + username)));
+					this.password = password;
 					statusBarDelegate(0);
 					serverConnect();
 					statusBarDelegate(50);

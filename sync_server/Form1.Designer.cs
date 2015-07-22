@@ -93,7 +93,7 @@
 			this.tSettings.Controls.Add(this.bStart);
 			this.tSettings.Location = new System.Drawing.Point(4, 22);
 			this.tSettings.Name = "tSettings";
-			this.tSettings.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+			this.tSettings.Padding = new System.Windows.Forms.Padding(3);
 			this.tSettings.Size = new System.Drawing.Size(602, 361);
 			this.tSettings.TabIndex = 0;
 			this.tSettings.Text = "Settings";
@@ -102,7 +102,7 @@
 			// nUDVersion
 			// 
 			this.nUDVersion.Location = new System.Drawing.Point(117, 58);
-			this.nUDVersion.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+			this.nUDVersion.Margin = new System.Windows.Forms.Padding(2);
 			this.nUDVersion.Minimum = new decimal(new int[] {
             5,
             0,
@@ -257,7 +257,7 @@
 			this.tVersions.Controls.Add(this.lvVersions);
 			this.tVersions.Location = new System.Drawing.Point(4, 22);
 			this.tVersions.Name = "tVersions";
-			this.tVersions.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+			this.tVersions.Padding = new System.Windows.Forms.Padding(3);
 			this.tVersions.Size = new System.Drawing.Size(602, 361);
 			this.tVersions.TabIndex = 1;
 			this.tVersions.Text = "Versions";
@@ -267,7 +267,7 @@
 			// bDel
 			// 
 			this.bDel.Location = new System.Drawing.Point(419, 140);
-			this.bDel.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+			this.bDel.Margin = new System.Windows.Forms.Padding(2);
 			this.bDel.Name = "bDel";
 			this.bDel.Size = new System.Drawing.Size(72, 19);
 			this.bDel.TabIndex = 5;
@@ -278,7 +278,7 @@
 			// bUsers
 			// 
 			this.bUsers.Location = new System.Drawing.Point(347, 140);
-			this.bUsers.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+			this.bUsers.Margin = new System.Windows.Forms.Padding(2);
 			this.bUsers.Name = "bUsers";
 			this.bUsers.Size = new System.Drawing.Size(54, 19);
 			this.bUsers.TabIndex = 4;
@@ -379,6 +379,8 @@
 			this.MinimumSize = new System.Drawing.Size(500, 300);
 			this.Name = "fSyncServer";
 			this.Text = "Sync server";
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.fSyncServer_FormClosing);
+			this.Load += new System.EventHandler(this.fSyncServer_Load);
 			this.tabControl1.ResumeLayout(false);
 			this.tSettings.ResumeLayout(false);
 			this.tSettings.PerformLayout();

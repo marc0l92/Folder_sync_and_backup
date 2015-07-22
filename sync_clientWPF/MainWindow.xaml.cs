@@ -34,6 +34,7 @@ namespace sync_clientWPF
 		private bool loggedin = false;
 		private NotifyIcon notifyIcon;
 		private System.Windows.Forms.ContextMenu notifyIconMenu;
+		private SettingsManager settingsManager;
 
 
 		public MainWindow()
@@ -49,26 +50,32 @@ namespace sync_clientWPF
 			Stream iconStream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/sync_clientWPF;component/Synchronize.ico")).Stream;
 			notifyIcon.Icon = new System.Drawing.Icon(iconStream);
 			notifyIconMenu = new System.Windows.Forms.ContextMenu();
-            System.Windows.Forms.MenuItem mnuItemSyncNow = new System.Windows.Forms.MenuItem();
-            System.Windows.Forms.MenuItem mnuItemShow = new System.Windows.Forms.MenuItem();
-            mnuItemShow.Text = "Show";
-            mnuItemShow.Click += new System.EventHandler(notifyIcon_Click);
-            notifyIconMenu.MenuItems.Add(mnuItemShow);
-            mnuItemSyncNow.Text = "SyncNow";
-            mnuItemSyncNow.Click += new System.EventHandler(syncMenuItem);
-            notifyIconMenu.MenuItems.Add(mnuItemSyncNow);
+			System.Windows.Forms.MenuItem mnuItemSyncNow = new System.Windows.Forms.MenuItem();
+			System.Windows.Forms.MenuItem mnuItemShow = new System.Windows.Forms.MenuItem();
+			mnuItemShow.Text = "Show";
+			mnuItemShow.Click += new System.EventHandler(notifyIcon_Click);
+			notifyIconMenu.MenuItems.Add(mnuItemShow);
+			mnuItemSyncNow.Text = "SyncNow";
+			mnuItemSyncNow.Click += new System.EventHandler(syncMenuItem);
+			notifyIconMenu.MenuItems.Add(mnuItemSyncNow);
 			notifyIcon.Text = "SyncClient";
 			notifyIcon.ContextMenu = notifyIconMenu;
 			notifyIcon.BalloonTipTitle = "App minimized to tray";
 			notifyIcon.BalloonTipText = "Sync sill running.";
-
 			//notifyIcon.Visible = true;
+
+			// Settings manager
+			settingsManager = new SettingsManager();
+			tAddress.Text = settingsManager.readSetting("connection", "address");
+			tPort.Text = settingsManager.readSetting("connection", "port");
+			tDirectory.Text = settingsManager.readSetting("connection", "directory");
+			tTimeout.Text = settingsManager.readSetting("connection", "syncTime");
 		}
-        private void syncMenuItem(object sender, System.EventArgs e)
-        {
-            syncManager.forceSync();
-            //this.Hide();
-        }
+		private void syncMenuItem(object sender, System.EventArgs e)
+		{
+			syncManager.forceSync();
+			//this.Hide();
+		}
 		private void StartSync_Click(object sender, EventArgs e)
 		{
 			// start the sync manager
@@ -86,6 +93,11 @@ namespace sync_clientWPF
 				tAddress.IsEnabled = false;
 				tPort.IsEnabled = false;
 				updateStatus("Started");
+				// Save settings
+				settingsManager.writeSetting("connection", "address", tAddress.Text);
+				settingsManager.writeSetting("connection", "port", tPort.Text);
+				settingsManager.writeSetting("connection", "directory", tDirectory.Text);
+				settingsManager.writeSetting("connection", "syncTime", tTimeout.Text);
 			}
 			catch (Exception ex)
 			{
@@ -162,6 +174,8 @@ namespace sync_clientWPF
 			LoginWindow lw = new LoginWindow();
 			bool loginAuthorized = false;
 			bLogInOut.IsEnabled = false;
+			lw.Username = settingsManager.readSetting("account", "username");
+			lw.Username = settingsManager.readSetting("account", "password");
 			while (!loginAuthorized)
 			{
 				lw.showLogin();
@@ -196,9 +210,15 @@ namespace sync_clientWPF
 						lUsername.Content = lw.Username;
 						bLogInOut.Content = "Logout";
 						lw.Close();
+						settingsManager.writeSetting("account", "username", lw.Username);
+						if(lw.KeepLoggedIn)
+							settingsManager.writeSetting("account", "password", lw.Username);
+						else
+							settingsManager.writeSetting("account", "password", "");
 						bStart.IsEnabled = true;
 						loggedin = true;
 						updateStatus("Logged in");
+						StartSync_Click(null, null); // start sync
 					}
 				}
 				catch (Exception ex)
@@ -316,7 +336,7 @@ namespace sync_clientWPF
 					// Do your stuff
 					notifyIcon.Visible = true;
 					notifyIcon.ShowBalloonTip(1000);
-					this.Hide();    
+					this.Hide();
 					break;
 				case WindowState.Normal:
 
@@ -327,12 +347,12 @@ namespace sync_clientWPF
 		private void notifyIcon_Click(object o, EventArgs ea)
 		{
 			this.Show();
-           
-           // this.Activate();
+
+			// this.Activate();
 			//this.Focus(); // todo focus
-            
-                 this.WindowState = WindowState.Normal;
-            this.Activate();
+
+			this.WindowState = WindowState.Normal;
+			this.Activate();
 			notifyIcon.Visible = false;
 		}
 
