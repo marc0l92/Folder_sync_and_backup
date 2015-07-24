@@ -21,7 +21,7 @@ namespace sync_clientWPF
 	/// </summary>
 	public partial class LoginWindow : Window
 	{
-		public enum LoginResponse {LOGIN, REGISTER, CANCEL};
+		public enum LoginResponse { LOGIN, REGISTER, CANCEL };
 		private LoginResponse lastResponse;
 		private String username, password;
 
@@ -31,7 +31,8 @@ namespace sync_clientWPF
 			lError.Content = "";
 		}
 
-		public void showLogin(){
+		public void showLogin()
+		{
 			this.ShowDialog();
 		}
 
@@ -42,7 +43,11 @@ namespace sync_clientWPF
 
 		public String Username
 		{
-			set {username = value;}
+			set
+			{
+				username = value;
+				tUsername.Text = value;
+			}
 			get
 			{
 				return username;
@@ -50,7 +55,11 @@ namespace sync_clientWPF
 		}
 		public String Password
 		{
-			private set {password = value;}
+			private set
+			{
+				password = value;
+				tPassword.Password = value;
+			}
 			get
 			{
 				SHA256Managed hashstring = new SHA256Managed();
@@ -63,10 +72,6 @@ namespace sync_clientWPF
 			{
 				lError.Content = value;
 			}
-		}
-		public bool KeepLoggedIn
-		{
-			get { return cbKeep.IsChecked.Value; }
 		}
 
 		private void LogIn_Click(object sender, RoutedEventArgs e)

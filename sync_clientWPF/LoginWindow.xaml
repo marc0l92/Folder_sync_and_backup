@@ -11,6 +11,6 @@
 		<Button Content="Register" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="90,164,0,0" Click="Register_Click"/>
 		<Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Top" Width="75" Margin="0,164,10,0" Click="Cancel_Click"/>
 		<Label Name="lError" Content="Error message" Margin="10,0,10,1" Foreground="Red" FontWeight="Bold" Height="26" VerticalAlignment="Bottom"/>
-		<CheckBox Name="cbKeep" Content="Keep me logged in" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,123,0,0" IsChecked="True"/>
+		<!--CheckBox Name="cbKeep" Content="Keep me logged in" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,123,0,0" IsChecked="True"/-->
 	</Grid>
 </Window>

@@ -68,7 +68,7 @@ namespace sync_clientWPF
 			settingsManager = new SettingsManager();
 			tAddress.Text = settingsManager.readSetting("connection", "address");
 			tPort.Text = settingsManager.readSetting("connection", "port");
-			tDirectory.Text = settingsManager.readSetting("connection", "directory");
+			tDirectory.Text = settingsManager.readSetting("account", "directory");
 			tTimeout.Text = settingsManager.readSetting("connection", "syncTime");
 		}
 		private void syncMenuItem(object sender, System.EventArgs e)
@@ -96,7 +96,7 @@ namespace sync_clientWPF
 				// Save settings
 				settingsManager.writeSetting("connection", "address", tAddress.Text);
 				settingsManager.writeSetting("connection", "port", tPort.Text);
-				settingsManager.writeSetting("connection", "directory", tDirectory.Text);
+				settingsManager.writeSetting("account", "directory", tDirectory.Text);
 				settingsManager.writeSetting("connection", "syncTime", tTimeout.Text);
 			}
 			catch (Exception ex)
@@ -218,7 +218,7 @@ namespace sync_clientWPF
 						bStart.IsEnabled = true;
 						loggedin = true;
 						updateStatus("Logged in");
-						StartSync_Click(null, null); // start sync
+						//StartSync_Click(null, null); // start sync
 					}
 				}
 				catch (Exception ex)
